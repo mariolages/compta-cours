@@ -55,7 +55,17 @@ export const RegisterForm = () => {
         },
       });
 
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        if (signUpError.message.includes('User already registered')) {
+          toast({
+            variant: "destructive",
+            title: "Compte existant",
+            description: "Un compte existe déjà avec cet email. Veuillez vous connecter ou utiliser un autre email.",
+          });
+          return;
+        }
+        throw signUpError;
+      }
 
       if (user) {
         // Create profile
