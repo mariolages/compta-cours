@@ -3,5 +3,6 @@ export interface UserProfile {
   full_name: string | null;
   is_admin: boolean;
   is_validated: boolean;
+  is_banned: boolean | null;
   email?: string;
 }

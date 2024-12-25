@@ -7,7 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
-export const LoginForm = () => {
+interface LoginFormProps {
+  onSubmit?: (email: string, password: string) => Promise<any>;
+}
+
+export const LoginForm = ({ onSubmit }: LoginFormProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,31 +33,38 @@ export const LoginForm = () => {
     try {
       console.log('Tentative de connexion avec:', email);
       
-      const { error: signInError, data } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password.trim(),
-      });
-
-      if (signInError) {
-        console.error('Erreur de connexion:', signInError);
-        if (signInError.message.includes('Invalid login credentials')) {
-          setValidationError('Email ou mot de passe incorrect. Veuillez vérifier vos identifiants.');
-        } else {
-          setValidationError(`Erreur de connexion: ${signInError.message}`);
+      if (onSubmit) {
+        const result = await onSubmit(email.trim(), password.trim());
+        if (result.error) {
+          throw result.error;
         }
-        setIsLoading(false);
-        return;
-      }
+      } else {
+        const { error: signInError, data } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: password.trim(),
+        });
 
-      const user = data?.user;
-      if (!user) {
-        console.error('Aucun utilisateur retourné après connexion');
-        setValidationError('Erreur lors de la connexion. Veuillez réessayer.');
-        setIsLoading(false);
-        return;
-      }
+        if (signInError) {
+          console.error('Erreur de connexion:', signInError);
+          if (signInError.message.includes('Invalid login credentials')) {
+            setValidationError('Email ou mot de passe incorrect. Veuillez vérifier vos identifiants.');
+          } else {
+            setValidationError(`Erreur de connexion: ${signInError.message}`);
+          }
+          setIsLoading(false);
+          return;
+        }
 
-      console.log('Utilisateur connecté avec succès:', user.id);
+        const user = data?.user;
+        if (!user) {
+          console.error('Aucun utilisateur retourné après connexion');
+          setValidationError('Erreur lors de la connexion. Veuillez réessayer.');
+          setIsLoading(false);
+          return;
+        }
+
+        console.log('Utilisateur connecté avec succès:', user.id);
+      }
 
       toast({
         title: "Connexion réussie",
