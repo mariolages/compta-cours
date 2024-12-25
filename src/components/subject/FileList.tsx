@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, ExternalLink } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface File {
   id: string;
@@ -19,6 +20,21 @@ interface FileListProps {
 }
 
 export function FileList({ files, onDownload }: FileListProps) {
+  const openInGoogle = async (filePath: string) => {
+    try {
+      const { data } = await supabase.storage
+        .from('dcg_files')
+        .createSignedUrl(filePath, 3600); // URL valide pendant 1 heure
+
+      if (data?.signedUrl) {
+        // Ouvrir dans un nouvel onglet
+        window.open(data.signedUrl, '_blank');
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'ouverture du fichier:', error);
+    }
+  };
+
   if (!files || files.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
@@ -41,14 +57,24 @@ export function FileList({ files, onDownload }: FileListProps) {
                 {new Date(file.created_at).toLocaleDateString('fr-FR')}
               </p>
             </div>
-            <Button
-              variant="outline"
-              className="ml-4 hover:bg-primary/10"
-              onClick={() => onDownload(file.id, file.file_path)}
-            >
-              <Download className="h-4 w-4" />
-              <span className="ml-2">Télécharger</span>
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="hover:bg-primary/10"
+                onClick={() => openInGoogle(file.file_path)}
+              >
+                <ExternalLink className="h-4 w-4" />
+                <span className="ml-2">Ouvrir</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="hover:bg-primary/10"
+                onClick={() => onDownload(file.id, file.file_path)}
+              >
+                <Download className="h-4 w-4" />
+                <span className="ml-2">Télécharger</span>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ))}
