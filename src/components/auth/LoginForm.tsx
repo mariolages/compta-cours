@@ -21,13 +21,15 @@ export const LoginForm = () => {
     setValidationError('');
     
     try {
-      // Tentative de connexion
+      console.log('Tentative de connexion avec:', email);
+      
       const { error: signInError, data: { user } } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (signInError) {
+        console.error('Erreur de connexion:', signInError);
         if (signInError.message.includes('Invalid login credentials')) {
           setValidationError('Email ou mot de passe incorrect');
         } else {
@@ -38,53 +40,65 @@ export const LoginForm = () => {
       }
 
       if (!user) {
+        console.error('Aucun utilisateur retourné après connexion');
         setValidationError('Utilisateur non trouvé');
         setIsLoading(false);
         return;
       }
 
-      console.log('Utilisateur connecté:', user.id);
+      console.log('Utilisateur connecté avec succès:', user.id);
 
-      // Vérification du profil et du statut de validation
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('is_validated, is_admin')
-        .eq('id', user.id)
-        .maybeSingle();
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('is_validated, is_admin')
+          .eq('id', user.id)
+          .maybeSingle();
 
-      console.log('Profil récupéré:', profile, 'Erreur profil:', profileError);
+        console.log('Résultat de la requête profil:', { profile, profileError });
 
-      if (profileError) {
-        console.error('Erreur lors de la vérification du profil:', profileError);
-        setValidationError('Erreur lors de la vérification du compte');
+        if (profileError) {
+          console.error('Erreur lors de la vérification du profil:', profileError);
+          setValidationError('Erreur lors de la vérification du compte');
+          await supabase.auth.signOut();
+          setIsLoading(false);
+          return;
+        }
+
+        if (!profile) {
+          console.error('Aucun profil trouvé pour l\'utilisateur:', user.id);
+          setValidationError('Profil utilisateur non trouvé');
+          await supabase.auth.signOut();
+          setIsLoading(false);
+          return;
+        }
+
+        console.log('Statut du profil:', { 
+          is_validated: profile.is_validated, 
+          is_admin: profile.is_admin 
+        });
+
+        if (!profile.is_validated && !profile.is_admin) {
+          setValidationError('Votre compte est en attente de validation par un administrateur');
+          await supabase.auth.signOut();
+          setIsLoading(false);
+          return;
+        }
+
+        // Succès de la connexion
+        console.log('Connexion réussie, redirection vers le dashboard');
+        toast({
+          title: "Connexion réussie",
+          description: "Vous êtes maintenant connecté",
+        });
+        navigate('/dashboard');
+      } catch (profileCheckError) {
+        console.error('Erreur lors de la vérification du profil:', profileCheckError);
+        setValidationError('Une erreur est survenue lors de la vérification de votre compte');
         await supabase.auth.signOut();
-        setIsLoading(false);
-        return;
       }
-
-      if (!profile) {
-        console.error('Aucun profil trouvé pour cet utilisateur');
-        setValidationError('Profil utilisateur non trouvé');
-        await supabase.auth.signOut();
-        setIsLoading(false);
-        return;
-      }
-
-      if (!profile.is_validated && !profile.is_admin) {
-        setValidationError('Votre compte est en attente de validation par un administrateur');
-        await supabase.auth.signOut();
-        setIsLoading(false);
-        return;
-      }
-
-      // Succès de la connexion
-      toast({
-        title: "Connexion réussie",
-        description: "Vous êtes maintenant connecté",
-      });
-      navigate('/dashboard');
     } catch (error) {
-      console.error('Erreur de connexion:', error);
+      console.error('Erreur générale de connexion:', error);
       setValidationError('Une erreur est survenue lors de la connexion');
     } finally {
       setIsLoading(false);
