@@ -1,11 +1,11 @@
+import { LoginForm } from '@/components/auth/LoginForm';
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { LoginForm } from "@/components/auth/LoginForm";
+import { ChevronLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const navigate = useNavigate();
-  
+
   const handleGoBack = () => {
     navigate('/');
   };
@@ -14,11 +14,11 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-white to-secondary relative">
       <Button 
         variant="ghost" 
-        className="absolute top-4 left-4 flex items-center text-primary hover:text-primary/80 text-lg font-semibold" 
+        className="absolute top-4 left-4" 
         onClick={handleGoBack}
       >
-        <ChevronLeft className="mr-2 h-5 w-5" />
-        compta-cours.fr
+        <ChevronLeft className="mr-2 h-4 w-4" />
+        Retour
       </Button>
       <LoginForm />
     </div>
