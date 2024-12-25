@@ -1,164 +1,163 @@
-"use client";
-
-import * as z from "zod";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
-
-const formSchema = z.object({
-  email: z.string().email({
-    message: "Veuillez entrer une adresse email valide.",
-  }),
-  password: z.string().min(6, {
-    message: "Le mot de passe doit contenir au moins 6 caractères.",
-  }),
-});
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export const LoginForm = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [validationError, setValidationError] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setValidationError('');
+    
+    if (!email || !password) {
+      setValidationError('Veuillez remplir tous les champs');
+      setIsLoading(false);
+      return;
+    }
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      setIsLoading(true);
-      const { email, password } = values;
-      console.log('Attempting login with:', email);
-
-      // Try to sign in
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.toLowerCase().trim(),
+      console.log('Tentative de connexion avec:', email);
+      
+      const { error: signInError, data } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
         password: password.trim(),
       });
 
       if (signInError) {
-        console.error('Login error details:', signInError);
-        
-        // Provide more specific error messages based on the error type
-        if (signInError.message.includes("Invalid login credentials")) {
-          toast({
-            variant: "destructive",
-            title: "Erreur de connexion",
-            description: "Email ou mot de passe incorrect. Si vous n'avez pas de compte, veuillez vous inscrire.",
-          });
+        console.error('Erreur de connexion:', signInError);
+        if (signInError.message.includes('Invalid login credentials')) {
+          setValidationError('Email ou mot de passe incorrect. Veuillez vérifier vos identifiants.');
         } else {
-          toast({
-            variant: "destructive",
-            title: "Erreur de connexion",
-            description: "Une erreur est survenue lors de la connexion. Veuillez réessayer.",
-          });
+          setValidationError(`Erreur de connexion: ${signInError.message}`);
         }
+        setIsLoading(false);
         return;
       }
 
-      if (signInData?.user) {
-        console.log('Login successful for user:', signInData.user.id);
-        toast({
-          title: "Connexion réussie",
-          description: "Vous êtes maintenant connecté.",
-        });
-        navigate("/dashboard");
+      const user = data?.user;
+      if (!user) {
+        console.error('Aucun utilisateur retourné après connexion');
+        setValidationError('Erreur lors de la connexion. Veuillez réessayer.');
+        setIsLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error('Unexpected error during login:', error);
+
+      console.log('Utilisateur connecté avec succès:', user.id);
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('is_validated, is_admin')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Erreur lors de la vérification du profil:', profileError);
+        setValidationError('Erreur lors de la vérification du compte. Veuillez réessayer.');
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        return;
+      }
+
+      if (!profile) {
+        console.error('Aucun profil trouvé pour l\'utilisateur:', user.id);
+        setValidationError('Compte non trouvé. Veuillez contacter un administrateur.');
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        return;
+      }
+
+      if (!profile.is_validated && !profile.is_admin) {
+        setValidationError('Votre compte est en attente de validation par un administrateur.');
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        return;
+      }
+
       toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur inattendue s'est produite. Veuillez réessayer.",
+        title: "Connexion réussie",
+        description: "Vous êtes maintenant connecté",
       });
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Erreur générale de connexion:', error);
+      setValidationError('Une erreur inattendue est survenue. Veuillez réessayer.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md space-y-6 p-6 bg-white rounded-lg shadow-lg">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">Connexion</h1>
-        <p className="text-gray-500">
-          Entrez vos identifiants pour accéder à votre compte
-        </p>
+    <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-md animate-fade-in bg-white/80 backdrop-blur-sm p-8 rounded-xl shadow-xl">
+      <div className="space-y-2">
+        <h2 className="text-2xl font-semibold text-center">Connexion à DCGHub</h2>
+        <p className="text-gray-500 text-center">Accédez à vos ressources DCG</p>
       </div>
       
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="exemple@email.com"
-                    {...field}
-                    disabled={isLoading}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+      {validationError && (
+        <Alert variant="destructive" className="animate-fade-in">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {validationError}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div className="space-y-4">
+        <div>
+          <Input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="input-field"
+            required
+            disabled={isLoading}
           />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Mot de passe</FormLabel>
-                <FormControl>
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    {...field}
-                    disabled={isLoading}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+        </div>
+        
+        <div>
+          <Input
+            type="password"
+            placeholder="Mot de passe"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="input-field"
+            required
+            disabled={isLoading}
           />
-          <div className="flex justify-between items-center">
-            <Link
-              to="/forgot-password"
-              className="text-sm text-blue-600 hover:text-blue-800"
-            >
-              Mot de passe oublié ?
-            </Link>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Connexion..." : "Se connecter"}
-            </Button>
-          </div>
-          <div className="text-center text-sm text-gray-500 mt-4">
-            Pas encore de compte ?{" "}
-            <Link to="/register" className="text-blue-600 hover:text-blue-800">
-              S'inscrire
-            </Link>
-          </div>
-        </form>
-      </Form>
-    </div>
+        </div>
+      </div>
+
+      <Button 
+        type="submit" 
+        className="w-full btn-primary"
+        disabled={isLoading}
+      >
+        {isLoading ? "Connexion..." : "Se connecter"}
+      </Button>
+
+      <div className="text-center space-y-2">
+        <a href="/forgot-password" className="text-primary hover:text-primary-hover text-sm">
+          Mot de passe oublié ?
+        </a>
+        <p className="text-sm text-gray-500">
+          Pas encore de compte ?{" "}
+          <a href="/register" className="text-primary hover:text-primary-hover">
+            S'inscrire
+          </a>
+        </p>
+      </div>
+    </form>
   );
 };
