@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import type { UserProfile } from "@/types/admin";
 
 const Admin = () => {
@@ -71,32 +73,19 @@ const Admin = () => {
     setLogs(data);
   };
 
-  const toggleBan = async (userId: string, currentBanStatus: boolean) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ is_banned: !currentBanStatus })
-      .eq('id', userId);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de modifier le statut de l'utilisateur",
-      });
-      return;
-    }
-
-    toast({
-      title: "Succès",
-      description: `L'utilisateur a été ${!currentBanStatus ? 'banni' : 'débanni'}`,
-    });
-
-    fetchUsers();
-  };
-
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-8">Administration</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold">Administration</h1>
+        <Button
+          variant="outline"
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour au tableau de bord
+        </Button>
+      </div>
       
       <div className="grid gap-8">
         <div className="bg-white p-6 rounded-lg shadow">
