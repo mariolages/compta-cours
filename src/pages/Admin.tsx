@@ -63,20 +63,25 @@ export default function Admin() {
         throw new Error('No session');
       }
 
+      console.log("Fetching users...");
       const response = await fetch(
         'https://sxpddyeasmcsnrbtvrgm.functions.supabase.co/get-users',
         {
+          method: 'GET',
           headers: {
             Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
           },
         }
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch users');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch users');
       }
 
       const users = await response.json();
+      console.log("Users fetched successfully:", users);
       setUsers(users);
     } catch (error) {
       console.error("Error fetching users:", error);
