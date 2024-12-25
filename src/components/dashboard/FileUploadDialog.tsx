@@ -17,11 +17,12 @@ interface FileUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  defaultSubjectId?: string;
 }
 
-export function FileUploadDialog({ open, onOpenChange, onSuccess }: FileUploadDialogProps) {
+export function FileUploadDialog({ open, onOpenChange, onSuccess, defaultSubjectId }: FileUploadDialogProps) {
   const [title, setTitle] = useState('');
-  const [subjectId, setSubjectId] = useState('');
+  const [subjectId, setSubjectId] = useState(defaultSubjectId || '');
   const [categoryId, setCategoryId] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -83,7 +84,7 @@ export function FileUploadDialog({ open, onOpenChange, onSuccess }: FileUploadDi
 
   const resetForm = () => {
     setTitle('');
-    setSubjectId('');
+    setSubjectId(defaultSubjectId || '');
     setCategoryId('');
     setFile(null);
   };
@@ -111,7 +112,7 @@ export function FileUploadDialog({ open, onOpenChange, onSuccess }: FileUploadDi
             <Select
               value={subjectId}
               onValueChange={setSubjectId}
-              disabled={isLoading}
+              disabled={defaultSubjectId ? true : isLoading}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Sélectionner une matière" />
