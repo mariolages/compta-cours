@@ -105,8 +105,17 @@ export default function Dashboard() {
   };
 
   const handleSubjectClick = (subjectId: number) => {
-    console.log("Navigating to subject:", subjectId);
-    navigate(`/subjects/${subjectId}`);
+    console.log("Attempting to navigate to subject:", subjectId);
+    try {
+      navigate(`/subjects/${subjectId}`);
+    } catch (error) {
+      console.error("Navigation error:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur de navigation",
+        description: "Impossible d'accéder à cette matière pour le moment",
+      });
+    }
   };
 
   return (
@@ -171,35 +180,30 @@ export default function Dashboard() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {subjects.map((subject) => (
-              <Card 
+              <Button
                 key={subject.id}
-                className="group hover:shadow-xl transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm hover:bg-white transform hover:scale-[1.02]"
+                variant="ghost"
+                className="p-0 h-auto w-full hover:bg-transparent"
                 onClick={() => handleSubjectClick(subject.id)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleSubjectClick(subject.id);
-                  }
-                }}
               >
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3 group-hover:text-primary transition-colors">
-                    <BookOpen className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                    <div className="flex flex-col flex-1">
-                      <span className="text-primary">{subject.code}</span>
-                      <span className="text-sm font-normal text-gray-600 group-hover:text-primary/80">
-                        {subject.name}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-gray-500">
-                      <FileText className="h-4 w-4" />
-                      <span>{fileCountBySubject[subject.id] || 0}</span>
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-              </Card>
+                <Card className="w-full group hover:shadow-xl transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm hover:bg-white transform hover:scale-[1.02]">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3 group-hover:text-primary transition-colors">
+                      <BookOpen className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
+                      <div className="flex flex-col flex-1">
+                        <span className="text-primary">{subject.code}</span>
+                        <span className="text-sm font-normal text-gray-600 group-hover:text-primary/80">
+                          {subject.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 text-sm text-gray-500">
+                        <FileText className="h-4 w-4" />
+                        <span>{fileCountBySubject[subject.id] || 0}</span>
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
+              </Button>
             ))}
           </div>
         </div>
