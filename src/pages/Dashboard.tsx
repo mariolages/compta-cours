@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, BookOpen } from "lucide-react";
+import { Upload, BookOpen, LogOut } from "lucide-react";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 
 interface Subject {
@@ -34,6 +34,19 @@ export default function Dashboard() {
     fetchSubjects();
     fetchRecentFiles();
   }, []);
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la déconnexion",
+      });
+      return;
+    }
+    navigate('/login');
+  };
 
   const fetchSubjects = async () => {
     const { data, error } = await supabase
@@ -82,10 +95,16 @@ export default function Dashboard() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Tableau de bord DCG</h1>
-        <Button onClick={() => setIsUploadOpen(true)} className="bg-primary">
-          <Upload className="mr-2 h-4 w-4" />
-          Déposer un fichier
-        </Button>
+        <div className="flex gap-4">
+          <Button onClick={() => setIsUploadOpen(true)} className="bg-primary">
+            <Upload className="mr-2 h-4 w-4" />
+            Déposer un fichier
+          </Button>
+          <Button onClick={handleLogout} variant="outline" className="text-red-500 hover:text-red-600">
+            <LogOut className="mr-2 h-4 w-4" />
+            Déconnexion
+          </Button>
+        </div>
       </div>
 
       {/* Recent Files Section */}

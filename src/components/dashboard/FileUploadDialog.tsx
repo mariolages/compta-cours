@@ -119,7 +119,17 @@ export function FileUploadDialog({ open, onOpenChange, onSuccess }: FileUploadDi
               <SelectContent>
                 <SelectItem value="1">UE1 - Fondamentaux du droit</SelectItem>
                 <SelectItem value="2">UE2 - Droit des sociétés</SelectItem>
-                {/* Add other subjects */}
+                <SelectItem value="3">UE3 - Droit social</SelectItem>
+                <SelectItem value="4">UE4 - Droit fiscal</SelectItem>
+                <SelectItem value="5">UE5 - Économie contemporaine</SelectItem>
+                <SelectItem value="6">UE6 - Finance d'entreprise</SelectItem>
+                <SelectItem value="7">UE7 - Management</SelectItem>
+                <SelectItem value="8">UE8 - Systèmes d'information de gestion</SelectItem>
+                <SelectItem value="9">UE9 - Comptabilité</SelectItem>
+                <SelectItem value="10">UE10 - Comptabilité approfondie</SelectItem>
+                <SelectItem value="11">UE11 - Contrôle de gestion</SelectItem>
+                <SelectItem value="12">UE12 - Anglais des affaires</SelectItem>
+                <SelectItem value="13">UE13 - Communication professionnelle</SelectItem>
               </SelectContent>
             </Select>
           </div>
