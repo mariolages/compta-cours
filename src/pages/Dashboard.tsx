@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { BookOpen, Plus } from "lucide-react";
+import { BookOpen, Plus, RefreshCw, Clock, FileText } from "lucide-react";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { SearchBar } from '@/components/dashboard/SearchBar';
 import { RecentFiles } from '@/components/dashboard/RecentFiles';
@@ -16,12 +16,16 @@ export default function Dashboard() {
   const [recentFiles, setRecentFiles] = useState<File[]>([]);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [fileCountBySubject, setFileCountBySubject] = useState<Record<number, number>>({});
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchSubjects();
     fetchRecentFiles();
+    fetchFileCountBySubject();
   }, []);
 
   const fetchSubjects = async () => {
@@ -40,6 +44,24 @@ export default function Dashboard() {
     }
     
     setSubjects(data);
+  };
+
+  const fetchFileCountBySubject = async () => {
+    const { data, error } = await supabase
+      .from('files')
+      .select('subject_id, count')
+      .select('subject_id');
+
+    if (error) {
+      console.error('Error fetching file counts:', error);
+      return;
+    }
+
+    const counts: Record<number, number> = {};
+    data.forEach(file => {
+      counts[file.subject_id] = (counts[file.subject_id] || 0) + 1;
+    });
+    setFileCountBySubject(counts);
   };
 
   const fetchRecentFiles = async () => {
@@ -67,6 +89,21 @@ export default function Dashboard() {
     setRecentFiles(data);
   };
 
+  const refreshData = async () => {
+    setIsRefreshing(true);
+    await Promise.all([
+      fetchSubjects(),
+      fetchRecentFiles(),
+      fetchFileCountBySubject()
+    ]);
+    setLastRefresh(new Date());
+    setIsRefreshing(false);
+    toast({
+      title: "Mise à jour effectuée",
+      description: "Les données ont été actualisées",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       {/* Navigation Bar */}
@@ -82,6 +119,15 @@ export default function Dashboard() {
             <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
             <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={refreshData}
+                disabled={isRefreshing}
+                className="relative"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
               <ProfileMenu />
             </div>
           </div>
@@ -99,6 +145,12 @@ export default function Dashboard() {
               <p className="text-gray-600">
                 Accédez à vos ressources et partagez vos fichiers avec la communauté.
               </p>
+              <div className="flex items-center gap-2 mt-4 text-sm text-gray-500">
+                <Clock className="h-4 w-4" />
+                <span>
+                  Dernière actualisation : {lastRefresh.toLocaleTimeString('fr-FR')}
+                </span>
+              </div>
             </div>
             <BookOpen className="h-16 w-16 text-primary opacity-20" />
           </div>
@@ -122,11 +174,15 @@ export default function Dashboard() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3 group-hover:text-primary transition-colors">
                     <BookOpen className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                    <div className="flex flex-col">
+                    <div className="flex flex-col flex-1">
                       <span className="text-primary">{subject.code}</span>
                       <span className="text-sm font-normal text-gray-600 group-hover:text-primary/80">
                         {subject.name}
                       </span>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                      <FileText className="h-4 w-4" />
+                      <span>{fileCountBySubject[subject.id] || 0}</span>
                     </div>
                   </CardTitle>
                 </CardHeader>
@@ -148,6 +204,7 @@ export default function Dashboard() {
           onOpenChange={setIsUploadOpen}
           onSuccess={() => {
             fetchRecentFiles();
+            fetchFileCountBySubject();
             setIsUploadOpen(false);
           }}
         />
