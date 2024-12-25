@@ -29,7 +29,7 @@ export const LoginForm = () => {
     try {
       console.log('Tentative de connexion avec:', email);
       
-      const { error: signInError, data: signInData } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim(),
       });
@@ -37,7 +37,7 @@ export const LoginForm = () => {
       if (signInError) {
         console.error('Erreur de connexion:', signInError);
         if (signInError.message.includes('Invalid login credentials')) {
-          setValidationError('Email ou mot de passe incorrect. Veuillez vérifier vos identifiants.');
+          setValidationError('Email ou mot de passe incorrect');
         } else {
           setValidationError(`Erreur de connexion: ${signInError.message}`);
         }
@@ -45,7 +45,7 @@ export const LoginForm = () => {
         return;
       }
 
-      const user = signInData?.user;
+      const user = data?.user;
       if (!user) {
         console.error('Aucun utilisateur retourné après connexion');
         setValidationError('Erreur lors de la connexion. Veuillez réessayer.');
@@ -55,8 +55,7 @@ export const LoginForm = () => {
 
       console.log('Utilisateur connecté avec succès:', user.id);
 
-      // Séparation de la vérification du profil en une requête distincte
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('is_validated, is_admin')
         .eq('id', user.id)
@@ -70,7 +69,7 @@ export const LoginForm = () => {
         return;
       }
 
-      if (!profileData) {
+      if (!profile) {
         console.error('Aucun profil trouvé pour l\'utilisateur:', user.id);
         setValidationError('Compte non trouvé. Veuillez contacter un administrateur.');
         await supabase.auth.signOut();
@@ -78,9 +77,9 @@ export const LoginForm = () => {
         return;
       }
 
-      console.log('Profil utilisateur:', profileData);
+      console.log('Profil utilisateur:', profile);
 
-      if (!profileData.is_validated && !profileData.is_admin) {
+      if (!profile.is_validated && !profile.is_admin) {
         console.log('Tentative de connexion avec un compte non validé');
         setValidationError('Votre compte est en attente de validation par un administrateur.');
         await supabase.auth.signOut();
