@@ -1,8 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, ArrowUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useState } from "react";
 
 interface File {
   id: string;
@@ -22,49 +23,20 @@ interface FileListProps {
 
 export function FileList({ files, onDownload }: FileListProps) {
   const { toast } = useToast();
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const openInGoogle = async (filePath: string) => {
-    try {
-      console.log('Tentative d\'ouverture du fichier:', filePath);
-      const { data, error } = await supabase.storage
-        .from('dcg_files')
-        .createSignedUrl(filePath, 3600);
+  const sortedFiles = files ? [...files].sort((a, b) => {
+    const dateA = new Date(a.created_at).getTime();
+    const dateB = new Date(b.created_at).getTime();
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+  }) : [];
 
-      if (error) {
-        console.error('Erreur lors de la création de l\'URL:', error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible d'ouvrir le fichier",
-        });
-        return;
-      }
-
-      if (data?.signedUrl) {
-        console.log('URL signée générée avec succès:', data.signedUrl);
-        
-        window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
-        
-        toast({
-          title: "Succès",
-          description: "Le fichier s'ouvre dans un nouvel onglet",
-        });
-      } else {
-        console.error('Pas d\'URL signée dans la réponse');
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "URL du fichier non disponible",
-        });
-      }
-    } catch (error) {
-      console.error('Erreur lors de l\'ouverture du fichier:', error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de l'ouverture du fichier",
-      });
-    }
+  const toggleSort = () => {
+    setSortOrder(current => current === 'asc' ? 'desc' : 'asc');
+    toast({
+      title: "Tri mis à jour",
+      description: `Les fichiers sont maintenant triés par date ${sortOrder === 'asc' ? 'décroissante' : 'croissante'}`,
+    });
   };
 
   if (!files || files.length === 0) {
@@ -76,8 +48,19 @@ export function FileList({ files, onDownload }: FileListProps) {
   }
 
   return (
-    <div className="grid gap-4">
-      {files.map((file) => (
+    <div className="space-y-4">
+      <div className="flex justify-end mb-4">
+        <Button
+          variant="outline"
+          onClick={toggleSort}
+          className="flex items-center gap-2"
+        >
+          <ArrowUpDown className="h-4 w-4" />
+          Trier par date {sortOrder === 'asc' ? '↑' : '↓'}
+        </Button>
+      </div>
+      
+      {sortedFiles.map((file) => (
         <Card
           key={file.id}
           className="hover:shadow-md transition-all duration-300 border-l-4 border-l-primary"
