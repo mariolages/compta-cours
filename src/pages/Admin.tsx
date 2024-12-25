@@ -25,6 +25,7 @@ interface UserProfile {
 export default function Admin() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -58,6 +59,7 @@ export default function Admin() {
 
   const fetchUsers = async () => {
     try {
+      setError(null);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('No session');
@@ -85,10 +87,11 @@ export default function Admin() {
       setUsers(users);
     } catch (error) {
       console.error("Error fetching users:", error);
+      setError(error.message);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de charger la liste des utilisateurs",
+        description: `Impossible de charger la liste des utilisateurs: ${error.message}`,
       });
     } finally {
       setIsLoading(false);
@@ -96,30 +99,41 @@ export default function Admin() {
   };
 
   const toggleValidation = async (userId: string, currentStatus: boolean) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ is_validated: !currentStatus })
-      .eq('id', userId);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_validated: !currentStatus })
+        .eq('id', userId);
 
-    if (error) {
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: `L'utilisateur a été ${!currentStatus ? 'validé' : 'invalidé'}`,
+      });
+
+      fetchUsers();
+    } catch (error) {
+      console.error("Error toggling validation:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Impossible de mettre à jour le statut de l'utilisateur",
       });
-      return;
     }
-
-    toast({
-      title: "Succès",
-      description: `L'utilisateur a été ${!currentStatus ? 'validé' : 'invalidé'}`,
-    });
-
-    fetchUsers();
   };
 
   if (isLoading) {
     return <div className="p-8">Chargement...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="text-red-500 mb-4">Erreur: {error}</div>
+        <Button onClick={fetchUsers}>Réessayer</Button>
+      </div>
+    );
   }
 
   return (

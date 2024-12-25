@@ -4,14 +4,17 @@ import { corsHeaders } from '../_shared/cors.ts'
 console.log("Get users function started");
 
 Deno.serve(async (req) => {
+  console.log(`Received ${req.method} request`);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 200
+    });
   }
 
   try {
-    console.log("Processing request:", req.method);
-    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -20,18 +23,29 @@ Deno.serve(async (req) => {
     // Verify that the user making the request is an admin
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
+      console.error("No authorization header provided");
       throw new Error('No authorization header')
     }
 
     const token = authHeader.replace('Bearer ', '')
+    console.log("Verifying user token...");
+    
     const {
       data: { user },
       error: userError,
     } = await supabaseClient.auth.getUser(token)
 
-    if (userError || !user) {
+    if (userError) {
+      console.error("User verification error:", userError);
       throw new Error('Invalid token')
     }
+
+    if (!user) {
+      console.error("No user found");
+      throw new Error('No user found')
+    }
+
+    console.log("User verified, checking admin status...");
 
     // Check if user is admin
     const { data: profile, error: profileError } = await supabaseClient
@@ -40,11 +54,17 @@ Deno.serve(async (req) => {
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile?.is_admin) {
+    if (profileError) {
+      console.error("Profile fetch error:", profileError);
+      throw new Error('Failed to fetch user profile')
+    }
+
+    if (!profile?.is_admin) {
+      console.error("User is not an admin");
       throw new Error('User is not an admin')
     }
 
-    console.log("Admin check passed, fetching users");
+    console.log("Admin status confirmed, fetching users...");
 
     // Get all users with their emails
     const { data: users, error: adminError } = await supabaseClient.auth.admin.listUsers()
@@ -85,7 +105,10 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("Function error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.toString()
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
