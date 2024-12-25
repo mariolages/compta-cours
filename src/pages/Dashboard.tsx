@@ -29,8 +29,7 @@ export default function Dashboard() {
     console.log("Fetching subjects...");
     const { data, error } = await supabase
       .from('subjects')
-      .select('*')
-      .order('code');
+      .select('*');
     
     if (error) {
       console.error("Error fetching subjects:", error);
@@ -42,8 +41,15 @@ export default function Dashboard() {
       return;
     }
     
-    console.log("Subjects fetched successfully:", data);
-    setSubjects(data);
+    // Sort subjects by extracting the UE number and comparing numerically
+    const sortedData = data.sort((a, b) => {
+      const numA = parseInt(a.code.match(/\d+/)[0]);
+      const numB = parseInt(b.code.match(/\d+/)[0]);
+      return numA - numB;
+    });
+    
+    console.log("Subjects fetched and sorted successfully:", sortedData);
+    setSubjects(sortedData);
   };
 
   const refreshData = async () => {
