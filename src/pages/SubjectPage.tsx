@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileUploadDialog } from "@/components/dashboard/FileUploadDialog";
+import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Download, Upload, ArrowLeft } from "lucide-react";
@@ -21,6 +21,7 @@ interface File {
     name: string;
   };
   created_at: string;
+  file_path: string;
 }
 
 export default function SubjectPage() {
@@ -29,7 +30,7 @@ export default function SubjectPage() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const { toast } = useToast();
 
-  const { data: subject } = useQuery({
+  const { data: subject, isLoading: isLoadingSubject } = useQuery({
     queryKey: ["subject", subjectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,7 +39,14 @@ export default function SubjectPage() {
         .eq("id", subjectId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les informations de la matière",
+        });
+        throw error;
+      }
       return data as Subject;
     },
   });
@@ -52,59 +60,69 @@ export default function SubjectPage() {
           id,
           title,
           created_at,
+          file_path,
           category:category_id(name)
         `)
         .eq("subject_id", subjectId)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les fichiers",
+        });
+        throw error;
+      }
       return data as File[];
     },
   });
 
-  const handleDownload = async (fileId: string) => {
-    const { data, error } = await supabase
-      .from("files")
-      .select("file_path")
-      .eq("id", fileId)
-      .single();
+  const handleDownload = async (fileId: string, filePath: string) => {
+    try {
+      const { data, error: downloadError } = await supabase.storage
+        .from("dcg_files")
+        .download(filePath);
 
-    if (error) {
+      if (downloadError) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de télécharger le fichier",
+        });
+        return;
+      }
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filePath.split("/").pop() || "download";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download error:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de télécharger le fichier",
+        description: "Une erreur est survenue lors du téléchargement",
       });
-      return;
     }
-
-    const { data: fileData, error: downloadError } = await supabase.storage
-      .from("dcg_files")
-      .download(data.file_path);
-
-    if (downloadError) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de télécharger le fichier",
-      });
-      return;
-    }
-
-    const url = URL.createObjectURL(fileData);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = data.file_path.split("/").pop() || "download";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
+  if (isLoadingSubject) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+        <div className="mb-8 bg-white rounded-xl p-6 shadow-lg">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-4 w-full">
               <Button
@@ -138,15 +156,15 @@ export default function SubjectPage() {
               <CardContent className="flex items-center justify-between p-4">
                 <div className="flex-1">
                   <h3 className="font-medium text-lg mb-1">{file.title}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-gray-500">
                     {file.category.name} |{" "}
-                    {new Date(file.created_at).toLocaleDateString()}
+                    {new Date(file.created_at).toLocaleDateString('fr-FR')}
                   </p>
                 </div>
                 <Button
                   variant="outline"
                   className="ml-4 hover:bg-primary/10"
-                  onClick={() => handleDownload(file.id)}
+                  onClick={() => handleDownload(file.id, file.file_path)}
                 >
                   <Download className="h-4 w-4" />
                   <span className="ml-2">Télécharger</span>
@@ -154,6 +172,12 @@ export default function SubjectPage() {
               </CardContent>
             </Card>
           ))}
+          
+          {files?.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              Aucun fichier n'a encore été déposé pour cette matière
+            </div>
+          )}
         </div>
 
         <FileUploadDialog
