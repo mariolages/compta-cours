@@ -10,7 +10,6 @@ import Dashboard from "./pages/Dashboard";
 import SubjectPage from "./pages/SubjectPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -30,7 +29,6 @@ const App = () => {
             <Route path="/subjects/:subjectId" element={<SubjectPage />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/admin" element={<Admin />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
