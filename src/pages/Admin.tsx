@@ -100,19 +100,28 @@ export default function Admin() {
 
   const toggleValidation = async (userId: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase
+      console.log(`Toggling validation for user ${userId} from ${currentStatus} to ${!currentStatus}`);
+      
+      const { error: updateError } = await supabase
         .from('profiles')
-        .update({ is_validated: !currentStatus })
+        .update({ 
+          is_validated: !currentStatus,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', userId);
 
-      if (error) throw error;
+      if (updateError) {
+        console.error("Error updating validation status:", updateError);
+        throw updateError;
+      }
 
       toast({
         title: "Succès",
         description: `L'utilisateur a été ${!currentStatus ? 'validé' : 'invalidé'}`,
       });
 
-      fetchUsers();
+      // Refresh the users list immediately
+      await fetchUsers();
     } catch (error) {
       console.error("Error toggling validation:", error);
       toast({
