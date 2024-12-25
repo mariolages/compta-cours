@@ -10,63 +10,67 @@ import { ProfileMenu } from '@/components/dashboard/ProfileMenu';
 import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { SubjectsGrid } from '@/components/dashboard/SubjectsGrid';
 import type { Subject } from '@/types/files';
+import { useQuery } from '@tanstack/react-query';
 
 export default function Dashboard() {
-  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [lastRefresh] = useState<Date>(new Date());
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    console.log("Dashboard mounted, fetching initial data");
-    fetchSubjects();
-  }, []);
-
-  const fetchSubjects = async () => {
-    console.log("Fetching subjects...");
-    const { data, error } = await supabase
-      .from('subjects')
-      .select('*');
-    
-    if (error) {
-      console.error("Error fetching subjects:", error);
+  const { data: subjects = [], isLoading, error } = useQuery({
+    queryKey: ['subjects'],
+    queryFn: async () => {
+      console.log("Fetching subjects...");
+      const { data, error } = await supabase
+        .from('subjects')
+        .select('*');
+      
+      if (error) {
+        console.error("Error fetching subjects:", error);
+        throw error;
+      }
+      
+      // Sort subjects by extracting the UE number and comparing numerically
+      return data.sort((a, b) => {
+        const numA = parseInt(a.code.match(/\d+/)[0]);
+        const numB = parseInt(b.code.match(/\d+/)[0]);
+        return numA - numB;
+      });
+    },
+    onError: (error) => {
+      console.error("Query error:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Impossible de charger les matières",
       });
-      return;
     }
-    
-    // Sort subjects by extracting the UE number and comparing numerically
-    const sortedData = data.sort((a, b) => {
-      const numA = parseInt(a.code.match(/\d+/)[0]);
-      const numB = parseInt(b.code.match(/\d+/)[0]);
-      return numA - numB;
-    });
-    
-    console.log("Subjects fetched and sorted successfully:", sortedData);
-    setSubjects(sortedData);
-  };
-
-  const refreshData = async () => {
-    console.log("Refreshing all data...");
-    setIsRefreshing(true);
-    await fetchSubjects();
-    setLastRefresh(new Date());
-    setIsRefreshing(false);
-    toast({
-      title: "Mise à jour effectuée",
-      description: "Les données ont été actualisées",
-    });
-  };
+  });
 
   const handleSubjectClick = (subjectId: number) => {
     navigate(`/subjects/${subjectId}`);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600">Erreur de chargement</h2>
+          <p className="text-gray-600">Impossible de charger les matières</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
@@ -85,11 +89,10 @@ export default function Dashboard() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={refreshData}
-                disabled={isRefreshing}
+                onClick={() => window.location.reload()}
                 className="relative"
               >
-                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw className="h-4 w-4" />
               </Button>
               <ProfileMenu />
             </div>
@@ -101,7 +104,6 @@ export default function Dashboard() {
         <WelcomeCard lastRefresh={lastRefresh} />
         <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
 
-        {/* Upload Dialog */}
         <FileUploadDialog 
           open={isUploadOpen} 
           onOpenChange={setIsUploadOpen}
@@ -110,7 +112,6 @@ export default function Dashboard() {
           }}
         />
 
-        {/* Floating Upload Button */}
         <Button
           onClick={() => setIsUploadOpen(true)}
           className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-primary hover:bg-primary-hover transition-all duration-300 animate-fade-in"
