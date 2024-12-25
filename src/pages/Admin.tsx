@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -121,7 +121,7 @@ export default function Admin() {
                 </TableCell>
                 <TableCell>
                   {user.is_validated ? (
-                    <Badge variant="success" className="bg-green-500">Validé</Badge>
+                    <Badge variant="default" className="bg-green-500">Validé</Badge>
                   ) : (
                     <Badge variant="destructive">Non validé</Badge>
                   )}
