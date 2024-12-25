@@ -3,24 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Check, X, Home } from "lucide-react";
-
-interface UserProfile {
-  id: string;
-  full_name: string | null;
-  is_admin: boolean;
-  is_validated: boolean;
-  email?: string;
-}
+import { Home } from "lucide-react";
+import { UserTable } from "@/components/admin/UserTable";
+import type { UserProfile } from "@/types/admin";
 
 export default function Admin() {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -181,60 +166,11 @@ export default function Admin() {
       </div>
       
       <div className="bg-white rounded-lg shadow">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Nom</TableHead>
-              <TableHead>Admin</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>{user.email || "Email non disponible"}</TableCell>
-                <TableCell>{user.full_name || "Sans nom"}</TableCell>
-                <TableCell>
-                  {user.is_admin ? (
-                    <Badge variant="default">Admin</Badge>
-                  ) : (
-                    <Badge variant="secondary">Utilisateur</Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {user.is_validated ? (
-                    <Badge variant="default" className="bg-green-500">Validé</Badge>
-                  ) : (
-                    <Badge variant="destructive">Non validé</Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant={user.is_validated ? "destructive" : "default"}
-                    size="sm"
-                    onClick={() => toggleValidation(user.id, user.is_validated)}
-                    className="gap-2"
-                    disabled={isUpdating}
-                  >
-                    {user.is_validated ? (
-                      <>
-                        <X className="h-4 w-4" />
-                        Invalider
-                      </>
-                    ) : (
-                      <>
-                        <Check className="h-4 w-4" />
-                        Valider
-                      </>
-                    )}
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <UserTable 
+          users={users}
+          isUpdating={isUpdating}
+          onToggleValidation={toggleValidation}
+        />
       </div>
     </div>
   );
