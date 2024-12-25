@@ -55,35 +55,6 @@ export const LoginForm = () => {
 
       console.log('Utilisateur connecté avec succès:', user.id);
 
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('is_validated, is_admin')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) {
-        console.error('Erreur lors de la vérification du profil:', profileError);
-        setValidationError('Erreur lors de la vérification du compte. Veuillez réessayer.');
-        await supabase.auth.signOut();
-        setIsLoading(false);
-        return;
-      }
-
-      if (!profile) {
-        console.error('Aucun profil trouvé pour l\'utilisateur:', user.id);
-        setValidationError('Compte non trouvé. Veuillez contacter un administrateur.');
-        await supabase.auth.signOut();
-        setIsLoading(false);
-        return;
-      }
-
-      if (!profile.is_validated && !profile.is_admin) {
-        setValidationError('Votre compte est en attente de validation par un administrateur.');
-        await supabase.auth.signOut();
-        setIsLoading(false);
-        return;
-      }
-
       toast({
         title: "Connexion réussie",
         description: "Vous êtes maintenant connecté",
