@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { useState } from "react";
@@ -17,6 +17,7 @@ interface Subject {
 
 export default function SubjectPage() {
   const { subjectId } = useParams();
+  const navigate = useNavigate();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("1");
   const { toast } = useToast();
@@ -103,6 +104,29 @@ export default function SubjectPage() {
     }
   };
 
+  const handleDeleteSubject = async () => {
+    try {
+      const { error } = await supabase
+        .from("subjects")
+        .delete()
+        .eq("id", subjectId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Le cours a été supprimé avec succès",
+      });
+      navigate("/dashboard");
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de supprimer le cours",
+      });
+    }
+  };
+
   if (isLoadingSubject) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -118,6 +142,7 @@ export default function SubjectPage() {
           code={subject?.code || ""}
           name={subject?.name || ""}
           onUploadClick={() => setIsUploadOpen(true)}
+          onDeleteClick={handleDeleteSubject}
         />
 
         <Tabs defaultValue="1" onValueChange={setSelectedCategory} className="w-full">
