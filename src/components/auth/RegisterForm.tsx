@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export const RegisterForm = () => {
   const [name, setName] = useState('');
@@ -11,38 +13,56 @@ export const RegisterForm = () => {
   const [password, setPassword] = useState('');
   const [adminCode, setAdminCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const verifyAdminCode = async (code: string) => {
     if (!code) return { isAdmin: false };
     
-    const { data, error } = await supabase
-      .from('admin_codes')
-      .select('*')
-      .eq('code', code)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('admin_codes')
+        .select('*')
+        .eq('code', code)
+        .maybeSingle();
 
-    if (error || !data || data.is_used) {
+      if (error) {
+        console.error('Error verifying admin code:', error);
+        return { isAdmin: false };
+      }
+
+      if (!data || data.is_used) {
+        return { isAdmin: false };
+      }
+
+      // Mark code as used
+      await supabase
+        .from('admin_codes')
+        .update({ is_used: true })
+        .eq('code', code);
+
+      return { isAdmin: true };
+    } catch (error) {
+      console.error('Error in verifyAdminCode:', error);
       return { isAdmin: false };
     }
-
-    // Mark code as used
-    await supabase
-      .from('admin_codes')
-      .update({ is_used: true })
-      .eq('code', code);
-
-    return { isAdmin: true };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
     try {
       // Verify admin code if provided
       const { isAdmin } = await verifyAdminCode(adminCode);
+
+      if (adminCode && !isAdmin) {
+        setError('Code administrateur invalide');
+        setIsLoading(false);
+        return;
+      }
 
       // Register user
       const { error: signUpError, data: { user } } = await supabase.auth.signUp({
@@ -57,14 +77,12 @@ export const RegisterForm = () => {
 
       if (signUpError) {
         if (signUpError.message.includes('User already registered')) {
-          toast({
-            variant: "destructive",
-            title: "Compte existant",
-            description: "Un compte existe déjà avec cet email. Veuillez vous connecter ou utiliser un autre email.",
-          });
-          return;
+          setError('Un compte existe déjà avec cet email. Veuillez vous connecter ou utiliser un autre email.');
+        } else {
+          setError(signUpError.message);
         }
-        throw signUpError;
+        setIsLoading(false);
+        return;
       }
 
       if (user) {
@@ -79,7 +97,11 @@ export const RegisterForm = () => {
             }
           ]);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          setError('Erreur lors de la création du profil');
+          console.error('Profile creation error:', profileError);
+          return;
+        }
 
         toast({
           title: "Inscription réussie",
@@ -88,11 +110,8 @@ export const RegisterForm = () => {
         navigate('/');
       }
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erreur d'inscription",
-        description: error.message,
-      });
+      setError(error.message);
+      console.error('Registration error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -104,6 +123,13 @@ export const RegisterForm = () => {
         <h2 className="text-2xl font-semibold text-center">Créer un compte</h2>
         <p className="text-gray-500 text-center">Rejoignez la communauté DCGHub</p>
       </div>
+      
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       
       <div className="space-y-4">
         <div>
