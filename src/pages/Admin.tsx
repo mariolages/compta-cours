@@ -110,11 +110,11 @@ const Admin = () => {
         <h1 className="text-2xl font-bold">Portail Administrateur</h1>
         <Button
           variant="outline"
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/dashboard')}
           className="flex items-center gap-2"
         >
           <Home className="h-4 w-4" />
-          Retour à l'accueil
+          Retour au tableau de bord
         </Button>
       </div>
       
