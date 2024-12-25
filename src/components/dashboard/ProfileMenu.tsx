@@ -24,113 +24,88 @@ export const ProfileMenu = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log("ProfileMenu mounted, fetching user profile");
     fetchUserProfile();
   }, []);
 
   const fetchUserProfile = async () => {
     try {
-      console.log("Fetching user profile...");
       const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.log("No user found, redirecting to login");
-        navigate('/login');
-        return;
-      }
+      if (!user) return;
 
-      console.log("User found, fetching profile data");
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('full_name, is_admin')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error fetching profile:', error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger votre profil",
-        });
         return;
       }
 
-      if (profile) {
-        console.log("Profile data:", profile);
+      if (!profile) {
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert([{ id: user.id }]);
+        
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+          return;
+        }
+      } else {
         setFullName(profile.full_name || '');
         setIsAdmin(profile.is_admin || false);
       }
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors du chargement de votre profil",
-      });
     }
   };
 
   const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Une erreur est survenue lors de la déconnexion",
-        });
-        return;
-      }
-      navigate('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Une erreur est survenue lors de la déconnexion",
       });
+      return;
     }
+    navigate('/login');
   };
 
   const updateProfile = async () => {
     setIsLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Vous devez être connecté pour modifier votre profil",
-        });
-        return;
-      }
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({ full_name: fullName.trim() })
-        .eq('id', user.id);
-
-      if (error) {
-        throw error;
-      }
-
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
       toast({
-        title: "Succès",
-        description: "Votre profil a été mis à jour",
+        variant: "destructive",
+        title: "Erreur",
+        description: "Vous devez être connecté pour modifier votre profil",
       });
-      setIsProfileOpen(false);
-    } catch (error) {
-      console.error('Update profile error:', error);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ full_name: fullName })
+      .eq('id', user.id);
+
+    if (error) {
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Impossible de mettre à jour le profil",
       });
-    } finally {
-      setIsLoading(false);
+    } else {
+      toast({
+        title: "Succès",
+        description: "Votre profil a été mis à jour",
+      });
+      setIsProfileOpen(false);
     }
+    setIsLoading(false);
   };
 
   return (

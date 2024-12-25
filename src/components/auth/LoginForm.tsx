@@ -29,7 +29,7 @@ export const LoginForm = () => {
     try {
       console.log('Tentative de connexion avec:', email);
       
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      const { error: signInError, data } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim(),
       });
@@ -37,7 +37,7 @@ export const LoginForm = () => {
       if (signInError) {
         console.error('Erreur de connexion:', signInError);
         if (signInError.message.includes('Invalid login credentials')) {
-          setValidationError('Email ou mot de passe incorrect');
+          setValidationError('Email ou mot de passe incorrect. Veuillez vérifier vos identifiants.');
         } else {
           setValidationError(`Erreur de connexion: ${signInError.message}`);
         }
@@ -63,7 +63,7 @@ export const LoginForm = () => {
 
       if (profileError) {
         console.error('Erreur lors de la vérification du profil:', profileError);
-        setValidationError('Erreur lors de la vérification du compte');
+        setValidationError('Erreur lors de la vérification du compte. Veuillez réessayer.');
         await supabase.auth.signOut();
         setIsLoading(false);
         return;
@@ -77,10 +77,7 @@ export const LoginForm = () => {
         return;
       }
 
-      console.log('Profil utilisateur:', profile);
-
       if (!profile.is_validated && !profile.is_admin) {
-        console.log('Tentative de connexion avec un compte non validé');
         setValidationError('Votre compte est en attente de validation par un administrateur.');
         await supabase.auth.signOut();
         setIsLoading(false);
