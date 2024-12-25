@@ -27,6 +27,69 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          created_at: string
+          id: number
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      files: {
+        Row: {
+          category_id: number
+          created_at: string
+          file_path: string
+          id: string
+          subject_id: number
+          title: string
+          user_id: string
+        }
+        Insert: {
+          category_id: number
+          created_at?: string
+          file_path: string
+          id?: string
+          subject_id: number
+          title: string
+          user_id: string
+        }
+        Update: {
+          category_id?: number
+          created_at?: string
+          file_path?: string
+          id?: string
+          subject_id?: number
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "files_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "files_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -48,6 +111,27 @@ export type Database = {
           id?: string
           is_admin?: boolean | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      subjects: {
+        Row: {
+          code: string
+          created_at: string
+          id: number
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: number
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: number
+          name?: string
         }
         Relationships: []
       }
