@@ -33,6 +33,16 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
     try {
       console.log('Tentative de connexion avec:', email);
       
+      // Log the login attempt
+      await supabase
+        .from('auth_logs')
+        .insert([
+          { 
+            email: email,
+            event_type: 'login_attempt'
+          }
+        ]);
+
       if (onSubmit) {
         const result = await onSubmit(email.trim(), password.trim());
         if (result.error) {
@@ -62,6 +72,17 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
           setIsLoading(false);
           return;
         }
+
+        // Log successful login
+        await supabase
+          .from('auth_logs')
+          .insert([
+            { 
+              user_id: user.id,
+              email: email,
+              event_type: 'login_success'
+            }
+          ]);
 
         console.log('Utilisateur connecté avec succès:', user.id);
       }
