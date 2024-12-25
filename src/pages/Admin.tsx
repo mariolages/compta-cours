@@ -19,7 +19,6 @@ interface UserProfile {
   full_name: string | null;
   is_admin: boolean;
   is_validated: boolean;
-  email?: string;
 }
 
 export default function Admin() {
@@ -57,27 +56,13 @@ export default function Admin() {
   };
 
   const fetchUsers = async () => {
-    // Fetch auth users first
-    const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-    
-    if (authError) {
-      console.error("Error fetching auth users:", authError);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger la liste des utilisateurs",
-      });
-      return;
-    }
-
-    // Then fetch profiles
-    const { data: profiles, error: profilesError } = await supabase
+    const { data: profiles, error } = await supabase
       .from('profiles')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (profilesError) {
-      console.error("Error fetching profiles:", profilesError);
+    if (error) {
+      console.error("Error fetching profiles:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -86,16 +71,7 @@ export default function Admin() {
       return;
     }
 
-    // Combine the data
-    const combinedUsers = profiles.map(profile => {
-      const authUser = authUsers.users.find(u => u.id === profile.id);
-      return {
-        ...profile,
-        email: authUser?.email
-      };
-    });
-
-    setUsers(combinedUsers);
+    setUsers(profiles || []);
     setIsLoading(false);
   };
 
@@ -145,7 +121,6 @@ export default function Admin() {
           <TableHeader>
             <TableRow>
               <TableHead>Nom</TableHead>
-              <TableHead>Email</TableHead>
               <TableHead>Admin</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead>Actions</TableHead>
@@ -155,7 +130,6 @@ export default function Admin() {
             {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>{user.full_name || "Sans nom"}</TableCell>
-                <TableCell>{user.email || "Email non disponible"}</TableCell>
                 <TableCell>
                   {user.is_admin ? (
                     <Badge variant="default">Admin</Badge>
