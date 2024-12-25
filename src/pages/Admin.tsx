@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Ban, CheckCircle } from 'lucide-react';
+import { Ban, CheckCircle, Home } from 'lucide-react';
 import type { UserProfile } from '@/types/admin';
 
 const Admin = () => {
@@ -106,7 +106,17 @@ const Admin = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">Portail Administrateur</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Portail Administrateur</h1>
+        <Button
+          variant="outline"
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2"
+        >
+          <Home className="h-4 w-4" />
+          Retour à l'accueil
+        </Button>
+      </div>
       
       <div className="space-y-8">
         <div>
