@@ -108,8 +108,8 @@ export const RegisterForm = () => {
             {
               id: user.id,
               full_name: name,
-              is_admin: isFirstUser || isAdmin, // Premier utilisateur ou code admin valide
-              is_validated: isFirstUser || isAdmin, // Premier utilisateur ou code admin valide
+              is_admin: isFirstUser || isAdmin,
+              is_validated: isFirstUser || isAdmin,
             }
           ]);
 
@@ -125,7 +125,13 @@ export const RegisterForm = () => {
             ? "Votre compte administrateur a été créé avec succès"
             : "Votre compte a été créé avec succès. Il doit être validé par un administrateur.",
         });
-        navigate('/');
+
+        // Si c'est un admin ou le premier utilisateur, on redirige vers le dashboard
+        if (isFirstUser || isAdmin) {
+          navigate('/dashboard');
+        } else {
+          navigate('/');
+        }
       }
     } catch (error: any) {
       setError(error.message);
