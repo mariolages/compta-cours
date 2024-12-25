@@ -39,7 +39,7 @@ export const ProfileMenu = () => {
         .from('profiles')
         .select('full_name, is_admin')
         .eq('id', user.id)
-        .maybeSingle();
+        .single();
       
       if (error) {
         console.error('Error fetching profile:', error);
