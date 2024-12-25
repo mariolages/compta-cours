@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      auth_logs: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          event_type: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          event_type?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          event_type?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -130,6 +154,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_admin: boolean | null
+          is_banned: boolean | null
           is_validated: boolean | null
           updated_at: string
         }
@@ -138,6 +163,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_admin?: boolean | null
+          is_banned?: boolean | null
           is_validated?: boolean | null
           updated_at?: string
         }
@@ -146,6 +172,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_admin?: boolean | null
+          is_banned?: boolean | null
           is_validated?: boolean | null
           updated_at?: string
         }
