@@ -9,24 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      admin_codes: {
-        Row: {
-          code: string
-          created_at: string
-          is_used: boolean | null
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          is_used?: boolean | null
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          is_used?: boolean | null
-        }
-        Relationships: []
-      }
       categories: {
         Row: {
           created_at: string

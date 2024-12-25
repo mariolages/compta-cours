@@ -11,50 +11,10 @@ export const RegisterForm = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [adminCode, setAdminCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const verifyAdminCode = async (code: string) => {
-    if (!code) return { isAdmin: false };
-    
-    try {
-      console.log('Vérification du code admin:', code);
-      
-      const { data, error } = await supabase
-        .from('admin_codes')
-        .select('*')
-        .eq('code', code)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Erreur lors de la vérification du code admin:', error);
-        return { isAdmin: false };
-      }
-
-      if (!data || data.is_used) {
-        console.log('Code invalide ou déjà utilisé');
-        return { isAdmin: false };
-      }
-
-      // Mark code as used
-      const { error: updateError } = await supabase
-        .from('admin_codes')
-        .update({ is_used: true })
-        .eq('code', code);
-
-      if (updateError) {
-        console.error('Erreur lors de la mise à jour du code:', updateError);
-      }
-
-      return { isAdmin: true };
-    } catch (error) {
-      console.error('Erreur dans verifyAdminCode:', error);
-      return { isAdmin: false };
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,24 +22,6 @@ export const RegisterForm = () => {
     setError('');
 
     try {
-      // Check if this is the first user
-      const { count, error: countError } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
-
-      if (countError) {
-        console.error('Erreur lors de la vérification des profils:', countError);
-        setError('Erreur lors de la vérification du système');
-        setIsLoading(false);
-        return;
-      }
-
-      const isFirstUser = count === 0;
-
-      // Verify admin code if provided
-      const { isAdmin } = await verifyAdminCode(adminCode);
-
-      // Register user
       const { error: signUpError, data: { user } } = await supabase.auth.signUp({
         email,
         password,
@@ -101,15 +43,12 @@ export const RegisterForm = () => {
       }
 
       if (user) {
-        // Create profile
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
             {
               id: user.id,
               full_name: name,
-              is_admin: isFirstUser || isAdmin,
-              is_validated: true, // Set to true by default now
             }
           ]);
 
@@ -121,9 +60,7 @@ export const RegisterForm = () => {
 
         toast({
           title: "Inscription réussie",
-          description: isFirstUser || isAdmin
-            ? "Votre compte administrateur a été créé avec succès"
-            : "Votre compte a été créé avec succès",
+          description: "Votre compte a été créé avec succès",
         });
         navigate('/login');
       }
@@ -182,17 +119,6 @@ export const RegisterForm = () => {
             onChange={(e) => setPassword(e.target.value)}
             className="input-field"
             required
-            disabled={isLoading}
-          />
-        </div>
-        
-        <div>
-          <Input
-            type="text"
-            placeholder="Code administrateur (optionnel)"
-            value={adminCode}
-            onChange={(e) => setAdminCode(e.target.value)}
-            className="input-field"
             disabled={isLoading}
           />
         </div>
