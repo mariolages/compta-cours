@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { MoreVertical, ArrowLeft, Trash2 } from "lucide-react";
+import { MoreVertical, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -12,10 +12,9 @@ interface SubjectHeaderProps {
   code: string;
   name: string;
   onUploadClick: () => void;
-  onDeleteClick?: () => void;
 }
 
-export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: SubjectHeaderProps) {
+export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [newName, setNewName] = useState(name);
   const { toast } = useToast();
@@ -78,17 +77,6 @@ export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: Subj
           <Button onClick={onUploadClick}>
             Ajouter un fichier
           </Button>
-
-          {onDeleteClick && (
-            <Button 
-              variant="destructive"
-              onClick={onDeleteClick}
-              className="flex items-center gap-2"
-            >
-              <Trash2 className="h-4 w-4" />
-              Supprimer le cours
-            </Button>
-          )}
 
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
             <DialogTrigger asChild>

@@ -1,9 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, ArrowUpDown } from "lucide-react";
+import { Download, ArrowUpDown, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface File {
   id: string;
@@ -24,6 +25,33 @@ interface FileListProps {
 export function FileList({ files, onDownload }: FileListProps) {
   const { toast } = useToast();
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const queryClient = useQueryClient();
+
+  const handleDeleteFile = async (fileId: string) => {
+    try {
+      const { error } = await supabase
+        .from('files')
+        .delete()
+        .eq('id', fileId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Le fichier a été supprimé",
+      });
+
+      // Rafraîchir la liste des fichiers
+      queryClient.invalidateQueries({ queryKey: ["subject-files"] });
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de supprimer le fichier",
+      });
+    }
+  };
 
   const sortedFiles = files ? [...files].sort((a, b) => {
     const dateA = new Date(a.created_at).getTime();
@@ -80,6 +108,13 @@ export function FileList({ files, onDownload }: FileListProps) {
               >
                 <Download className="h-4 w-4" />
                 <span className="ml-2">Télécharger</span>
+              </Button>
+              <Button
+                variant="destructive"
+                size="icon"
+                onClick={() => handleDeleteFile(file.id)}
+              >
+                <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           </CardContent>
