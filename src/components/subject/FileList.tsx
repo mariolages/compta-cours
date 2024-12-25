@@ -28,7 +28,7 @@ export function FileList({ files, onDownload }: FileListProps) {
       console.log('Tentative d\'ouverture du fichier:', filePath);
       const { data, error } = await supabase.storage
         .from('dcg_files')
-        .createSignedUrl(filePath, 3600); // URL valide pendant 1 heure
+        .createSignedUrl(filePath, 3600);
 
       if (error) {
         console.error('Erreur lors de la création de l\'URL:', error);
@@ -42,8 +42,20 @@ export function FileList({ files, onDownload }: FileListProps) {
 
       if (data?.signedUrl) {
         console.log('URL signée générée avec succès:', data.signedUrl);
-        // Ouvrir dans un nouvel onglet
-        window.open(data.signedUrl, '_blank');
+        
+        // Créer un élément <a> pour ouvrir le lien
+        const link = document.createElement('a');
+        link.href = data.signedUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast({
+          title: "Succès",
+          description: "Le fichier s'ouvre dans un nouvel onglet",
+        });
       } else {
         console.error('Pas d\'URL signée dans la réponse');
         toast({
