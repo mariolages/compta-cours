@@ -13,6 +13,12 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Home } from "lucide-react";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 export default function Admin() {
   const [users, setUsers] = useState<any[]>([]);
@@ -97,7 +103,7 @@ export default function Admin() {
   return (
     <div className="container mx-auto p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Administration des utilisateurs</h1>
+        <h1 className="text-3xl font-bold">Administration</h1>
         <Button 
           variant="outline" 
           onClick={() => navigate('/dashboard')}
@@ -107,60 +113,108 @@ export default function Admin() {
           Retour à l'accueil
         </Button>
       </div>
-      
-      <div className="bg-white rounded-lg shadow">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nom</TableHead>
-              <TableHead>Admin</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>{user.full_name || "Sans nom"}</TableCell>
-                <TableCell>
-                  {user.is_admin ? (
-                    <Badge variant="default">Admin</Badge>
-                  ) : (
-                    <Badge variant="secondary">Utilisateur</Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {user.is_validated ? (
-                    <Badge variant="default" className="bg-green-500">Validé</Badge>
-                  ) : (
-                    <Badge variant="destructive">Non validé</Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant={user.is_validated ? "destructive" : "default"}
-                    size="sm"
-                    onClick={() => toggleValidation(user.id, user.is_validated)}
-                    className="gap-2"
-                  >
-                    {user.is_validated ? (
-                      <>
-                        <X className="h-4 w-4" />
-                        Invalider
-                      </>
-                    ) : (
-                      <>
-                        <Check className="h-4 w-4" />
-                        Valider
-                      </>
-                    )}
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+
+      <Tabs defaultValue="validation" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="validation">Validation des utilisateurs</TabsTrigger>
+          <TabsTrigger value="users">Liste des utilisateurs</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="validation">
+          <div className="bg-white rounded-lg shadow">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users
+                  .filter(user => !user.is_validated && !user.is_admin)
+                  .map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>{user.full_name || "Sans nom"}</TableCell>
+                      <TableCell>
+                        <Badge variant="destructive">En attente</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => toggleValidation(user.id, user.is_validated)}
+                          className="gap-2"
+                        >
+                          <Check className="h-4 w-4" />
+                          Valider
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="users">
+          <div className="bg-white rounded-lg shadow">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Admin</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>{user.full_name || "Sans nom"}</TableCell>
+                    <TableCell>
+                      {user.is_admin ? (
+                        <Badge variant="default">Admin</Badge>
+                      ) : (
+                        <Badge variant="secondary">Utilisateur</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {user.is_validated ? (
+                        <Badge variant="default" className="bg-green-500">Validé</Badge>
+                      ) : (
+                        <Badge variant="destructive">Non validé</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {!user.is_admin && (
+                        <Button
+                          variant={user.is_validated ? "destructive" : "default"}
+                          size="sm"
+                          onClick={() => toggleValidation(user.id, user.is_validated)}
+                          className="gap-2"
+                        >
+                          {user.is_validated ? (
+                            <>
+                              <X className="h-4 w-4" />
+                              Invalider
+                            </>
+                          ) : (
+                            <>
+                              <Check className="h-4 w-4" />
+                              Valider
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
