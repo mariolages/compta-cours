@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { RegisterFormHeader } from './RegisterFormHeader';
+import { RegisterFormFields } from './RegisterFormFields';
+import { RegisterFormFooter } from './RegisterFormFooter';
 
 export const RegisterForm = () => {
   const [name, setName] = useState('');
@@ -39,7 +38,6 @@ export const RegisterForm = () => {
         return { isAdmin: false };
       }
 
-      // Mark code as used
       const { error: updateError } = await supabase
         .from('admin_codes')
         .update({ is_used: true })
@@ -62,7 +60,6 @@ export const RegisterForm = () => {
     setError('');
 
     try {
-      // Check if this is the first user
       const { count, error: countError } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true });
@@ -75,17 +72,14 @@ export const RegisterForm = () => {
       }
 
       const isFirstUser = count === 0;
-
-      // Verify admin code if provided
       const { isAdmin } = await verifyAdminCode(adminCode);
 
-      // Register user
       const { error: signUpError, data: { user } } = await supabase.auth.signUp({
-        email,
-        password,
+        email: email.trim(),
+        password: password.trim(),
         options: {
           data: {
-            full_name: name,
+            full_name: name.trim(),
           },
         },
       });
@@ -101,13 +95,12 @@ export const RegisterForm = () => {
       }
 
       if (user) {
-        // Create profile
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
             {
               id: user.id,
-              full_name: name,
+              full_name: name.trim(),
               is_admin: isFirstUser || isAdmin,
               is_validated: isFirstUser || isAdmin,
             }
@@ -126,7 +119,6 @@ export const RegisterForm = () => {
             : "Votre compte a été créé avec succès. Il doit être validé par un administrateur.",
         });
 
-        // Si c'est un admin ou le premier utilisateur, on redirige vers le dashboard
         if (isFirstUser || isAdmin) {
           navigate('/dashboard');
         } else {
@@ -143,81 +135,21 @@ export const RegisterForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-md animate-fade-in bg-white/80 backdrop-blur-sm p-8 rounded-xl shadow-xl">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-semibold text-center">Créer un compte</h2>
-        <p className="text-gray-500 text-center">Rejoignez la communauté DCGHub</p>
-      </div>
+      <RegisterFormHeader error={error} />
       
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-      
-      <div className="space-y-4">
-        <div>
-          <Input
-            type="text"
-            placeholder="Nom complet"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="input-field"
-            required
-            disabled={isLoading}
-          />
-        </div>
-        
-        <div>
-          <Input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="input-field"
-            required
-            disabled={isLoading}
-          />
-        </div>
-        
-        <div>
-          <Input
-            type="password"
-            placeholder="Mot de passe"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="input-field"
-            required
-            disabled={isLoading}
-          />
-        </div>
-        
-        <div>
-          <Input
-            type="text"
-            placeholder="Code administrateur (optionnel)"
-            value={adminCode}
-            onChange={(e) => setAdminCode(e.target.value)}
-            className="input-field"
-            disabled={isLoading}
-          />
-        </div>
-      </div>
+      <RegisterFormFields
+        name={name}
+        email={email}
+        password={password}
+        adminCode={adminCode}
+        isLoading={isLoading}
+        onNameChange={setName}
+        onEmailChange={setEmail}
+        onPasswordChange={setPassword}
+        onAdminCodeChange={setAdminCode}
+      />
 
-      <Button 
-        type="submit" 
-        className="w-full btn-primary"
-        disabled={isLoading}
-      >
-        {isLoading ? "Inscription..." : "S'inscrire"}
-      </Button>
-
-      <p className="text-sm text-gray-500 text-center">
-        Déjà inscrit ?{" "}
-        <a href="/login" className="text-primary hover:text-primary-hover">
-          Se connecter
-        </a>
-      </p>
+      <RegisterFormFooter isLoading={isLoading} />
     </form>
   );
 };

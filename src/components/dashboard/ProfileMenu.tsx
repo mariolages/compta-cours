@@ -30,29 +30,23 @@ export const ProfileMenu = () => {
   const fetchUserProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        navigate('/login');
+        return;
+      }
 
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('full_name, is_admin')
         .eq('id', user.id)
-        .maybeSingle();
+        .single();
       
       if (error) {
         console.error('Error fetching profile:', error);
         return;
       }
 
-      if (!profile) {
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert([{ id: user.id }]);
-        
-        if (insertError) {
-          console.error('Error creating profile:', insertError);
-          return;
-        }
-      } else {
+      if (profile) {
         setFullName(profile.full_name || '');
         setIsAdmin(profile.is_admin || false);
       }
