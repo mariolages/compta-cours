@@ -30,7 +30,10 @@ export const ProfileMenu = () => {
   const fetchUserProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        navigate('/login');
+        return;
+      }
 
       const { data: profile, error } = await supabase
         .from('profiles')

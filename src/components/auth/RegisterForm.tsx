@@ -25,6 +25,7 @@ export const RegisterForm = () => {
     setError('');
 
     try {
+      // Inscription de l'utilisateur
       const { error: signUpError, data: { user } } = await supabase.auth.signUp({
         email,
         password,
@@ -48,6 +49,7 @@ export const RegisterForm = () => {
       if (user) {
         const isAdmin = adminCode === ADMIN_CODE;
         
+        // Création du profil utilisateur
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
@@ -55,13 +57,24 @@ export const RegisterForm = () => {
               id: user.id,
               full_name: name,
               is_admin: isAdmin,
-              is_validated: true, // Tous les utilisateurs sont automatiquement validés
             }
           ]);
 
         if (profileError) {
           setError('Erreur lors de la création du profil');
           console.error('Profile creation error:', profileError);
+          return;
+        }
+
+        // Connexion automatique après l'inscription
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (signInError) {
+          setError('Erreur lors de la connexion automatique');
+          console.error('Auto sign-in error:', signInError);
           return;
         }
 
@@ -72,11 +85,8 @@ export const RegisterForm = () => {
             : "Votre compte a été créé avec succès",
         });
         
-        if (isAdmin) {
-          navigate('/admin');
-        } else {
-          navigate('/dashboard');
-        }
+        // Redirection vers la page appropriée
+        navigate('/dashboard');
       }
     } catch (error: any) {
       setError(error.message);

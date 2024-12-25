@@ -1,19 +1,8 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Ban, CheckCircle, Home } from 'lucide-react';
-import type { UserProfile } from '@/types/admin';
+import type { UserProfile } from "@/types/admin";
 
 const Admin = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -22,9 +11,37 @@ const Admin = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    checkAdminAccess();
+  }, []);
+
+  const checkAdminAccess = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.is_admin) {
+      toast({
+        variant: "destructive",
+        title: "Accès refusé",
+        description: "Vous n'avez pas les droits d'administrateur",
+      });
+      navigate('/dashboard');
+      return;
+    }
+
+    // Si l'utilisateur est admin, charger les données
     fetchUsers();
     fetchLogs();
-  }, []);
+  };
 
   const fetchUsers = async () => {
     const { data: profiles, error } = await supabase
@@ -79,87 +96,85 @@ const Admin = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Portail Administrateur</h1>
-        <Button
-          variant="outline"
-          onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2"
-        >
-          <Home className="h-4 w-4" />
-          Retour au tableau de bord
-        </Button>
-      </div>
+      <h1 className="text-3xl font-bold mb-8">Administration</h1>
       
-      <div className="space-y-8">
-        <div>
+      <div className="grid gap-8">
+        <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-4">Utilisateurs</h2>
-          <ScrollArea className="h-[400px] rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Nom
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Admin
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
                 {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>{user.full_name || 'Non renseigné'}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      {user.is_banned ? (
-                        <span className="text-red-500">Banni</span>
-                      ) : (
-                        <span className="text-green-500">Actif</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant={user.is_banned ? "outline" : "destructive"}
-                        size="sm"
-                        onClick={() => toggleBan(user.id, user.is_banned || false)}
-                      >
-                        {user.is_banned ? (
-                          <><CheckCircle className="h-4 w-4 mr-2" /> Débannir</>
-                        ) : (
-                          <><Ban className="h-4 w-4 mr-2" /> Bannir</>
-                        )}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                  <tr key={user.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {user.full_name || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {user.email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {user.is_admin ? "Oui" : "Non"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {/* Add action buttons here if needed */}
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Logs de Connexion</h2>
-          <ScrollArea className="h-[400px] rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Événement</TableHead>
-                  <TableHead>Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">Logs de connexion</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type d'événement
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
                 {logs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell>{log.email}</TableCell>
-                    <TableCell>{log.event_type}</TableCell>
-                    <TableCell>
+                  <tr key={log.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {log.email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {log.event_type}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       {new Date(log.created_at).toLocaleString()}
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
