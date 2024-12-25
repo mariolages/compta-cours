@@ -100,15 +100,18 @@ export default function Admin() {
         )
       );
 
-      const { error: updateError } = await supabase
+      const { data, error: updateError } = await supabase
         .from('profiles')
         .update({ 
           is_validated: !currentStatus,
           updated_at: new Date().toISOString()
         })
-        .eq('id', userId);
+        .eq('id', userId)
+        .select()
+        .single();
 
       if (updateError) {
+        console.error("Error updating validation status:", updateError);
         // Revert local state if update fails
         setUsers(prevUsers => 
           prevUsers.map(user => 
@@ -117,9 +120,10 @@ export default function Admin() {
               : user
           )
         );
-        console.error("Error updating validation status:", updateError);
         throw updateError;
       }
+
+      console.log("Update successful, updated data:", data);
 
       toast({
         title: "Succès",
