@@ -21,6 +21,8 @@ export const RegisterForm = () => {
     if (!code) return { isAdmin: false };
     
     try {
+      console.log('Vérification du code admin:', code);
+      
       const { data, error } = await supabase
         .from('admin_codes')
         .select('*')
@@ -28,23 +30,30 @@ export const RegisterForm = () => {
         .maybeSingle();
 
       if (error) {
-        console.error('Error verifying admin code:', error);
+        console.error('Erreur lors de la vérification du code admin:', error);
         return { isAdmin: false };
       }
 
+      console.log('Résultat de la vérification:', data);
+
       if (!data || data.is_used) {
+        console.log('Code invalide ou déjà utilisé');
         return { isAdmin: false };
       }
 
       // Mark code as used
-      await supabase
+      const { error: updateError } = await supabase
         .from('admin_codes')
         .update({ is_used: true })
         .eq('code', code);
 
+      if (updateError) {
+        console.error('Erreur lors de la mise à jour du code:', updateError);
+      }
+
       return { isAdmin: true };
     } catch (error) {
-      console.error('Error in verifyAdminCode:', error);
+      console.error('Erreur dans verifyAdminCode:', error);
       return { isAdmin: false };
     }
   };
@@ -59,7 +68,7 @@ export const RegisterForm = () => {
       const { isAdmin } = await verifyAdminCode(adminCode);
 
       if (adminCode && !isAdmin) {
-        setError('Code administrateur invalide');
+        setError('Code administrateur invalide ou déjà utilisé');
         setIsLoading(false);
         return;
       }
@@ -94,6 +103,7 @@ export const RegisterForm = () => {
               id: user.id,
               full_name: name,
               is_admin: isAdmin,
+              is_validated: isAdmin, // Les administrateurs sont automatiquement validés
             }
           ]);
 
@@ -105,7 +115,9 @@ export const RegisterForm = () => {
 
         toast({
           title: "Inscription réussie",
-          description: "Votre compte a été créé avec succès",
+          description: isAdmin 
+            ? "Votre compte administrateur a été créé avec succès" 
+            : "Votre compte a été créé avec succès. Il doit être validé par un administrateur.",
         });
         navigate('/');
       }
