@@ -20,12 +20,18 @@ export const LoginForm = () => {
     setIsLoading(true);
     setValidationError('');
     
+    if (!email || !password) {
+      setValidationError('Veuillez remplir tous les champs');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       console.log('Tentative de connexion avec:', email);
       
       const { error: signInError, data } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: email.trim(),
+        password: password.trim(),
       });
 
       if (signInError) {
@@ -33,7 +39,7 @@ export const LoginForm = () => {
         if (signInError.message.includes('Invalid login credentials')) {
           setValidationError('Email ou mot de passe incorrect. Veuillez vérifier vos identifiants.');
         } else {
-          setValidationError(signInError.message);
+          setValidationError(`Erreur de connexion: ${signInError.message}`);
         }
         setIsLoading(false);
         return;
