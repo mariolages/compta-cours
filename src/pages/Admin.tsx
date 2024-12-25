@@ -108,7 +108,7 @@ export default function Admin() {
         })
         .eq('id', userId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (updateError) {
         console.error("Error updating validation status:", updateError);
@@ -121,6 +121,11 @@ export default function Admin() {
           )
         );
         throw updateError;
+      }
+
+      if (!data) {
+        console.error("No data returned after update, user might not exist anymore");
+        throw new Error("Failed to update user status - user not found");
       }
 
       console.log("Update successful, updated data:", data);
