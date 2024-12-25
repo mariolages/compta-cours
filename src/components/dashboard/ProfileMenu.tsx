@@ -27,17 +27,36 @@ export const ProfileMenu = () => {
   }, []);
 
   const fetchUserProfile = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('full_name')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
-      if (profile?.full_name) {
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      // Si le profil n'existe pas, on le crée
+      if (!profile) {
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert([{ id: user.id }]);
+        
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+          return;
+        }
+      } else if (profile.full_name) {
         setFullName(profile.full_name);
       }
+    } catch (error) {
+      console.error('Error in fetchUserProfile:', error);
     }
   };
 
