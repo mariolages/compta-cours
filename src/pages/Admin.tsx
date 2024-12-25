@@ -14,8 +14,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Home } from "lucide-react";
 
+interface UserProfile {
+  id: string;
+  full_name: string | null;
+  is_admin: boolean;
+  is_validated: boolean;
+  email?: string;
+}
+
 export default function Admin() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -49,12 +57,11 @@ export default function Admin() {
   };
 
   const fetchUsers = async () => {
-    const { data: profiles, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
+    // Fetch auth users first
+    const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+    
+    if (authError) {
+      console.error("Error fetching auth users:", authError);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -63,7 +70,32 @@ export default function Admin() {
       return;
     }
 
-    setUsers(profiles);
+    // Then fetch profiles
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (profilesError) {
+      console.error("Error fetching profiles:", profilesError);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger la liste des utilisateurs",
+      });
+      return;
+    }
+
+    // Combine the data
+    const combinedUsers = profiles.map(profile => {
+      const authUser = authUsers.users.find(u => u.id === profile.id);
+      return {
+        ...profile,
+        email: authUser?.email
+      };
+    });
+
+    setUsers(combinedUsers);
     setIsLoading(false);
   };
 
@@ -113,6 +145,7 @@ export default function Admin() {
           <TableHeader>
             <TableRow>
               <TableHead>Nom</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>Admin</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead>Actions</TableHead>
@@ -122,6 +155,7 @@ export default function Admin() {
             {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>{user.full_name || "Sans nom"}</TableCell>
+                <TableCell>{user.email || "Email non disponible"}</TableCell>
                 <TableCell>
                   {user.is_admin ? (
                     <Badge variant="default">Admin</Badge>
