@@ -1,11 +1,11 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { FileUploadDialog } from "@/components/dashboard/FileUploadDialog";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Download, Upload } from "lucide-react";
+import { Download, Upload, ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface Subject {
@@ -25,6 +25,7 @@ interface File {
 
 export default function SubjectPage() {
   const { subjectId } = useParams();
+  const navigate = useNavigate();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const { toast } = useToast();
 
@@ -105,9 +106,19 @@ export default function SubjectPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              {subject?.code} - {subject?.name}
-            </h1>
+            <div className="flex items-center gap-4 w-full">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/dashboard')}
+                className="group hover:bg-primary/10 transition-all duration-300"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4 group-hover:translate-x-[-2px] transition-transform" />
+                Retour
+              </Button>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                {subject?.code} - {subject?.name}
+              </h1>
+            </div>
             <Button
               onClick={() => setIsUploadOpen(true)}
               className="bg-primary hover:bg-primary/90 transition-all duration-300 shadow-md hover:shadow-lg"
