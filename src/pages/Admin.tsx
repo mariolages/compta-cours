@@ -19,6 +19,7 @@ interface UserProfile {
   full_name: string | null;
   is_admin: boolean;
   is_validated: boolean;
+  email?: string;
 }
 
 export default function Admin() {
@@ -56,23 +57,37 @@ export default function Admin() {
   };
 
   const fetchUsers = async () => {
-    const { data: profiles, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No session');
+      }
 
-    if (error) {
-      console.error("Error fetching profiles:", error);
+      const response = await fetch(
+        'https://sxpddyeasmcsnrbtvrgm.functions.supabase.co/get-users',
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+
+      const users = await response.json();
+      setUsers(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Impossible de charger la liste des utilisateurs",
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    setUsers(profiles || []);
-    setIsLoading(false);
   };
 
   const toggleValidation = async (userId: string, currentStatus: boolean) => {
@@ -120,6 +135,7 @@ export default function Admin() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Email</TableHead>
               <TableHead>Nom</TableHead>
               <TableHead>Admin</TableHead>
               <TableHead>Statut</TableHead>
@@ -129,6 +145,7 @@ export default function Admin() {
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
+                <TableCell>{user.email || "Email non disponible"}</TableCell>
                 <TableCell>{user.full_name || "Sans nom"}</TableCell>
                 <TableCell>
                   {user.is_admin ? (
