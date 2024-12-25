@@ -11,9 +11,10 @@ import { useNavigate } from "react-router-dom";
 interface SubjectHeaderProps {
   code: string;
   name: string;
+  onUploadClick: () => void;
 }
 
-export function SubjectHeader({ code, name }: SubjectHeaderProps) {
+export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [newName, setNewName] = useState(name);
   const { toast } = useToast();
@@ -73,7 +74,7 @@ export function SubjectHeader({ code, name }: SubjectHeaderProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button onClick={() => setIsEditDialogOpen(true)}>
+          <Button onClick={onUploadClick}>
             Ajouter un fichier
           </Button>
 
