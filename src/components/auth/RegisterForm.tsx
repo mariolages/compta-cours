@@ -62,7 +62,7 @@ export const RegisterForm = () => {
           title: "Inscription réussie",
           description: "Votre compte a été créé avec succès",
         });
-        navigate('/login');
+        navigate('/dashboard');
       }
     } catch (error: any) {
       setError(error.message);
