@@ -1,35 +1,24 @@
 import { Button } from "@/components/ui/button";
-import { Upload, MoreVertical } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { MoreVertical, ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface SubjectHeaderProps {
   code: string;
   name: string;
-  onUploadClick: () => void;
 }
 
-export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps) {
+export function SubjectHeader({ code, name }: SubjectHeaderProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [newName, setNewName] = useState(name);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const handleUpdateName = async () => {
     try {
@@ -52,8 +41,7 @@ export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps)
         title: "Succès",
         description: "Le nom du cours a été mis à jour",
       });
-      
-      // Invalider le cache pour forcer un rechargement des données
+
       queryClient.invalidateQueries({ queryKey: ["subject"] });
       setIsEditDialogOpen(false);
     } catch (error) {
@@ -67,52 +55,46 @@ export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps)
   };
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-3xl font-bold mb-2 flex items-center gap-4">
-            {name}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
-                  Modifier le nom
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </h1>
-          <p className="text-gray-500">Code: {code}</p>
-        </div>
-        <Button onClick={onUploadClick} className="flex items-center gap-2">
-          <Upload className="h-4 w-4" />
-          Déposer un fichier
-        </Button>
-      </div>
-
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Modifier le nom du cours</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="Nouveau nom du cours"
-            />
+    <div className="mb-8 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/dashboard")}
+            className="hover:bg-gray-100"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">{name}</h1>
+            <p className="text-gray-500">{code}</p>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Annuler
+        </div>
+
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreVertical className="h-5 w-5" />
             </Button>
-            <Button onClick={handleUpdateName}>Enregistrer</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Modifier le nom du cours</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <Input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Nouveau nom du cours"
+              />
+              <Button onClick={handleUpdateName} className="w-full">
+                Enregistrer
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }
