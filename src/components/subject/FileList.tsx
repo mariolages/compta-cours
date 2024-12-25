@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
+import { AudioPlayer } from "./AudioPlayer";
 
 interface File {
   id: string;
@@ -113,6 +114,8 @@ export function FileList({ files, onDownload }: FileListProps) {
     );
   }
 
+  const isPodcast = (file: File) => file.category.id === 6;
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end mb-4">
@@ -131,72 +134,77 @@ export function FileList({ files, onDownload }: FileListProps) {
           key={file.id}
           className="hover:shadow-md transition-all duration-300 border-l-4 border-l-primary"
         >
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="flex-1">
-              {editingFileId === file.id ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    className="max-w-md"
-                    autoFocus
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRenameSubmit(file.id)}
-                    className="hover:bg-primary/10 hover:text-primary transition-colors"
-                  >
-                    Enregistrer
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleRenameCancel}
-                    className="hover:bg-gray-100 transition-colors"
-                  >
-                    Annuler
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <h3 className="font-medium text-lg mb-1">{file.title}</h3>
-                  <p className="text-sm text-gray-500">
-                    {new Date(file.created_at).toLocaleDateString('fr-FR')}
-                  </p>
-                </>
-              )}
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2 hover:bg-primary hover:text-white transition-all duration-300 border-primary/20"
-                onClick={() => onDownload(file.id, file.file_path, file.title)}
-              >
-                <Download className="h-4 w-4" />
-                <span>Télécharger</span>
-              </Button>
-              {editingFileId !== file.id && (
+          <CardContent className="flex flex-col p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex-1">
+                {editingFileId === file.id ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      className="max-w-md"
+                      autoFocus
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRenameSubmit(file.id)}
+                      className="hover:bg-primary/10 hover:text-primary transition-colors"
+                    >
+                      Enregistrer
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRenameCancel}
+                      className="hover:bg-gray-100 transition-colors"
+                    >
+                      Annuler
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="font-medium text-lg mb-1">{file.title}</h3>
+                    <p className="text-sm text-gray-500">
+                      {new Date(file.created_at).toLocaleDateString('fr-FR')}
+                    </p>
+                  </>
+                )}
+              </div>
+              <div className="flex gap-3">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleRenameClick(file.id, file.title)}
-                  className="flex items-center gap-2 hover:bg-accent hover:text-white transition-all duration-300 border-accent/20"
+                  className="flex items-center gap-2 hover:bg-primary hover:text-white transition-all duration-300 border-primary/20"
+                  onClick={() => onDownload(file.id, file.file_path, file.title)}
                 >
-                  <Edit2 className="h-4 w-4" />
-                  <span>Renommer</span>
+                  <Download className="h-4 w-4" />
+                  <span>Télécharger</span>
                 </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleDeleteFile(file.id)}
-                className="hover:bg-red-50 hover:text-red-500 transition-colors"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+                {editingFileId !== file.id && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleRenameClick(file.id, file.title)}
+                    className="flex items-center gap-2 hover:bg-accent hover:text-white transition-all duration-300 border-accent/20"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                    <span>Renommer</span>
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDeleteFile(file.id)}
+                  className="hover:bg-red-50 hover:text-red-500 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
+            {isPodcast(file) && (
+              <AudioPlayer filePath={file.file_path} />
+            )}
           </CardContent>
         </Card>
       ))}
