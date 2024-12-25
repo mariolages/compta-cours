@@ -72,28 +72,34 @@ export function SubjectHeader({ code, name }: SubjectHeaderProps) {
           </div>
         </div>
 
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreVertical className="h-5 w-5" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Modifier le nom du cours</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <Input
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="Nouveau nom du cours"
-              />
-              <Button onClick={handleUpdateName} className="w-full">
-                Enregistrer
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setIsEditDialogOpen(true)}>
+            Ajouter un fichier
+          </Button>
+
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="h-5 w-5" />
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Modifier le nom du cours</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <Input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Nouveau nom du cours"
+                />
+                <Button onClick={handleUpdateName} className="w-full">
+                  Enregistrer
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
     </div>
   );

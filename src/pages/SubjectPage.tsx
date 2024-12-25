@@ -117,7 +117,6 @@ export default function SubjectPage() {
         <SubjectHeader
           code={subject?.code || ""}
           name={subject?.name || ""}
-          onUploadClick={() => setIsUploadOpen(true)}
         />
 
         <Tabs defaultValue="1" onValueChange={setSelectedCategory} className="w-full">
