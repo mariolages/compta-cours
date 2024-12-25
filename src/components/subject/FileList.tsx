@@ -145,6 +145,7 @@ export function FileList({ files, onDownload }: FileListProps) {
                     variant="outline"
                     size="sm"
                     onClick={() => handleRenameSubmit(file.id)}
+                    className="hover:bg-primary/10 hover:text-primary transition-colors"
                   >
                     Enregistrer
                   </Button>
@@ -152,6 +153,7 @@ export function FileList({ files, onDownload }: FileListProps) {
                     variant="ghost"
                     size="sm"
                     onClick={handleRenameCancel}
+                    className="hover:bg-gray-100 transition-colors"
                   >
                     Annuler
                   </Button>
@@ -165,28 +167,32 @@ export function FileList({ files, onDownload }: FileListProps) {
                 </>
               )}
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Button
                 variant="outline"
-                className="hover:bg-primary/10"
+                size="sm"
+                className="flex items-center gap-2 hover:bg-primary hover:text-white transition-all duration-300 border-primary/20"
                 onClick={() => onDownload(file.id, file.file_path)}
               >
                 <Download className="h-4 w-4" />
-                <span className="ml-2">Télécharger</span>
+                <span>Télécharger</span>
               </Button>
               {editingFileId !== file.id && (
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={() => handleRenameClick(file.id, file.title)}
+                  className="flex items-center gap-2 hover:bg-accent hover:text-white transition-all duration-300 border-accent/20"
                 >
                   <Edit2 className="h-4 w-4" />
-                  <span className="ml-2">Renommer</span>
+                  <span>Renommer</span>
                 </Button>
               )}
               <Button
-                variant="destructive"
+                variant="ghost"
                 size="icon"
                 onClick={() => handleDeleteFile(file.id)}
+                className="hover:bg-red-50 hover:text-red-500 transition-colors"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
