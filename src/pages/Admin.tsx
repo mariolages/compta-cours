@@ -18,60 +18,13 @@ import type { UserProfile } from '@/types/admin';
 const Admin = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
-  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    checkAdminStatus();
+    fetchUsers();
+    fetchLogs();
   }, []);
-
-  const checkAdminStatus = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.log("No user found, redirecting to login");
-        navigate('/login');
-        return;
-      }
-
-      console.log("Checking admin status for user:", user.id);
-      
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single();
-
-      if (error) {
-        console.error("Error fetching profile:", error);
-        navigate('/dashboard');
-        return;
-      }
-
-      console.log("Profile data:", profile);
-
-      if (!profile?.is_admin) {
-        console.log("User is not admin, redirecting to dashboard");
-        toast({
-          variant: "destructive",
-          title: "Accès refusé",
-          description: "Vous n'avez pas les droits d'administrateur.",
-        });
-        navigate('/dashboard');
-        return;
-      }
-
-      console.log("User is admin, fetching data");
-      setIsAdmin(true);
-      fetchUsers();
-      fetchLogs();
-    } catch (error) {
-      console.error("Error in checkAdminStatus:", error);
-      navigate('/dashboard');
-    }
-  };
 
   const fetchUsers = async () => {
     const { data: profiles, error } = await supabase
@@ -123,10 +76,6 @@ const Admin = () => {
 
     fetchUsers();
   };
-
-  if (!isAdmin) {
-    return <div className="flex items-center justify-center h-screen">Chargement...</div>;
-  }
 
   return (
     <div className="container mx-auto py-8">
