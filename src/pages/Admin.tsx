@@ -26,6 +26,7 @@ export default function Admin() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -99,7 +100,10 @@ export default function Admin() {
   };
 
   const toggleValidation = async (userId: string, currentStatus: boolean) => {
+    if (isUpdating) return; // Prevent multiple simultaneous updates
+    
     try {
+      setIsUpdating(true);
       console.log(`Toggling validation for user ${userId} from ${currentStatus} to ${!currentStatus}`);
       
       const { error: updateError } = await supabase
@@ -115,12 +119,21 @@ export default function Admin() {
         throw updateError;
       }
 
+      // Update local state immediately
+      setUsers(prevUsers => 
+        prevUsers.map(user => 
+          user.id === userId 
+            ? { ...user, is_validated: !currentStatus }
+            : user
+        )
+      );
+
       toast({
         title: "Succès",
         description: `L'utilisateur a été ${!currentStatus ? 'validé' : 'invalidé'}`,
       });
 
-      // Refresh the users list immediately
+      // Refresh the users list to ensure consistency
       await fetchUsers();
     } catch (error) {
       console.error("Error toggling validation:", error);
@@ -129,6 +142,8 @@ export default function Admin() {
         title: "Erreur",
         description: "Impossible de mettre à jour le statut de l'utilisateur",
       });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -195,6 +210,7 @@ export default function Admin() {
                     size="sm"
                     onClick={() => toggleValidation(user.id, user.is_validated)}
                     className="gap-2"
+                    disabled={isUpdating}
                   >
                     {user.is_validated ? (
                       <>
