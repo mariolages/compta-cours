@@ -43,16 +43,7 @@ export const ProfileMenu = () => {
         return;
       }
 
-      if (!profile) {
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert([{ id: user.id }]);
-        
-        if (insertError) {
-          console.error('Error creating profile:', insertError);
-          return;
-        }
-      } else {
+      if (profile) {
         setFullName(profile.full_name || '');
         setIsAdmin(profile.is_admin || false);
       }
