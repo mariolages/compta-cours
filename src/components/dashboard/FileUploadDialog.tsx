@@ -146,9 +146,11 @@ export function FileUploadDialog({ open, onOpenChange, onSuccess, defaultSubject
                 <SelectValue placeholder="Sélectionner une catégorie" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">Cours</SelectItem>
-                <SelectItem value="2">Exercices</SelectItem>
-                <SelectItem value="3">Corrections</SelectItem>
+                <SelectItem value="1">📘 Cours</SelectItem>
+                <SelectItem value="2">📄 Exercices</SelectItem>
+                <SelectItem value="3">✅ Corrections d'exercices</SelectItem>
+                <SelectItem value="4">📂 Sujets d'examen</SelectItem>
+                <SelectItem value="5">✅ Corrections de sujets d'examen</SelectItem>
               </SelectContent>
             </Select>
           </div>
