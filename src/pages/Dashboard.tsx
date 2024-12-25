@@ -38,18 +38,18 @@ export default function Dashboard() {
         const numB = parseInt(b.code.match(/\d+/)[0]);
         return numA - numB;
       });
-    },
-    meta: {
-      onError: (error: Error) => {
-        console.error("Query error:", error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger les matières",
-        });
-      }
     }
   });
+
+  // Handle error outside of the query configuration
+  if (error) {
+    console.error("Query error:", error);
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible de charger les matières",
+    });
+  }
 
   const handleSubjectClick = (subjectId: number) => {
     navigate(`/subjects/${subjectId}`);
@@ -59,17 +59,6 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600">Erreur de chargement</h2>
-          <p className="text-gray-600">Impossible de charger les matières</p>
-        </div>
       </div>
     );
   }
