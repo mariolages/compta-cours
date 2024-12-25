@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Check, X } from "lucide-react";
+import { Check, X, Home } from "lucide-react";
 
 export default function Admin() {
   const [users, setUsers] = useState<any[]>([]);
@@ -96,7 +96,17 @@ export default function Admin() {
 
   return (
     <div className="container mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-8">Administration des utilisateurs</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Administration des utilisateurs</h1>
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/dashboard')}
+          className="gap-2"
+        >
+          <Home className="h-4 w-4" />
+          Retour à l'accueil
+        </Button>
+      </div>
       
       <div className="bg-white rounded-lg shadow">
         <Table>
