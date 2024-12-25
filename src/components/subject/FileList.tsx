@@ -20,7 +20,7 @@ interface File {
 
 interface FileListProps {
   files: File[] | undefined;
-  onDownload: (fileId: string, filePath: string) => void;
+  onDownload: (fileId: string, filePath: string, fileName: string) => void;
 }
 
 export function FileList({ files, onDownload }: FileListProps) {
@@ -172,7 +172,7 @@ export function FileList({ files, onDownload }: FileListProps) {
                 variant="outline"
                 size="sm"
                 className="flex items-center gap-2 hover:bg-primary hover:text-white transition-all duration-300 border-primary/20"
-                onClick={() => onDownload(file.id, file.file_path)}
+                onClick={() => onDownload(file.id, file.file_path, file.title)}
               >
                 <Download className="h-4 w-4" />
                 <span>Télécharger</span>

@@ -71,7 +71,7 @@ export default function SubjectPage() {
     },
   });
 
-  const handleDownload = async (fileId: string, filePath: string) => {
+  const handleDownload = async (fileId: string, filePath: string, fileName: string) => {
     try {
       const { data, error: downloadError } = await supabase.storage
         .from("dcg_files")
@@ -86,10 +86,13 @@ export default function SubjectPage() {
         return;
       }
 
+      // Create a URL for the file and trigger download with the original file name
       const url = URL.createObjectURL(data);
       const a = document.createElement("a");
       a.href = url;
-      a.download = filePath.split("/").pop() || "download";
+      // Use the file's title and append the original extension
+      const fileExt = filePath.split('.').pop();
+      a.download = `${fileName}.${fileExt}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
