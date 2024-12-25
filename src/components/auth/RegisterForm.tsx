@@ -34,8 +34,6 @@ export const RegisterForm = () => {
         return { isAdmin: false };
       }
 
-      console.log('Résultat de la vérification:', data);
-
       if (!data || data.is_used) {
         console.log('Code invalide ou déjà utilisé');
         return { isAdmin: false };
@@ -64,14 +62,22 @@ export const RegisterForm = () => {
     setError('');
 
     try {
-      // Verify admin code if provided
-      const { isAdmin } = await verifyAdminCode(adminCode);
+      // Check if this is the first user
+      const { count, error: countError } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
 
-      if (adminCode && !isAdmin) {
-        setError('Code administrateur invalide ou déjà utilisé');
+      if (countError) {
+        console.error('Erreur lors de la vérification des profils:', countError);
+        setError('Erreur lors de la vérification du système');
         setIsLoading(false);
         return;
       }
+
+      const isFirstUser = count === 0;
+
+      // Verify admin code if provided
+      const { isAdmin } = await verifyAdminCode(adminCode);
 
       // Register user
       const { error: signUpError, data: { user } } = await supabase.auth.signUp({
@@ -102,8 +108,8 @@ export const RegisterForm = () => {
             {
               id: user.id,
               full_name: name,
-              is_admin: isAdmin,
-              is_validated: isAdmin, // Les administrateurs sont automatiquement validés
+              is_admin: isFirstUser || isAdmin, // Premier utilisateur ou code admin valide
+              is_validated: isFirstUser || isAdmin, // Premier utilisateur ou code admin valide
             }
           ]);
 
@@ -115,8 +121,8 @@ export const RegisterForm = () => {
 
         toast({
           title: "Inscription réussie",
-          description: isAdmin 
-            ? "Votre compte administrateur a été créé avec succès" 
+          description: isFirstUser || isAdmin
+            ? "Votre compte administrateur a été créé avec succès"
             : "Votre compte a été créé avec succès. Il doit être validé par un administrateur.",
         });
         navigate('/');
