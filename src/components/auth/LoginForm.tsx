@@ -4,37 +4,74 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [validationError, setValidationError] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setValidationError('');
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error: signInError, data: { user } } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
+      if (signInError) {
         toast({
           variant: "destructive",
           title: "Erreur de connexion",
-          description: error.message,
+          description: signInError.message,
         });
-      } else {
-        toast({
-          title: "Connexion réussie",
-          description: "Vous êtes maintenant connecté",
-        });
-        navigate('/dashboard');
+        return;
       }
+
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Utilisateur non trouvé",
+        });
+        return;
+      }
+
+      // Vérifier si l'utilisateur est validé
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('is_validated')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de vérifier le statut de validation",
+        });
+        return;
+      }
+
+      if (!profile?.is_validated) {
+        setValidationError('Votre compte est en attente de validation par un administrateur.');
+        // Déconnexion automatique si non validé
+        await supabase.auth.signOut();
+        return;
+      }
+
+      toast({
+        title: "Connexion réussie",
+        description: "Vous êtes maintenant connecté",
+      });
+      navigate('/dashboard');
     } catch (error) {
       toast({
         variant: "destructive",
@@ -53,6 +90,15 @@ export const LoginForm = () => {
         <p className="text-gray-500 text-center">Accédez à vos ressources DCG</p>
       </div>
       
+      {validationError && (
+        <Alert variant="destructive" className="animate-fade-in">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {validationError}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="space-y-4">
         <div>
           <Input
