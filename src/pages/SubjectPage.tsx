@@ -132,7 +132,7 @@ export default function SubjectPage() {
 
   if (isLoadingSubject) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
@@ -140,48 +140,54 @@ export default function SubjectPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="container mx-auto px-4 py-8">
-        <SubjectHeader
-          code={subject?.code || ""}
-          name={subject?.name || ""}
-          onUploadClick={() => setIsUploadOpen(true)}
-          onDeleteClick={handleDeleteSubject}
-        />
+      <div className="container mx-auto px-6 py-8 max-w-7xl">
+        <div className="space-y-8">
+          <SubjectHeader
+            code={subject?.code || ""}
+            name={subject?.name || ""}
+            onUploadClick={() => setIsUploadOpen(true)}
+            onDeleteClick={handleDeleteSubject}
+          />
 
-        <Tabs defaultValue="1" onValueChange={setSelectedCategory} className="w-full">
-          <TabsList className="w-full flex flex-wrap justify-start gap-2 bg-white p-2 rounded-lg mb-6">
-            <TabsTrigger value="1" className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4" />
-              Cours
-            </TabsTrigger>
-            <TabsTrigger value="2" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Exercices
-            </TabsTrigger>
-            <TabsTrigger value="3" className="flex items-center gap-2">
-              <CheckSquare className="h-4 w-4" />
-              Corrections d'exercices
-            </TabsTrigger>
-            <TabsTrigger value="4" className="flex items-center gap-2">
-              <Archive className="h-4 w-4" />
-              Sujets d'examen
-            </TabsTrigger>
-            <TabsTrigger value="5" className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Corrections de sujets
-            </TabsTrigger>
-            <TabsTrigger value="6" className="flex items-center gap-2">
-              <Headphones className="h-4 w-4" />
-              Podcasts
-            </TabsTrigger>
-          </TabsList>
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <Tabs defaultValue="1" onValueChange={setSelectedCategory} className="w-full">
+              <TabsList className="w-full flex flex-wrap justify-start gap-3 bg-gray-50/50 p-3 rounded-lg mb-8">
+                <TabsTrigger value="1" className="flex items-center gap-2 px-4 py-2">
+                  <BookOpen className="h-4 w-4" />
+                  Cours
+                </TabsTrigger>
+                <TabsTrigger value="2" className="flex items-center gap-2 px-4 py-2">
+                  <FileText className="h-4 w-4" />
+                  Exercices
+                </TabsTrigger>
+                <TabsTrigger value="3" className="flex items-center gap-2 px-4 py-2">
+                  <CheckSquare className="h-4 w-4" />
+                  Corrections d'exercices
+                </TabsTrigger>
+                <TabsTrigger value="4" className="flex items-center gap-2 px-4 py-2">
+                  <Archive className="h-4 w-4" />
+                  Sujets d'examen
+                </TabsTrigger>
+                <TabsTrigger value="5" className="flex items-center gap-2 px-4 py-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Corrections de sujets
+                </TabsTrigger>
+                <TabsTrigger value="6" className="flex items-center gap-2 px-4 py-2">
+                  <Headphones className="h-4 w-4" />
+                  Podcasts
+                </TabsTrigger>
+              </TabsList>
 
-          {["1", "2", "3", "4", "5", "6"].map((categoryId) => (
-            <TabsContent key={categoryId} value={categoryId}>
-              <FileList files={files} onDownload={handleDownload} />
-            </TabsContent>
-          ))}
-        </Tabs>
+              <div className="mt-6">
+                {["1", "2", "3", "4", "5", "6"].map((categoryId) => (
+                  <TabsContent key={categoryId} value={categoryId} className="focus-visible:outline-none focus-visible:ring-0">
+                    <FileList files={files} onDownload={handleDownload} />
+                  </TabsContent>
+                ))}
+              </div>
+            </Tabs>
+          </div>
+        </div>
 
         <FileUploadDialog
           open={isUploadOpen}

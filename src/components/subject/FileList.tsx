@@ -108,8 +108,10 @@ export function FileList({ files, onDownload }: FileListProps) {
 
   if (!files || files.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        Aucun fichier n'a encore été déposé dans cette catégorie
+      <div className="text-center py-12 bg-gray-50 rounded-lg">
+        <p className="text-gray-500">
+          Aucun fichier n'a encore été déposé dans cette catégorie
+        </p>
       </div>
     );
   }
@@ -117,97 +119,109 @@ export function FileList({ files, onDownload }: FileListProps) {
   const isPodcast = (file: File) => file.category.id === 6;
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end mb-4">
+    <div className="space-y-6">
+      <div className="flex justify-end">
         <Button
           variant="outline"
           onClick={toggleSort}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 hover:bg-gray-50"
         >
           <ArrowUpDown className="h-4 w-4" />
           Trier par date {sortOrder === 'asc' ? '↑' : '↓'}
         </Button>
       </div>
       
-      {sortedFiles.map((file) => (
-        <Card
-          key={file.id}
-          className="hover:shadow-md transition-all duration-300 border-l-4 border-l-primary"
-        >
-          <CardContent className="flex flex-col p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex-1">
-                {editingFileId === file.id ? (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
-                      className="max-w-md"
-                      autoFocus
-                    />
+      <div className="space-y-4">
+        {sortedFiles.map((file) => (
+          <Card
+            key={file.id}
+            className="hover:shadow-md transition-all duration-300 border-l-4 border-l-primary group"
+          >
+            <CardContent className="p-6">
+              <div className="flex flex-col space-y-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    {editingFileId === file.id ? (
+                      <div className="flex items-center gap-3">
+                        <Input
+                          value={newTitle}
+                          onChange={(e) => setNewTitle(e.target.value)}
+                          className="max-w-md"
+                          autoFocus
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRenameSubmit(file.id)}
+                            className="hover:bg-primary/10 hover:text-primary transition-colors"
+                          >
+                            Enregistrer
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleRenameCancel}
+                            className="hover:bg-gray-100 transition-colors"
+                          >
+                            Annuler
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <h3 className="font-medium text-lg text-gray-900 truncate">
+                          {file.title}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {new Date(file.created_at).toLocaleDateString('fr-FR')}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-3 ml-4">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleRenameSubmit(file.id)}
-                      className="hover:bg-primary/10 hover:text-primary transition-colors"
+                      className="flex items-center gap-2 hover:bg-primary hover:text-white transition-all duration-300 border-primary/20"
+                      onClick={() => onDownload(file.id, file.file_path, file.title)}
                     >
-                      Enregistrer
+                      <Download className="h-4 w-4" />
+                      <span>Télécharger</span>
                     </Button>
+                    {editingFileId !== file.id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRenameClick(file.id, file.title)}
+                        className="flex items-center gap-2 hover:bg-accent hover:text-white transition-all duration-300 border-accent/20"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                        <span>Renommer</span>
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
-                      size="sm"
-                      onClick={handleRenameCancel}
-                      className="hover:bg-gray-100 transition-colors"
+                      size="icon"
+                      onClick={() => handleDeleteFile(file.id)}
+                      className="hover:bg-red-50 hover:text-red-500 transition-colors"
                     >
-                      Annuler
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                ) : (
-                  <>
-                    <h3 className="font-medium text-lg mb-1">{file.title}</h3>
-                    <p className="text-sm text-gray-500">
-                      {new Date(file.created_at).toLocaleDateString('fr-FR')}
-                    </p>
-                  </>
+                </div>
+
+                {isPodcast(file) && (
+                  <div className="mt-4">
+                    <AudioPlayer filePath={file.file_path} />
+                  </div>
                 )}
               </div>
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2 hover:bg-primary hover:text-white transition-all duration-300 border-primary/20"
-                  onClick={() => onDownload(file.id, file.file_path, file.title)}
-                >
-                  <Download className="h-4 w-4" />
-                  <span>Télécharger</span>
-                </Button>
-                {editingFileId !== file.id && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRenameClick(file.id, file.title)}
-                    className="flex items-center gap-2 hover:bg-accent hover:text-white transition-all duration-300 border-accent/20"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                    <span>Renommer</span>
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeleteFile(file.id)}
-                  className="hover:bg-red-50 hover:text-red-500 transition-colors"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            {isPodcast(file) && (
-              <AudioPlayer filePath={file.file_path} />
-            )}
-          </CardContent>
-        </Card>
-      ))}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
