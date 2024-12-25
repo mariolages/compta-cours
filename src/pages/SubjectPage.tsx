@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SubjectHeader } from "@/components/subject/SubjectHeader";
 import { FileList } from "@/components/subject/FileList";
-import { BookOpen, FileText, CheckSquare, Archive, CheckCircle } from "lucide-react";
+import { BookOpen, FileText, CheckSquare, Archive, CheckCircle, Headphones } from "lucide-react";
 
 interface Subject {
   id: number;
@@ -170,9 +170,13 @@ export default function SubjectPage() {
               <CheckCircle className="h-4 w-4" />
               Corrections de sujets
             </TabsTrigger>
+            <TabsTrigger value="6" className="flex items-center gap-2">
+              <Headphones className="h-4 w-4" />
+              Podcasts
+            </TabsTrigger>
           </TabsList>
 
-          {["1", "2", "3", "4", "5"].map((categoryId) => (
+          {["1", "2", "3", "4", "5", "6"].map((categoryId) => (
             <TabsContent key={categoryId} value={categoryId}>
               <FileList files={files} onDownload={handleDownload} />
             </TabsContent>
