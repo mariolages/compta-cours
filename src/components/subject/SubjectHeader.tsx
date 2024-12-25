@@ -12,9 +12,10 @@ interface SubjectHeaderProps {
   code: string;
   name: string;
   onUploadClick: () => void;
+  onDeleteClick: () => Promise<void>;
 }
 
-export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps) {
+export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: SubjectHeaderProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [newName, setNewName] = useState(name);
   const { toast } = useToast();
