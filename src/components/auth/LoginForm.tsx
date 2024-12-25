@@ -101,12 +101,7 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-md animate-fade-in bg-white/80 backdrop-blur-sm p-8 rounded-xl shadow-xl">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-semibold text-center">Connexion à DCGHub</h2>
-        <p className="text-gray-500 text-center">Accédez à vos ressources DCG</p>
-      </div>
-      
+    <form onSubmit={handleSubmit} className="space-y-6">
       {validationError && (
         <Alert variant="destructive" className="animate-fade-in">
           <AlertCircle className="h-4 w-4" />
@@ -123,7 +118,7 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="input-field"
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
             required
             disabled={isLoading}
           />
@@ -135,7 +130,7 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
             placeholder="Mot de passe"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="input-field"
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
             required
             disabled={isLoading}
           />
@@ -144,7 +139,7 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
 
       <Button 
         type="submit" 
-        className="w-full btn-primary"
+        className="w-full bg-primary hover:bg-primary-hover text-white py-2 rounded-lg transition-colors duration-300"
         disabled={isLoading}
       >
         {isLoading ? "Connexion..." : "Se connecter"}
