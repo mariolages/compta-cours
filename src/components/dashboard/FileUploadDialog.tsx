@@ -18,9 +18,10 @@ interface FileUploadDialogProps {
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
   defaultSubjectId?: string;
+  currentFolderId?: string | null;
 }
 
-export function FileUploadDialog({ open, onOpenChange, onSuccess, defaultSubjectId }: FileUploadDialogProps) {
+export function FileUploadDialog({ open, onOpenChange, onSuccess, defaultSubjectId, currentFolderId }: FileUploadDialogProps) {
   const [title, setTitle] = useState('');
   const [subjectId, setSubjectId] = useState(defaultSubjectId || '');
   const [categoryId, setCategoryId] = useState('');
@@ -60,6 +61,7 @@ export function FileUploadDialog({ open, onOpenChange, onSuccess, defaultSubject
           subject_id: parseInt(subjectId),
           category_id: parseInt(categoryId),
           user_id: (await supabase.auth.getUser()).data.user?.id,
+          folder_id: currentFolderId
         });
 
       if (dbError) throw dbError;

@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SubjectHeader } from "@/components/subject/SubjectHeader";
 import { FileList } from "@/components/subject/FileList";
+import { FolderList } from "@/components/subject/FolderList";
 import { BookOpen, FileText, CheckSquare, Archive, CheckCircle } from "lucide-react";
 
 interface Subject {
@@ -20,6 +21,7 @@ export default function SubjectPage() {
   const navigate = useNavigate();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("1");
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { data: subject, isLoading: isLoadingSubject } = useQuery({
@@ -43,10 +45,31 @@ export default function SubjectPage() {
     },
   });
 
-  const { data: files, refetch: refetchFiles } = useQuery({
-    queryKey: ["subject-files", subjectId, selectedCategory],
+  const { data: folders } = useQuery({
+    queryKey: ["folders", subjectId],
     queryFn: async () => {
       const { data, error } = await supabase
+        .from("folders")
+        .select("*")
+        .eq("subject_id", subjectId)
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les dossiers",
+        });
+        throw error;
+      }
+      return data;
+    },
+  });
+
+  const { data: files, refetch: refetchFiles } = useQuery({
+    queryKey: ["subject-files", subjectId, selectedCategory, currentFolderId],
+    queryFn: async () => {
+      let query = supabase
         .from("files")
         .select(`
           id,
@@ -56,8 +79,15 @@ export default function SubjectPage() {
           category:category_id(id, name)
         `)
         .eq("subject_id", subjectId)
-        .eq("category_id", selectedCategory)
-        .order("created_at", { ascending: false });
+        .eq("category_id", selectedCategory);
+
+      if (currentFolderId) {
+        query = query.eq("folder_id", currentFolderId);
+      } else {
+        query = query.is("folder_id", null);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) {
         toast({
@@ -145,6 +175,13 @@ export default function SubjectPage() {
           onDeleteClick={handleDeleteSubject}
         />
 
+        <FolderList
+          folders={folders || []}
+          currentFolderId={currentFolderId}
+          onFolderClick={setCurrentFolderId}
+          subjectId={subjectId || ""}
+        />
+
         <Tabs defaultValue="1" onValueChange={setSelectedCategory} className="w-full">
           <TabsList className="w-full flex flex-wrap justify-start gap-2 bg-white p-2 rounded-lg mb-6">
             <TabsTrigger value="1" className="flex items-center gap-2">
@@ -184,6 +221,7 @@ export default function SubjectPage() {
             setIsUploadOpen(false);
           }}
           defaultSubjectId={subjectId}
+          currentFolderId={currentFolderId}
         />
       </div>
     </div>
