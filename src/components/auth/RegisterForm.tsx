@@ -55,7 +55,7 @@ export const RegisterForm = () => {
               id: user.id,
               full_name: name,
               is_admin: isAdmin,
-              is_validated: isAdmin, // Seuls les admins sont automatiquement validés
+              is_validated: true, // Tous les utilisateurs sont automatiquement validés
             }
           ]);
 
@@ -69,7 +69,7 @@ export const RegisterForm = () => {
           title: "Inscription réussie",
           description: isAdmin 
             ? "Votre compte administrateur a été créé avec succès" 
-            : "Votre compte a été créé avec succès. Un administrateur doit valider votre compte.",
+            : "Votre compte a été créé avec succès",
         });
         
         if (isAdmin) {
