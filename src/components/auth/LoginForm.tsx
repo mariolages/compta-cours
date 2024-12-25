@@ -29,8 +29,20 @@ export const LoginForm = () => {
     try {
       console.log('Tentative de connexion avec:', email);
       
+      // First, check if the user exists
+      const { data: userExists, error: userCheckError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', email)
+        .maybeSingle();
+
+      if (userCheckError) {
+        console.error('Erreur lors de la vérification du compte:', userCheckError);
+      }
+
+      // Attempt to sign in
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(), // Ajout de toLowerCase() pour normaliser l'email
+        email: email.trim().toLowerCase(),
         password: password.trim(),
       });
 
@@ -39,6 +51,8 @@ export const LoginForm = () => {
         
         if (signInError.message.includes('Invalid login credentials')) {
           setValidationError('Email ou mot de passe incorrect. Vérifiez vos identifiants et réessayez.');
+        } else if (signInError.message.includes('Email not confirmed')) {
+          setValidationError('Veuillez confirmer votre email avant de vous connecter.');
         } else if (signInError.message.includes('Body is disturbed')) {
           setValidationError('Une erreur technique est survenue. La page va se recharger.');
           await new Promise(resolve => setTimeout(resolve, 1000));
