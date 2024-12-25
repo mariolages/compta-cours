@@ -100,15 +100,13 @@ export default function Admin() {
         )
       );
 
-      const { data, error: updateError } = await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
           is_validated: !currentStatus,
           updated_at: new Date().toISOString()
         })
-        .eq('id', userId)
-        .select()
-        .maybeSingle();
+        .eq('id', userId);
 
       if (updateError) {
         console.error("Error updating validation status:", updateError);
@@ -123,12 +121,27 @@ export default function Admin() {
         throw updateError;
       }
 
-      if (!data) {
-        console.error("No data returned after update, user might not exist anymore");
-        throw new Error("Failed to update user status - user not found");
+      // Verify the update by fetching the latest data
+      const { data: updatedProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error("Error fetching updated profile:", fetchError);
+        throw fetchError;
       }
 
-      console.log("Update successful, updated data:", data);
+      if (!updatedProfile) {
+        console.error("No profile found after update");
+        throw new Error("Profile not found after update");
+      }
+
+      console.log("Update successful, updated profile:", updatedProfile);
+
+      // Refresh the users list to ensure we have the latest data
+      await fetchUsers();
 
       toast({
         title: "Succès",
