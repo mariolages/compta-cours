@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink } from "lucide-react";
+import { Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -43,7 +43,6 @@ export function FileList({ files, onDownload }: FileListProps) {
       if (data?.signedUrl) {
         console.log('URL signée générée avec succès:', data.signedUrl);
         
-        // Ouvrir directement dans un nouvel onglet
         window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
         
         toast({
@@ -91,14 +90,6 @@ export function FileList({ files, onDownload }: FileListProps) {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="hover:bg-primary/10"
-                onClick={() => openInGoogle(file.file_path)}
-              >
-                <ExternalLink className="h-4 w-4" />
-                <span className="ml-2">Ouvrir</span>
-              </Button>
               <Button
                 variant="outline"
                 className="hover:bg-primary/10"
