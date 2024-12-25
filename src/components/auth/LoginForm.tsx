@@ -55,21 +55,21 @@ export const LoginForm = () => {
 
       console.log('Utilisateur connecté avec succès:', user.id);
 
-      const { data: profile, error: profileError } = await supabase
+      // Vérification du profil avec une requête distincte pour s'assurer d'avoir les données les plus récentes
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('is_validated, is_admin')
-        .eq('id', user.id)
-        .single();
+        .eq('id', user.id);
 
-      if (profileError) {
-        console.error('Erreur lors de la vérification du profil:', profileError);
-        setValidationError('Erreur lors de la vérification du compte. Veuillez réessayer.');
+      if (profilesError) {
+        console.error('Erreur lors de la vérification du profil:', profilesError);
+        setValidationError('Erreur lors de la vérification du compte');
         await supabase.auth.signOut();
         setIsLoading(false);
         return;
       }
 
-      if (!profile) {
+      if (!profiles || profiles.length === 0) {
         console.error('Aucun profil trouvé pour l\'utilisateur:', user.id);
         setValidationError('Compte non trouvé. Veuillez contacter un administrateur.');
         await supabase.auth.signOut();
@@ -77,7 +77,11 @@ export const LoginForm = () => {
         return;
       }
 
+      const profile = profiles[0];
+      console.log('Profil utilisateur:', profile);
+
       if (!profile.is_validated && !profile.is_admin) {
+        console.log('Tentative de connexion avec un compte non validé');
         setValidationError('Votre compte est en attente de validation par un administrateur.');
         await supabase.auth.signOut();
         setIsLoading(false);
