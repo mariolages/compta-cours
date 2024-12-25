@@ -104,6 +104,11 @@ export default function Dashboard() {
     });
   };
 
+  const handleSubjectClick = (subjectId: number) => {
+    console.log("Navigating to subject:", subjectId);
+    navigate(`/subjects/${subjectId}`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       {/* Navigation Bar */}
@@ -169,7 +174,15 @@ export default function Dashboard() {
               <Card 
                 key={subject.id}
                 className="group hover:shadow-xl transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm hover:bg-white transform hover:scale-[1.02]"
-                onClick={() => navigate(`/subjects/${subject.id}`)}
+                onClick={() => handleSubjectClick(subject.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSubjectClick(subject.id);
+                  }
+                }}
               >
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3 group-hover:text-primary transition-colors">
