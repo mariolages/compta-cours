@@ -29,18 +29,6 @@ export const LoginForm = () => {
     try {
       console.log('Tentative de connexion avec:', email);
       
-      // First, check if the user exists
-      const { data: userExists, error: userCheckError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', email)
-        .maybeSingle();
-
-      if (userCheckError) {
-        console.error('Erreur lors de la vérification du compte:', userCheckError);
-      }
-
-      // Attempt to sign in
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password: password.trim(),
