@@ -48,22 +48,31 @@ export function FileCard({
   const MobileActions = () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" className="h-8 w-8">
           <MoreVertical className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onDownload(file.id, file.file_path, file.title)}>
-          <Download className="h-4 w-4 mr-2" />
-          Télécharger
+      <DropdownMenuContent align="end" className="w-48 bg-white shadow-lg border-2 border-gray-200">
+        <DropdownMenuItem 
+          onClick={() => onDownload(file.id, file.file_path, file.title)}
+          className="py-3 cursor-pointer"
+        >
+          <Download className="h-4 w-4 mr-3 text-primary" />
+          <span className="text-base">Télécharger</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onRenameClick(file.id, file.title)}>
-          <Edit2 className="h-4 w-4 mr-2" />
-          Renommer
+        <DropdownMenuItem 
+          onClick={() => onRenameClick(file.id, file.title)}
+          className="py-3 cursor-pointer"
+        >
+          <Edit2 className="h-4 w-4 mr-3 text-primary" />
+          <span className="text-base">Renommer</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onDelete(file.id)} className="text-red-600">
-          <Trash2 className="h-4 w-4 mr-2" />
-          Supprimer
+        <DropdownMenuItem 
+          onClick={() => onDelete(file.id)} 
+          className="py-3 cursor-pointer text-red-600"
+        >
+          <Trash2 className="h-4 w-4 mr-3" />
+          <span className="text-base">Supprimer</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -103,13 +112,13 @@ export function FileCard({
   );
 
   return (
-    <Card className="hover:shadow-md transition-all duration-300 border-l-4 border-l-primary group">
-      <CardContent className="p-4 md:p-6">
+    <Card className="hover:shadow-md transition-all duration-300 border-l-4 border-l-primary">
+      <CardContent className="p-4">
         <div className="flex flex-col space-y-4">
           <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 space-y-1">
               {editingFileId === file.id ? (
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+                <div className="flex flex-col space-y-3">
                   <Input
                     value={newTitle}
                     onChange={(e) => onNewTitleChange(e.target.value)}
@@ -136,8 +145,8 @@ export function FileCard({
                   </div>
                 </div>
               ) : (
-                <div className="space-y-1">
-                  <h3 className="font-medium text-lg text-gray-900 truncate">
+                <div>
+                  <h3 className="font-medium text-base md:text-lg text-gray-900 truncate">
                     {file.title}
                   </h3>
                   <p className="text-sm text-gray-500">
@@ -147,7 +156,7 @@ export function FileCard({
               )}
             </div>
 
-            <div className="ml-4">
+            <div className="ml-4 flex-shrink-0">
               {isMobile ? <MobileActions /> : <DesktopActions />}
             </div>
           </div>
