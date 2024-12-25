@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { BookOpen, Plus, RefreshCw, Clock, FileText } from "lucide-react";
+import { BookOpen, Plus, RefreshCw, Clock } from "lucide-react";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { SearchBar } from '@/components/dashboard/SearchBar';
 import { RecentFiles } from '@/components/dashboard/RecentFiles';
@@ -18,14 +18,12 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-  const [fileCountBySubject, setFileCountBySubject] = useState<Record<number, number>>({});
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchSubjects();
     fetchRecentFiles();
-    fetchFileCountBySubject();
   }, []);
 
   const fetchSubjects = async () => {
@@ -44,24 +42,6 @@ export default function Dashboard() {
     }
     
     setSubjects(data);
-  };
-
-  const fetchFileCountBySubject = async () => {
-    const { data, error } = await supabase
-      .from('files')
-      .select('subject_id, count')
-      .select('subject_id');
-
-    if (error) {
-      console.error('Error fetching file counts:', error);
-      return;
-    }
-
-    const counts: Record<number, number> = {};
-    data.forEach(file => {
-      counts[file.subject_id] = (counts[file.subject_id] || 0) + 1;
-    });
-    setFileCountBySubject(counts);
   };
 
   const fetchRecentFiles = async () => {
@@ -89,13 +69,13 @@ export default function Dashboard() {
     setRecentFiles(data);
   };
 
+  const handleDeleteFile = (fileId: string) => {
+    setRecentFiles(prev => prev.filter(file => file.id !== fileId));
+  };
+
   const refreshData = async () => {
     setIsRefreshing(true);
-    await Promise.all([
-      fetchSubjects(),
-      fetchRecentFiles(),
-      fetchFileCountBySubject()
-    ]);
+    await Promise.all([fetchSubjects(), fetchRecentFiles()]);
     setLastRefresh(new Date());
     setIsRefreshing(false);
     toast({
@@ -105,17 +85,7 @@ export default function Dashboard() {
   };
 
   const handleSubjectClick = (subjectId: number) => {
-    console.log("Attempting to navigate to subject:", subjectId);
-    try {
-      navigate(`/subjects/${subjectId}`);
-    } catch (error) {
-      console.error("Navigation error:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur de navigation",
-        description: "Impossible d'accéder à cette matière pour le moment",
-      });
-    }
+    navigate(`/subjects/${subjectId}`);
   };
 
   return (
@@ -171,7 +141,11 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Files Section */}
-        <RecentFiles files={recentFiles} searchQuery={searchQuery} />
+        <RecentFiles 
+          files={recentFiles} 
+          searchQuery={searchQuery} 
+          onDelete={handleDeleteFile}
+        />
 
         {/* Subjects Grid */}
         <div className="space-y-4 animate-fade-in">
@@ -196,10 +170,6 @@ export default function Dashboard() {
                           {subject.name}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1 text-sm text-gray-500">
-                        <FileText className="h-4 w-4" />
-                        <span>{fileCountBySubject[subject.id] || 0}</span>
-                      </div>
                     </CardTitle>
                   </CardHeader>
                 </Card>
@@ -208,6 +178,16 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Upload Dialog */}
+        <FileUploadDialog 
+          open={isUploadOpen} 
+          onOpenChange={setIsUploadOpen}
+          onSuccess={() => {
+            fetchRecentFiles();
+            setIsUploadOpen(false);
+          }}
+        />
+
         {/* Floating Upload Button */}
         <Button
           onClick={() => setIsUploadOpen(true)}
@@ -215,16 +195,6 @@ export default function Dashboard() {
         >
           <Plus className="h-6 w-6" />
         </Button>
-
-        <FileUploadDialog 
-          open={isUploadOpen} 
-          onOpenChange={setIsUploadOpen}
-          onSuccess={() => {
-            fetchRecentFiles();
-            fetchFileCountBySubject();
-            setIsUploadOpen(false);
-          }}
-        />
       </div>
     </div>
   );

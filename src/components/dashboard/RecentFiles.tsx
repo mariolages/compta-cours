@@ -1,15 +1,19 @@
 import React from 'react';
-import { Download } from 'lucide-react';
+import { Download, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { File } from '@/types/files';
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import type { File } from '@/types/files';
 
 interface RecentFilesProps {
   files: File[];
   searchQuery: string;
+  onDelete: (fileId: string) => void;
 }
 
-export const RecentFiles = ({ files, searchQuery }: RecentFilesProps) => {
+export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) => {
+  const { toast } = useToast();
   const filteredFiles = files.filter((file) => {
     const searchLower = searchQuery.toLowerCase();
     return (
@@ -19,6 +23,29 @@ export const RecentFiles = ({ files, searchQuery }: RecentFilesProps) => {
       file.category.name.toLowerCase().includes(searchLower)
     );
   });
+
+  const handleDelete = async (fileId: string) => {
+    try {
+      const { error } = await supabase
+        .from('files')
+        .delete()
+        .eq('id', fileId);
+
+      if (error) throw error;
+
+      onDelete(fileId);
+      toast({
+        title: "Succès",
+        description: "Le fichier a été supprimé avec succès",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de supprimer le fichier",
+      });
+    }
+  };
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -44,7 +71,7 @@ export const RecentFiles = ({ files, searchQuery }: RecentFilesProps) => {
                     Date
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Action
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -64,10 +91,21 @@ export const RecentFiles = ({ files, searchQuery }: RecentFilesProps) => {
                       {new Date(file.created_at).toLocaleDateString('fr-FR')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Button variant="ghost" size="sm" className="text-primary hover:text-primary-hover">
-                        <Download className="h-4 w-4 mr-2" />
-                        Télécharger
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" className="text-primary hover:text-primary-hover">
+                          <Download className="h-4 w-4 mr-2" />
+                          Télécharger
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDelete(file.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Supprimer
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
