@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface File {
   id: string;
@@ -20,18 +21,41 @@ interface FileListProps {
 }
 
 export function FileList({ files, onDownload }: FileListProps) {
+  const { toast } = useToast();
+
   const openInGoogle = async (filePath: string) => {
     try {
-      const { data } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from('dcg_files')
         .createSignedUrl(filePath, 3600); // URL valide pendant 1 heure
+
+      if (error) {
+        console.error('Erreur lors de la création de l\'URL:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible d'ouvrir le fichier",
+        });
+        return;
+      }
 
       if (data?.signedUrl) {
         // Ouvrir dans un nouvel onglet
         window.open(data.signedUrl, '_blank');
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "URL du fichier non disponible",
+        });
       }
     } catch (error) {
       console.error('Erreur lors de l\'ouverture du fichier:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'ouverture du fichier",
+      });
     }
   };
 
