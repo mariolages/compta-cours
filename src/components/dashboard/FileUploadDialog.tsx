@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 
 interface FileUploadDialogProps {
   open: boolean;
@@ -21,92 +22,96 @@ interface FileUploadDialogProps {
 }
 
 export function FileUploadDialog({ open, onOpenChange, onSuccess, defaultSubjectId }: FileUploadDialogProps) {
-  const [title, setTitle] = useState('');
   const [subjectId, setSubjectId] = useState(defaultSubjectId || '');
   const [categoryId, setCategoryId] = useState('');
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<FileList | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !title || !subjectId || !categoryId) {
+    if (!files || files.length === 0 || !subjectId || !categoryId) {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Veuillez remplir tous les champs",
+        description: "Veuillez sélectionner des fichiers et remplir tous les champs",
       });
       return;
     }
 
     setIsLoading(true);
+    setProgress(0);
+    
     try {
-      // Upload file to storage
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${crypto.randomUUID()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('dcg_files')
-        .upload(filePath, file);
+      const totalFiles = files.length;
+      let successCount = 0;
 
-      if (uploadError) throw uploadError;
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileExt = file.name.split('.').pop();
+        const filePath = `${crypto.randomUUID()}.${fileExt}`;
+        
+        // Upload file to storage
+        const { error: uploadError } = await supabase.storage
+          .from('dcg_files')
+          .upload(filePath, file);
 
-      // Save file metadata to database
-      const { error: dbError } = await supabase
-        .from('files')
-        .insert({
-          title,
-          file_path: filePath,
-          subject_id: parseInt(subjectId),
-          category_id: parseInt(categoryId),
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-        });
+        if (uploadError) throw uploadError;
 
-      if (dbError) throw dbError;
+        // Save file metadata to database
+        const { error: dbError } = await supabase
+          .from('files')
+          .insert({
+            title: file.name.replace(`.${fileExt}`, ''),
+            file_path: filePath,
+            subject_id: parseInt(subjectId),
+            category_id: parseInt(categoryId),
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+          });
+
+        if (dbError) throw dbError;
+
+        successCount++;
+        setProgress((successCount / totalFiles) * 100);
+      }
 
       toast({
         title: "Succès",
-        description: "Votre fichier a été déposé avec succès",
+        description: `${successCount} fichier(s) déposé(s) avec succès`,
       });
       
       onSuccess();
       resetForm();
     } catch (error) {
+      console.error("Upload error:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Une erreur est survenue lors du dépôt du fichier",
+        description: "Une erreur est survenue lors du dépôt des fichiers",
       });
     } finally {
       setIsLoading(false);
+      setProgress(0);
     }
   };
 
   const resetForm = () => {
-    setTitle('');
     setSubjectId(defaultSubjectId || '');
     setCategoryId('');
-    setFile(null);
+    setFiles(null);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Déposer un fichier</DialogTitle>
+          <DialogTitle>Déposer des fichiers</DialogTitle>
+          <DialogDescription>
+            Vous pouvez sélectionner plusieurs fichiers à la fois
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Titre</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Titre du document"
-              disabled={isLoading}
-            />
-          </div>
-          
           <div className="space-y-2">
             <Label htmlFor="subject">Matière</Label>
             <Select
@@ -156,15 +161,25 @@ export function FileUploadDialog({ open, onOpenChange, onSuccess, defaultSubject
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="file">Fichier</Label>
+            <Label htmlFor="files">Fichiers</Label>
             <Input
-              id="file"
+              id="files"
               type="file"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              onChange={(e) => setFiles(e.target.files)}
               disabled={isLoading}
               accept=".pdf,.doc,.docx,.xls,.xlsx"
+              multiple
             />
           </div>
+
+          {isLoading && progress > 0 && (
+            <div className="space-y-2">
+              <Progress value={progress} className="w-full" />
+              <p className="text-sm text-center text-muted-foreground">
+                {Math.round(progress)}% terminé
+              </p>
+            </div>
+          )}
 
           <div className="flex justify-end space-x-2">
             <Button
