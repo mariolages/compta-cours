@@ -1,50 +1,86 @@
+import { useEffect } from "react";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function Login() {
-  const handleLogin = async (email: string, password: string) => {
-    // Log the login attempt
-    await supabase
-      .from('auth_logs')
-      .insert([
-        { 
-          email: email,
-          event_type: 'login_attempt'
-        }
-      ]);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+  useEffect(() => {
+    // Check current session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate('/dashboard');
+      }
     });
 
-    if (error) {
+    // Listen for auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        navigate('/dashboard');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const handleLogin = async (email: string, password: string) => {
+    try {
+      // Log the login attempt
+      await supabase
+        .from('auth_logs')
+        .insert([
+          { 
+            email: email,
+            event_type: 'login_attempt'
+          }
+        ]);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Check if user is banned
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_banned')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profile?.is_banned) {
+        throw new Error('Votre compte a été banni');
+      }
+
+      // Log successful login
+      await supabase
+        .from('auth_logs')
+        .insert([
+          { 
+            user_id: data.user.id,
+            email: email,
+            event_type: 'login_success'
+          }
+        ]);
+
+      return data;
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur de connexion",
+        description: error.message || "Une erreur est survenue lors de la connexion",
+      });
       throw error;
     }
-
-    // Check if user is banned
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_banned')
-      .eq('id', data.user.id)
-      .single();
-
-    if (profile?.is_banned) {
-      throw new Error('Votre compte a été banni');
-    }
-
-    // Log successful login
-    await supabase
-      .from('auth_logs')
-      .insert([
-        { 
-          user_id: data.user.id,
-          email: email,
-          event_type: 'login_success'
-        }
-      ]);
-
-    return data;
   };
 
   return (
