@@ -100,12 +100,21 @@ export default function Admin() {
   };
 
   const toggleValidation = async (userId: string, currentStatus: boolean) => {
-    if (isUpdating) return; // Prevent multiple simultaneous updates
+    if (isUpdating) return;
     
     try {
       setIsUpdating(true);
       console.log(`Toggling validation for user ${userId} from ${currentStatus} to ${!currentStatus}`);
       
+      // Update local state immediately for better UX
+      setUsers(prevUsers => 
+        prevUsers.map(user => 
+          user.id === userId 
+            ? { ...user, is_validated: !currentStatus }
+            : user
+        )
+      );
+
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
@@ -115,26 +124,23 @@ export default function Admin() {
         .eq('id', userId);
 
       if (updateError) {
+        // Revert local state if update fails
+        setUsers(prevUsers => 
+          prevUsers.map(user => 
+            user.id === userId 
+              ? { ...user, is_validated: currentStatus }
+              : user
+          )
+        );
         console.error("Error updating validation status:", updateError);
         throw updateError;
       }
-
-      // Update local state immediately
-      setUsers(prevUsers => 
-        prevUsers.map(user => 
-          user.id === userId 
-            ? { ...user, is_validated: !currentStatus }
-            : user
-        )
-      );
 
       toast({
         title: "Succès",
         description: `L'utilisateur a été ${!currentStatus ? 'validé' : 'invalidé'}`,
       });
 
-      // Refresh the users list to ensure consistency
-      await fetchUsers();
     } catch (error) {
       console.error("Error toggling validation:", error);
       toast({
