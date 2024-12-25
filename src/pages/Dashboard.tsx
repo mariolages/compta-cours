@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { BookOpen, LogOut, Plus, User } from "lucide-react";
+import { BookOpen, Plus } from "lucide-react";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { SearchBar } from '@/components/dashboard/SearchBar';
 import { RecentFiles } from '@/components/dashboard/RecentFiles';
+import { ProfileMenu } from '@/components/dashboard/ProfileMenu';
 import type { Subject, File } from '@/types/files';
 
 export default function Dashboard() {
@@ -22,19 +23,6 @@ export default function Dashboard() {
     fetchSubjects();
     fetchRecentFiles();
   }, []);
-
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la déconnexion",
-      });
-      return;
-    }
-    navigate('/login');
-  };
 
   const fetchSubjects = async () => {
     const { data, error } = await supabase
@@ -94,18 +82,7 @@ export default function Dashboard() {
             <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
             <div className="flex items-center gap-4">
-              <Button variant="ghost" className="gap-2">
-                <User className="h-4 w-4" />
-                <span>Profil</span>
-              </Button>
-              <Button 
-                onClick={handleLogout} 
-                variant="outline" 
-                className="border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Déconnexion
-              </Button>
+              <ProfileMenu />
             </div>
           </div>
         </div>
