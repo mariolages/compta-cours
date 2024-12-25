@@ -22,17 +22,20 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("Dashboard mounted, fetching initial data");
     fetchSubjects();
     fetchRecentFiles();
   }, []);
 
   const fetchSubjects = async () => {
+    console.log("Fetching subjects...");
     const { data, error } = await supabase
       .from('subjects')
       .select('*')
       .order('code');
     
     if (error) {
+      console.error("Error fetching subjects:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -41,23 +44,26 @@ export default function Dashboard() {
       return;
     }
     
+    console.log("Subjects fetched successfully:", data);
     setSubjects(data);
   };
 
   const fetchRecentFiles = async () => {
+    console.log("Fetching recent files...");
     const { data, error } = await supabase
       .from('files')
       .select(`
         id,
         title,
         created_at,
-        subject:subject_id(id, code, name),
-        category:category_id(name)
+        subject:subjects(id, code, name),
+        category:categories(id, name)
       `)
       .order('created_at', { ascending: false })
-      .limit(5);
+      .limit(10);
     
     if (error) {
+      console.error("Error fetching recent files:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -66,14 +72,17 @@ export default function Dashboard() {
       return;
     }
     
+    console.log("Recent files fetched successfully:", data);
     setRecentFiles(data);
   };
 
-  const handleDeleteFile = (fileId: string) => {
+  const handleDeleteFile = async (fileId: string) => {
+    console.log("Deleting file:", fileId);
     setRecentFiles(prev => prev.filter(file => file.id !== fileId));
   };
 
   const refreshData = async () => {
+    console.log("Refreshing all data...");
     setIsRefreshing(true);
     await Promise.all([fetchSubjects(), fetchRecentFiles()]);
     setLastRefresh(new Date());
