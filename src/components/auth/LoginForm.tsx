@@ -30,31 +30,34 @@ export const LoginForm = () => {
       console.log('Tentative de connexion avec:', email);
       
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: email.trim().toLowerCase(), // Ajout de toLowerCase() pour normaliser l'email
         password: password.trim(),
       });
 
       if (signInError) {
-        console.error('Erreur de connexion:', signInError);
+        console.error('Erreur de connexion détaillée:', signInError);
+        
         if (signInError.message.includes('Invalid login credentials')) {
-          setValidationError('Email ou mot de passe incorrect');
+          setValidationError('Email ou mot de passe incorrect. Vérifiez vos identifiants et réessayez.');
         } else if (signInError.message.includes('Body is disturbed')) {
-          setValidationError('Une erreur technique est survenue. Veuillez réessayer.');
+          setValidationError('Une erreur technique est survenue. La page va se recharger.');
           await new Promise(resolve => setTimeout(resolve, 1000));
           window.location.reload();
         } else {
-          setValidationError(signInError.message);
+          setValidationError(`Erreur de connexion: ${signInError.message}`);
         }
         setIsLoading(false);
         return;
       }
 
       if (!data.user) {
+        console.error('Aucun utilisateur retourné après connexion');
         setValidationError('Erreur lors de la connexion');
         setIsLoading(false);
         return;
       }
 
+      console.log('Vérification du profil pour:', data.user.id);
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('is_validated, is_admin')
@@ -62,6 +65,7 @@ export const LoginForm = () => {
         .single();
 
       if (profileError) {
+        console.error('Erreur lors de la vérification du profil:', profileError);
         setValidationError('Erreur lors de la vérification du compte');
         await supabase.auth.signOut();
         setIsLoading(false);
@@ -69,6 +73,7 @@ export const LoginForm = () => {
       }
 
       if (!profile) {
+        console.error('Aucun profil trouvé pour:', data.user.id);
         setValidationError('Compte non trouvé');
         await supabase.auth.signOut();
         setIsLoading(false);
@@ -76,12 +81,14 @@ export const LoginForm = () => {
       }
 
       if (!profile.is_validated && !profile.is_admin) {
-        setValidationError('Votre compte est en attente de validation');
+        console.log('Compte non validé:', data.user.id);
+        setValidationError('Votre compte est en attente de validation par un administrateur');
         await supabase.auth.signOut();
         setIsLoading(false);
         return;
       }
 
+      console.log('Connexion réussie pour:', data.user.id);
       toast({
         title: "Connexion réussie",
         description: "Vous êtes maintenant connecté",
@@ -89,7 +96,7 @@ export const LoginForm = () => {
       navigate('/dashboard');
     } catch (error) {
       console.error('Erreur générale:', error);
-      setValidationError('Une erreur est survenue');
+      setValidationError('Une erreur inattendue est survenue');
     } finally {
       setIsLoading(false);
     }
