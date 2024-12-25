@@ -43,14 +43,8 @@ export function FileList({ files, onDownload }: FileListProps) {
       if (data?.signedUrl) {
         console.log('URL signée générée avec succès:', data.signedUrl);
         
-        // Créer un élément <a> pour ouvrir le lien
-        const link = document.createElement('a');
-        link.href = data.signedUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Ouvrir directement dans un nouvel onglet
+        window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
         
         toast({
           title: "Succès",
