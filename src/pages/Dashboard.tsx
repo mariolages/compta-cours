@@ -9,7 +9,7 @@ import { SearchBar } from '@/components/dashboard/SearchBar';
 import { ProfileMenu } from '@/components/dashboard/ProfileMenu';
 import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { SubjectsGrid } from '@/components/dashboard/SubjectsGrid';
-import type { Subject } from '@/types/files';
+import type { Subject } from '@/types/subject';
 import { useQuery } from '@tanstack/react-query';
 
 export default function Dashboard() {

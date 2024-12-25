@@ -7,6 +7,7 @@ import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { SubjectHeader } from "@/components/subject/SubjectHeader";
 import { SubjectTabs } from "@/components/subject/SubjectTabs";
 import { useIsMobile } from "@/hooks/use-mobile";
+import type { Subject } from '@/types/subject';
 
 export default function SubjectPage() {
   const { subjectId } = useParams();
@@ -161,3 +162,4 @@ export default function SubjectPage() {
     </div>
   );
 }
+
