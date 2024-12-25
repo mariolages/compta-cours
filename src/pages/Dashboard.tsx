@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -39,13 +39,15 @@ export default function Dashboard() {
         return numA - numB;
       });
     },
-    onError: (error) => {
-      console.error("Query error:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger les matières",
-      });
+    meta: {
+      onError: (error: Error) => {
+        console.error("Query error:", error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les matières",
+        });
+      }
     }
   });
 
