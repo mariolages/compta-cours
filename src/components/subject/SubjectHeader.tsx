@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { MoreVertical, ArrowLeft } from "lucide-react";
+import { MoreVertical, ArrowLeft, Upload } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SubjectHeaderProps {
   code: string;
@@ -21,21 +22,15 @@ export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: Subj
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const handleUpdateName = async () => {
     try {
-      console.log("Tentative de mise à jour du nom du cours:", {
-        code,
-        nouveauNom: newName,
-      });
-
       const { data, error } = await supabase
         .from("subjects")
         .update({ name: newName })
         .eq("code", code)
         .select();
-
-      console.log("Réponse de Supabase:", { data, error });
 
       if (error) throw error;
 
@@ -57,8 +52,8 @@ export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: Subj
   };
 
   return (
-    <div className="mb-8 space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="mb-6 md:mb-8 space-y-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -69,14 +64,18 @@ export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: Subj
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">{name}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">{name}</h1>
             <p className="text-gray-500">{code}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button onClick={onUploadClick}>
-            Ajouter un fichier
+          <Button onClick={onUploadClick} className="w-full md:w-auto">
+            {isMobile ? (
+              <Upload className="h-5 w-5" />
+            ) : (
+              "Ajouter un fichier"
+            )}
           </Button>
 
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -85,7 +84,7 @@ export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: Subj
                 <MoreVertical className="h-5 w-5" />
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Modifier le nom du cours</DialogTitle>
               </DialogHeader>

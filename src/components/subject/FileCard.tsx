@@ -1,8 +1,15 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Edit2, Trash2 } from "lucide-react";
+import { Download, Edit2, Trash2, MoreVertical } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { AudioPlayer } from "./AudioPlayer";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface FileCardProps {
   file: {
@@ -36,15 +43,73 @@ export function FileCard({
   onNewTitleChange,
 }: FileCardProps) {
   const isPodcast = (file: { category: { id: number } }) => file.category.id === 6;
+  const isMobile = useIsMobile();
+
+  const MobileActions = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => onDownload(file.id, file.file_path, file.title)}>
+          <Download className="h-4 w-4 mr-2" />
+          Télécharger
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onRenameClick(file.id, file.title)}>
+          <Edit2 className="h-4 w-4 mr-2" />
+          Renommer
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onDelete(file.id)} className="text-red-600">
+          <Trash2 className="h-4 w-4 mr-2" />
+          Supprimer
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+  const DesktopActions = () => (
+    <div className="flex items-center gap-3">
+      <Button
+        variant="outline"
+        size="sm"
+        className="flex items-center gap-2 hover:bg-primary hover:text-white transition-all duration-300 border-primary/20"
+        onClick={() => onDownload(file.id, file.file_path, file.title)}
+      >
+        <Download className="h-4 w-4" />
+        <span>Télécharger</span>
+      </Button>
+      {editingFileId !== file.id && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onRenameClick(file.id, file.title)}
+          className="flex items-center gap-2 hover:bg-accent hover:text-white transition-all duration-300 border-accent/20"
+        >
+          <Edit2 className="h-4 w-4" />
+          <span>Renommer</span>
+        </Button>
+      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => onDelete(file.id)}
+        className="hover:bg-red-50 hover:text-red-500 transition-colors"
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
+  );
 
   return (
     <Card className="hover:shadow-md transition-all duration-300 border-l-4 border-l-primary group">
-      <CardContent className="p-6">
+      <CardContent className="p-4 md:p-6">
         <div className="flex flex-col space-y-4">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               {editingFileId === file.id ? (
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
                   <Input
                     value={newTitle}
                     onChange={(e) => onNewTitleChange(e.target.value)}
@@ -82,35 +147,8 @@ export function FileCard({
               )}
             </div>
 
-            <div className="flex items-center gap-3 ml-4">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2 hover:bg-primary hover:text-white transition-all duration-300 border-primary/20"
-                onClick={() => onDownload(file.id, file.file_path, file.title)}
-              >
-                <Download className="h-4 w-4" />
-                <span>Télécharger</span>
-              </Button>
-              {editingFileId !== file.id && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onRenameClick(file.id, file.title)}
-                  className="flex items-center gap-2 hover:bg-accent hover:text-white transition-all duration-300 border-accent/20"
-                >
-                  <Edit2 className="h-4 w-4" />
-                  <span>Renommer</span>
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onDelete(file.id)}
-                className="hover:bg-red-50 hover:text-red-500 transition-colors"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+            <div className="ml-4">
+              {isMobile ? <MobileActions /> : <DesktopActions />}
             </div>
           </div>
 

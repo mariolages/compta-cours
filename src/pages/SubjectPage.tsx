@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,18 +6,15 @@ import { useToast } from "@/components/ui/use-toast";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { SubjectHeader } from "@/components/subject/SubjectHeader";
 import { SubjectTabs } from "@/components/subject/SubjectTabs";
-
-interface Subject {
-  id: number;
-  code: string;
-  name: string;
-}
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function SubjectPage() {
   const { subjectId } = useParams();
+  const navigate = useNavigate();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("1");
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const { data: subject, isLoading: isLoadingSubject } = useQuery({
     queryKey: ["subject", subjectId],
@@ -112,8 +109,8 @@ export default function SubjectPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="container mx-auto px-8 py-12 max-w-7xl">
-        <div className="space-y-8">
+      <div className="container mx-auto px-4 md:px-8 py-6 md:py-12 max-w-7xl">
+        <div className="space-y-6 md:space-y-8">
           <SubjectHeader
             code={subject?.code || ""}
             name={subject?.name || ""}
@@ -147,6 +144,7 @@ export default function SubjectPage() {
             selectedCategory={selectedCategory}
             onCategoryChange={setSelectedCategory}
             onDownload={handleDownload}
+            isMobile={isMobile}
           />
         </div>
 
