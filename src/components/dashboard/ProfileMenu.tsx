@@ -19,6 +19,7 @@ export const ProfileMenu = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -33,7 +34,7 @@ export const ProfileMenu = () => {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('full_name')
+        .select('full_name, is_admin')
         .eq('id', user.id)
         .maybeSingle();
       
@@ -42,7 +43,6 @@ export const ProfileMenu = () => {
         return;
       }
 
-      // Si le profil n'existe pas, on le crée
       if (!profile) {
         const { error: insertError } = await supabase
           .from('profiles')
@@ -52,8 +52,9 @@ export const ProfileMenu = () => {
           console.error('Error creating profile:', insertError);
           return;
         }
-      } else if (profile.full_name) {
-        setFullName(profile.full_name);
+      } else {
+        setFullName(profile.full_name || '');
+        setIsAdmin(profile.is_admin || false);
       }
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
@@ -122,6 +123,11 @@ export const ProfileMenu = () => {
           <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>
             Modifier le profil
           </DropdownMenuItem>
+          {isAdmin && (
+            <DropdownMenuItem onClick={() => navigate('/admin')}>
+              Administration
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={handleLogout} className="text-red-600">
             <LogOut className="h-4 w-4 mr-2" />
             Déconnexion
