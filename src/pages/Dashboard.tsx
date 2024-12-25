@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, BookOpen, LogOut, Download } from "lucide-react";
+import { Upload, BookOpen, LogOut, Download, Search, User, Plus } from "lucide-react";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 
 interface Subject {
@@ -27,6 +27,7 @@ export default function Dashboard() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [recentFiles, setRecentFiles] = useState<File[]>([]);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -92,82 +93,142 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      {/* Navigation Bar */}
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                DCGHub
+              </h1>
+            </div>
+            
+            <div className="flex-1 max-w-2xl mx-8">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <input
+                  type="text"
+                  placeholder="Rechercher des ressources..."
+                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" className="gap-2">
+                <User className="h-4 w-4" />
+                <span>Profil</span>
+              </Button>
+              <Button 
+                onClick={handleLogout} 
+                variant="outline" 
+                className="border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Déconnexion
+              </Button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
       <div className="container mx-auto px-4 py-8 space-y-8">
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8 glass-card rounded-xl p-6 backdrop-blur-sm animate-fade-in">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-pulse">
-            Tableau de bord DCG
-          </h1>
-          <div className="flex gap-4">
-            <Button 
-              onClick={() => setIsUploadOpen(true)} 
-              className="bg-primary hover:bg-primary-hover transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              Déposer un fichier
-            </Button>
-            <Button 
-              onClick={handleLogout} 
-              variant="outline" 
-              className="border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 transition-all duration-300 transform hover:scale-105"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Déconnexion
-            </Button>
+        {/* Welcome Message */}
+        <div className="glass-card rounded-xl p-8 animate-fade-in">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                Bienvenue sur DCGHub !
+              </h2>
+              <p className="text-gray-600">
+                Accédez à vos ressources et partagez vos fichiers avec la communauté.
+              </p>
+            </div>
+            <BookOpen className="h-16 w-16 text-primary opacity-20" />
           </div>
         </div>
 
         {/* Recent Files Section */}
         <div className="space-y-4 animate-fade-in">
-          <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 pl-2 border-l-4 border-primary">
+          <h2 className="text-2xl font-semibold text-gray-800 pl-2 border-l-4 border-primary">
             Fichiers récents
           </h2>
-          <div className="grid gap-4">
-            {recentFiles.map((file) => (
-              <Card 
-                key={file.id} 
-                className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary transform hover:scale-[1.01] bg-white/80 backdrop-blur-sm"
-              >
-                <CardContent className="flex items-center justify-between p-4">
-                  <div className="flex-1">
-                    <h3 className="font-medium text-lg mb-1">{file.title}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      <span className="font-semibold text-primary">{file.subject.code}</span> - {file.subject.name} | {file.category.name}
-                    </p>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    className="ml-4 hover:bg-primary/10 transition-all duration-300 transform hover:scale-105"
-                  >
-                    <Download className="h-4 w-4" />
-                    <span className="ml-2">Télécharger</span>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Card className="overflow-hidden bg-white/80 backdrop-blur-sm">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Nom du fichier
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Matière
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Catégorie
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {recentFiles.map((file) => (
+                      <tr key={file.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {file.title}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {file.subject.code} - {file.subject.name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {file.category.name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(file.created_at).toLocaleDateString('fr-FR')}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <Button variant="ghost" size="sm" className="text-primary hover:text-primary-hover">
+                            <Download className="h-4 w-4 mr-2" />
+                            Télécharger
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Subjects Grid */}
         <div className="space-y-4 animate-fade-in">
-          <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 pl-2 border-l-4 border-primary">
+          <h2 className="text-2xl font-semibold text-gray-800 pl-2 border-l-4 border-primary">
             Matières
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {subjects.map((subject) => (
               <Card 
                 key={subject.id}
-                className="group hover:shadow-xl transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transform hover:scale-[1.02]"
+                className="group hover:shadow-xl transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm hover:bg-white transform hover:scale-[1.02]"
                 onClick={() => navigate(`/subjects/${subject.id}`)}
               >
                 <CardHeader>
-                  <CardTitle className="flex items-center group-hover:text-primary transition-colors">
-                    <BookOpen className="mr-2 h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                    <div>
+                  <CardTitle className="flex items-center gap-3 group-hover:text-primary transition-colors">
+                    <BookOpen className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
+                    <div className="flex flex-col">
                       <span className="text-primary">{subject.code}</span>
-                      <span className="mx-2">-</span>
-                      <span className="group-hover:text-primary transition-colors">{subject.name}</span>
+                      <span className="text-sm font-normal text-gray-600 group-hover:text-primary/80">
+                        {subject.name}
+                      </span>
                     </div>
                   </CardTitle>
                 </CardHeader>
@@ -175,6 +236,14 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
+
+        {/* Floating Upload Button */}
+        <Button
+          onClick={() => setIsUploadOpen(true)}
+          className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-primary hover:bg-primary-hover transition-all duration-300 animate-fade-in"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
 
         <FileUploadDialog 
           open={isUploadOpen} 
