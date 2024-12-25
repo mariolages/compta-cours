@@ -21,63 +21,71 @@ export const LoginForm = () => {
     setValidationError('');
     
     try {
+      // Tentative de connexion
       const { error: signInError, data: { user } } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (signInError) {
-        toast({
-          variant: "destructive",
-          title: "Erreur de connexion",
-          description: signInError.message,
-        });
+        if (signInError.message.includes('Invalid login credentials')) {
+          setValidationError('Email ou mot de passe incorrect');
+        } else {
+          setValidationError(signInError.message);
+        }
+        setIsLoading(false);
         return;
       }
 
       if (!user) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Utilisateur non trouvé",
-        });
+        setValidationError('Utilisateur non trouvé');
+        setIsLoading(false);
         return;
       }
 
-      // Vérifier si l'utilisateur est validé
+      console.log('Utilisateur connecté:', user.id);
+
+      // Vérification du profil et du statut de validation
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('is_validated')
+        .select('is_validated, is_admin')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
+
+      console.log('Profil récupéré:', profile, 'Erreur profil:', profileError);
 
       if (profileError) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de vérifier le statut de validation",
-        });
-        return;
-      }
-
-      if (!profile?.is_validated) {
-        setValidationError('Votre compte est en attente de validation par un administrateur.');
-        // Déconnexion automatique si non validé
+        console.error('Erreur lors de la vérification du profil:', profileError);
+        setValidationError('Erreur lors de la vérification du compte');
         await supabase.auth.signOut();
+        setIsLoading(false);
         return;
       }
 
+      if (!profile) {
+        console.error('Aucun profil trouvé pour cet utilisateur');
+        setValidationError('Profil utilisateur non trouvé');
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        return;
+      }
+
+      if (!profile.is_validated && !profile.is_admin) {
+        setValidationError('Votre compte est en attente de validation par un administrateur');
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        return;
+      }
+
+      // Succès de la connexion
       toast({
         title: "Connexion réussie",
         description: "Vous êtes maintenant connecté",
       });
       navigate('/dashboard');
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la connexion",
-      });
+      console.error('Erreur de connexion:', error);
+      setValidationError('Une erreur est survenue lors de la connexion');
     } finally {
       setIsLoading(false);
     }
