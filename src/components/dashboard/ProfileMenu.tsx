@@ -19,7 +19,6 @@ export const ProfileMenu = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -37,7 +36,7 @@ export const ProfileMenu = () => {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('full_name, is_admin')
+        .select('full_name')
         .eq('id', user.id)
         .single();
       
@@ -48,7 +47,6 @@ export const ProfileMenu = () => {
 
       if (profile) {
         setFullName(profile.full_name || '');
-        setIsAdmin(profile.is_admin || false);
       }
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
