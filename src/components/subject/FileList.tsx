@@ -1,10 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, ArrowUpDown, Trash2 } from "lucide-react";
+import { Download, ArrowUpDown, Trash2, Edit2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
 
 interface File {
   id: string;
@@ -26,6 +27,8 @@ export function FileList({ files, onDownload }: FileListProps) {
   const { toast } = useToast();
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const queryClient = useQueryClient();
+  const [editingFileId, setEditingFileId] = useState<string | null>(null);
+  const [newTitle, setNewTitle] = useState("");
 
   const handleDeleteFile = async (fileId: string) => {
     try {
@@ -41,7 +44,6 @@ export function FileList({ files, onDownload }: FileListProps) {
         description: "Le fichier a été supprimé",
       });
 
-      // Rafraîchir la liste des fichiers
       queryClient.invalidateQueries({ queryKey: ["subject-files"] });
     } catch (error) {
       console.error("Erreur lors de la suppression:", error);
@@ -51,6 +53,42 @@ export function FileList({ files, onDownload }: FileListProps) {
         description: "Impossible de supprimer le fichier",
       });
     }
+  };
+
+  const handleRenameClick = (fileId: string, currentTitle: string) => {
+    setEditingFileId(fileId);
+    setNewTitle(currentTitle);
+  };
+
+  const handleRenameSubmit = async (fileId: string) => {
+    try {
+      const { error } = await supabase
+        .from('files')
+        .update({ title: newTitle })
+        .eq('id', fileId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Le fichier a été renommé",
+      });
+
+      setEditingFileId(null);
+      queryClient.invalidateQueries({ queryKey: ["subject-files"] });
+    } catch (error) {
+      console.error("Erreur lors du renommage:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de renommer le fichier",
+      });
+    }
+  };
+
+  const handleRenameCancel = () => {
+    setEditingFileId(null);
+    setNewTitle("");
   };
 
   const sortedFiles = files ? [...files].sort((a, b) => {
@@ -95,10 +133,37 @@ export function FileList({ files, onDownload }: FileListProps) {
         >
           <CardContent className="flex items-center justify-between p-4">
             <div className="flex-1">
-              <h3 className="font-medium text-lg mb-1">{file.title}</h3>
-              <p className="text-sm text-gray-500">
-                {new Date(file.created_at).toLocaleDateString('fr-FR')}
-              </p>
+              {editingFileId === file.id ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    className="max-w-md"
+                    autoFocus
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleRenameSubmit(file.id)}
+                  >
+                    Enregistrer
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRenameCancel}
+                  >
+                    Annuler
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <h3 className="font-medium text-lg mb-1">{file.title}</h3>
+                  <p className="text-sm text-gray-500">
+                    {new Date(file.created_at).toLocaleDateString('fr-FR')}
+                  </p>
+                </>
+              )}
             </div>
             <div className="flex gap-2">
               <Button
@@ -109,6 +174,15 @@ export function FileList({ files, onDownload }: FileListProps) {
                 <Download className="h-4 w-4" />
                 <span className="ml-2">Télécharger</span>
               </Button>
+              {editingFileId !== file.id && (
+                <Button
+                  variant="outline"
+                  onClick={() => handleRenameClick(file.id, file.title)}
+                >
+                  <Edit2 className="h-4 w-4" />
+                  <span className="ml-2">Renommer</span>
+                </Button>
+              )}
               <Button
                 variant="destructive"
                 size="icon"
