@@ -11,6 +11,8 @@ interface FileUploadDialogProps {
   defaultSubjectId?: string;
 }
 
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB in bytes
+
 export function FileUploadDialog({ open, onOpenChange, onSuccess, defaultSubjectId }: FileUploadDialogProps) {
   const [subjectId, setSubjectId] = useState(defaultSubjectId || '');
   const [categoryId, setCategoryId] = useState('');
@@ -18,6 +20,20 @@ export function FileUploadDialog({ open, onOpenChange, onSuccess, defaultSubject
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
+
+  const validateFiles = (files: FileList): boolean => {
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].size > MAX_FILE_SIZE) {
+        toast({
+          variant: "destructive",
+          title: "Fichier trop volumineux",
+          description: `Le fichier "${files[i].name}" dépasse la limite de 50 Mo`,
+        });
+        return false;
+      }
+    }
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +43,10 @@ export function FileUploadDialog({ open, onOpenChange, onSuccess, defaultSubject
         title: "Erreur",
         description: "Veuillez sélectionner des fichiers et remplir tous les champs",
       });
+      return;
+    }
+
+    if (!validateFiles(files)) {
       return;
     }
 
@@ -74,12 +94,16 @@ export function FileUploadDialog({ open, onOpenChange, onSuccess, defaultSubject
       
       onSuccess();
       resetForm();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Upload error:", error);
+      const errorMessage = error.message?.includes("Payload too large")
+        ? "Le fichier est trop volumineux (maximum 50 Mo)"
+        : "Une erreur est survenue lors du dépôt des fichiers";
+      
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Une erreur est survenue lors du dépôt des fichiers",
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
@@ -99,7 +123,7 @@ export function FileUploadDialog({ open, onOpenChange, onSuccess, defaultSubject
         <DialogHeader>
           <DialogTitle>Déposer des fichiers</DialogTitle>
           <DialogDescription>
-            Vous pouvez sélectionner plusieurs fichiers à la fois. Le titre sera automatiquement repris du nom du fichier.
+            Vous pouvez sélectionner plusieurs fichiers à la fois (maximum 50 Mo par fichier). Le titre sera automatiquement repris du nom du fichier.
           </DialogDescription>
         </DialogHeader>
         <FileUploadForm
