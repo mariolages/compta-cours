@@ -33,10 +33,18 @@ export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps)
 
   const handleUpdateName = async () => {
     try {
-      const { error } = await supabase
+      console.log("Tentative de mise à jour du nom du cours:", {
+        code,
+        nouveauNom: newName,
+      });
+
+      const { data, error } = await supabase
         .from("subjects")
         .update({ name: newName })
-        .eq("code", code);
+        .eq("code", code)
+        .select();
+
+      console.log("Réponse de Supabase:", { data, error });
 
       if (error) throw error;
 
@@ -49,7 +57,7 @@ export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps)
       queryClient.invalidateQueries({ queryKey: ["subject"] });
       setIsEditDialogOpen(false);
     } catch (error) {
-      console.error("Erreur lors de la mise à jour:", error);
+      console.error("Erreur détaillée lors de la mise à jour:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
