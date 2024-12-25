@@ -47,23 +47,34 @@ export const LoginForm = () => {
       const { email, password } = values;
       console.log('Attempting login with:', email);
 
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
+      // Try to sign in
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase().trim(),
         password: password.trim(),
       });
 
       if (signInError) {
-        console.error('Login error:', signInError);
-        toast({
-          variant: "destructive",
-          title: "Erreur de connexion",
-          description: "Email ou mot de passe incorrect.",
-        });
+        console.error('Login error details:', signInError);
+        
+        // Provide more specific error messages based on the error type
+        if (signInError.message.includes("Invalid login credentials")) {
+          toast({
+            variant: "destructive",
+            title: "Erreur de connexion",
+            description: "Email ou mot de passe incorrect. Si vous n'avez pas de compte, veuillez vous inscrire.",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Erreur de connexion",
+            description: "Une erreur est survenue lors de la connexion. Veuillez réessayer.",
+          });
+        }
         return;
       }
 
-      if (data?.user) {
-        console.log('Login successful:', data.user.id);
+      if (signInData?.user) {
+        console.log('Login successful for user:', signInData.user.id);
         toast({
           title: "Connexion réussie",
           description: "Vous êtes maintenant connecté.",
@@ -75,7 +86,7 @@ export const LoginForm = () => {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Une erreur inattendue s'est produite.",
+        description: "Une erreur inattendue s'est produite. Veuillez réessayer.",
       });
     } finally {
       setIsLoading(false);
@@ -83,56 +94,71 @@ export const LoginForm = () => {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input
-                  type="email"
-                  placeholder="exemple@email.com"
-                  {...field}
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Mot de passe</FormLabel>
-              <FormControl>
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  {...field}
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex justify-between items-center">
-          <Link
-            to="/forgot-password"
-            className="text-sm text-blue-600 hover:text-blue-800"
-          >
-            Mot de passe oublié ?
-          </Link>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Connexion..." : "Se connecter"}
-          </Button>
-        </div>
-      </form>
-    </Form>
+    <div className="w-full max-w-md space-y-6 p-6 bg-white rounded-lg shadow-lg">
+      <div className="space-y-2 text-center">
+        <h1 className="text-2xl font-bold">Connexion</h1>
+        <p className="text-gray-500">
+          Entrez vos identifiants pour accéder à votre compte
+        </p>
+      </div>
+      
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input
+                    type="email"
+                    placeholder="exemple@email.com"
+                    {...field}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mot de passe</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    {...field}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="flex justify-between items-center">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-blue-600 hover:text-blue-800"
+            >
+              Mot de passe oublié ?
+            </Link>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Connexion..." : "Se connecter"}
+            </Button>
+          </div>
+          <div className="text-center text-sm text-gray-500 mt-4">
+            Pas encore de compte ?{" "}
+            <Link to="/register" className="text-blue-600 hover:text-blue-800">
+              S'inscrire
+            </Link>
+          </div>
+        </form>
+      </Form>
+    </div>
   );
 };
