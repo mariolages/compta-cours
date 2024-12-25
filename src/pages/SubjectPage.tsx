@@ -1,13 +1,11 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { SubjectHeader } from "@/components/subject/SubjectHeader";
-import { FileList } from "@/components/subject/FileList";
-import { BookOpen, FileText, CheckSquare, Archive, CheckCircle, Headphones } from "lucide-react";
+import { SubjectTabs } from "@/components/subject/SubjectTabs";
 
 interface Subject {
   id: number;
@@ -17,7 +15,6 @@ interface Subject {
 
 export default function SubjectPage() {
   const { subjectId } = useParams();
-  const navigate = useNavigate();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("1");
   const { toast } = useToast();
@@ -86,11 +83,9 @@ export default function SubjectPage() {
         return;
       }
 
-      // Create a URL for the file and trigger download with the original file name
       const url = URL.createObjectURL(data);
       const a = document.createElement("a");
       a.href = url;
-      // Use the file's title and append the original extension
       const fileExt = filePath.split('.').pop();
       a.download = `${fileName}.${fileExt}`;
       document.body.appendChild(a);
@@ -107,29 +102,6 @@ export default function SubjectPage() {
     }
   };
 
-  const handleDeleteSubject = async () => {
-    try {
-      const { error } = await supabase
-        .from("subjects")
-        .delete()
-        .eq("id", subjectId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Succès",
-        description: "Le cours a été supprimé avec succès",
-      });
-      navigate("/dashboard");
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de supprimer le cours",
-      });
-    }
-  };
-
   if (isLoadingSubject) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -140,53 +112,42 @@ export default function SubjectPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
+      <div className="container mx-auto px-8 py-12 max-w-7xl">
         <div className="space-y-8">
           <SubjectHeader
             code={subject?.code || ""}
             name={subject?.name || ""}
             onUploadClick={() => setIsUploadOpen(true)}
-            onDeleteClick={handleDeleteSubject}
+            onDeleteClick={async () => {
+              try {
+                const { error } = await supabase
+                  .from("subjects")
+                  .delete()
+                  .eq("id", subjectId);
+
+                if (error) throw error;
+
+                toast({
+                  title: "Succès",
+                  description: "Le cours a été supprimé avec succès",
+                });
+                navigate("/dashboard");
+              } catch (error) {
+                toast({
+                  variant: "destructive",
+                  title: "Erreur",
+                  description: "Impossible de supprimer le cours",
+                });
+              }
+            }}
           />
 
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <Tabs defaultValue="1" onValueChange={setSelectedCategory} className="w-full">
-              <TabsList className="w-full flex flex-wrap justify-start gap-3 bg-gray-50/50 p-3 rounded-lg mb-8">
-                <TabsTrigger value="1" className="flex items-center gap-2 px-4 py-2">
-                  <BookOpen className="h-4 w-4" />
-                  Cours
-                </TabsTrigger>
-                <TabsTrigger value="2" className="flex items-center gap-2 px-4 py-2">
-                  <FileText className="h-4 w-4" />
-                  Exercices
-                </TabsTrigger>
-                <TabsTrigger value="3" className="flex items-center gap-2 px-4 py-2">
-                  <CheckSquare className="h-4 w-4" />
-                  Corrections d'exercices
-                </TabsTrigger>
-                <TabsTrigger value="4" className="flex items-center gap-2 px-4 py-2">
-                  <Archive className="h-4 w-4" />
-                  Sujets d'examen
-                </TabsTrigger>
-                <TabsTrigger value="5" className="flex items-center gap-2 px-4 py-2">
-                  <CheckCircle className="h-4 w-4" />
-                  Corrections de sujets
-                </TabsTrigger>
-                <TabsTrigger value="6" className="flex items-center gap-2 px-4 py-2">
-                  <Headphones className="h-4 w-4" />
-                  Podcasts
-                </TabsTrigger>
-              </TabsList>
-
-              <div className="mt-6">
-                {["1", "2", "3", "4", "5", "6"].map((categoryId) => (
-                  <TabsContent key={categoryId} value={categoryId} className="focus-visible:outline-none focus-visible:ring-0">
-                    <FileList files={files} onDownload={handleDownload} />
-                  </TabsContent>
-                ))}
-              </div>
-            </Tabs>
-          </div>
+          <SubjectTabs
+            files={files}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            onDownload={handleDownload}
+          />
         </div>
 
         <FileUploadDialog

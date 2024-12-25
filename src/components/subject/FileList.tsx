@@ -1,12 +1,10 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Download, ArrowUpDown, Trash2, Edit2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Input } from "@/components/ui/input";
-import { AudioPlayer } from "./AudioPlayer";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import { FileCard } from "./FileCard";
+import { FileListHeader } from "./FileListHeader";
+import { EmptyFileList } from "./EmptyFileList";
 
 interface File {
   id: string;
@@ -92,12 +90,6 @@ export function FileList({ files, onDownload }: FileListProps) {
     setNewTitle("");
   };
 
-  const sortedFiles = files ? [...files].sort((a, b) => {
-    const dateA = new Date(a.created_at).getTime();
-    const dateB = new Date(b.created_at).getTime();
-    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-  }) : [];
-
   const toggleSort = () => {
     setSortOrder(current => current === 'asc' ? 'desc' : 'asc');
     toast({
@@ -107,119 +99,32 @@ export function FileList({ files, onDownload }: FileListProps) {
   };
 
   if (!files || files.length === 0) {
-    return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg">
-        <p className="text-gray-500">
-          Aucun fichier n'a encore été déposé dans cette catégorie
-        </p>
-      </div>
-    );
+    return <EmptyFileList />;
   }
 
-  const isPodcast = (file: File) => file.category.id === 6;
+  const sortedFiles = [...files].sort((a, b) => {
+    const dateA = new Date(a.created_at).getTime();
+    const dateB = new Date(b.created_at).getTime();
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+  });
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Button
-          variant="outline"
-          onClick={toggleSort}
-          className="flex items-center gap-2 hover:bg-gray-50"
-        >
-          <ArrowUpDown className="h-4 w-4" />
-          Trier par date {sortOrder === 'asc' ? '↑' : '↓'}
-        </Button>
-      </div>
-      
+      <FileListHeader sortOrder={sortOrder} onSortToggle={toggleSort} />
       <div className="space-y-4">
         {sortedFiles.map((file) => (
-          <Card
+          <FileCard
             key={file.id}
-            className="hover:shadow-md transition-all duration-300 border-l-4 border-l-primary group"
-          >
-            <CardContent className="p-6">
-              <div className="flex flex-col space-y-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    {editingFileId === file.id ? (
-                      <div className="flex items-center gap-3">
-                        <Input
-                          value={newTitle}
-                          onChange={(e) => setNewTitle(e.target.value)}
-                          className="max-w-md"
-                          autoFocus
-                        />
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRenameSubmit(file.id)}
-                            className="hover:bg-primary/10 hover:text-primary transition-colors"
-                          >
-                            Enregistrer
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleRenameCancel}
-                            className="hover:bg-gray-100 transition-colors"
-                          >
-                            Annuler
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-1">
-                        <h3 className="font-medium text-lg text-gray-900 truncate">
-                          {file.title}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {new Date(file.created_at).toLocaleDateString('fr-FR')}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-3 ml-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-2 hover:bg-primary hover:text-white transition-all duration-300 border-primary/20"
-                      onClick={() => onDownload(file.id, file.file_path, file.title)}
-                    >
-                      <Download className="h-4 w-4" />
-                      <span>Télécharger</span>
-                    </Button>
-                    {editingFileId !== file.id && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRenameClick(file.id, file.title)}
-                        className="flex items-center gap-2 hover:bg-accent hover:text-white transition-all duration-300 border-accent/20"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                        <span>Renommer</span>
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteFile(file.id)}
-                      className="hover:bg-red-50 hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {isPodcast(file) && (
-                  <div className="mt-4">
-                    <AudioPlayer filePath={file.file_path} />
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+            file={file}
+            editingFileId={editingFileId}
+            newTitle={newTitle}
+            onDownload={onDownload}
+            onDelete={handleDeleteFile}
+            onRenameClick={handleRenameClick}
+            onRenameSubmit={handleRenameSubmit}
+            onRenameCancel={handleRenameCancel}
+            onNewTitleChange={setNewTitle}
+          />
         ))}
       </div>
     </div>
