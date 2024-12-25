@@ -117,11 +117,6 @@ export const ProfileMenu = () => {
           <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>
             Modifier le profil
           </DropdownMenuItem>
-          {isAdmin && (
-            <DropdownMenuItem onClick={() => navigate('/admin')}>
-              Administration
-            </DropdownMenuItem>
-          )}
           <DropdownMenuItem onClick={handleLogout} className="text-red-600">
             <LogOut className="h-4 w-4 mr-2" />
             Déconnexion
