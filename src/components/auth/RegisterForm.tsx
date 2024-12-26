@@ -62,6 +62,19 @@ export const RegisterForm = () => {
           return;
         }
 
+        // Notifier l'administrateur
+        try {
+          const { error: notifyError } = await supabase.functions.invoke('notify-admin', {
+            body: { email },
+          });
+
+          if (notifyError) {
+            console.error('Error notifying admin:', notifyError);
+          }
+        } catch (notifyError) {
+          console.error('Failed to notify admin:', notifyError);
+        }
+
         toast({
           title: "Inscription réussie",
           description: "Votre compte a été créé. Veuillez attendre la validation par un administrateur.",
