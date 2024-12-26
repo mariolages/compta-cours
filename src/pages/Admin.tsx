@@ -195,18 +195,20 @@ export default function Admin() {
                     </TableCell>
                     <TableCell>
                       <Switch
-                        checked={user.is_validated ?? false}
+                        checked={Boolean(user.is_validated)}
                         onCheckedChange={(checked) => 
                           updateUserStatus(user.id, 'is_validated', checked)
                         }
+                        className="data-[state=checked]:bg-primary"
                       />
                     </TableCell>
                     <TableCell>
                       <Switch
-                        checked={user.is_banned ?? false}
+                        checked={Boolean(user.is_banned)}
                         onCheckedChange={(checked) => 
                           updateUserStatus(user.id, 'is_banned', checked)
                         }
+                        className="data-[state=checked]:bg-primary"
                       />
                     </TableCell>
                     <TableCell>
