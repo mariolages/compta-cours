@@ -3,4 +3,5 @@ export interface Class {
   name: string;
   code: string;
   color: string;
+  created_at: string;
 }
