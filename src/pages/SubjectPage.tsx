@@ -1,5 +1,4 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -7,6 +6,8 @@ import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { SubjectHeader } from "@/components/subject/SubjectHeader";
 import { SubjectTabs } from "@/components/subject/SubjectTabs";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSubjectDetails } from "@/hooks/use-subject-details";
+import { useSubjectFiles } from "@/hooks/use-subject-files";
 
 export default function SubjectPage() {
   const { subjectId } = useParams();
@@ -27,83 +28,8 @@ export default function SubjectPage() {
     checkAuth();
   }, [navigate]);
 
-  // Fetch subject details
-  const { data: subject, isLoading: isLoadingSubject } = useQuery({
-    queryKey: ["subject", subjectId],
-    queryFn: async () => {
-      console.log("Fetching subject details for ID:", subjectId);
-      const { data, error } = await supabase
-        .from("subjects")
-        .select(`
-          id,
-          code,
-          name,
-          class_id
-        `)
-        .eq("id", subjectId)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching subject:", error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger les informations de la matière",
-        });
-        throw error;
-      }
-      return data;
-    },
-  });
-
-  // Fetch files for the subject
-  const { data: files, refetch: refetchFiles } = useQuery({
-    queryKey: ["subject-files", subjectId, selectedCategory],
-    queryFn: async () => {
-      console.log("Fetching files for subject:", subjectId, "category:", selectedCategory);
-      const { data, error } = await supabase
-        .from("files")
-        .select(`
-          id,
-          title,
-          created_at,
-          file_path,
-          category:category_id(id, name),
-          subject:subject_id(
-            id,
-            code,
-            name
-          )
-        `)
-        .eq("subject_id", subjectId)
-        .eq("category_id", selectedCategory)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching files:", error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger les fichiers",
-        });
-        throw error;
-      }
-
-      // Filter files to ensure they belong to UE subjects
-      const ueFiles = data.filter(file => {
-        const subjectCode = file.subject?.code || "";
-        return /^UE\d+$/.test(subjectCode);
-      });
-
-      // Sort files by UE number
-      return ueFiles.sort((a, b) => {
-        const getUENumber = (code: string) => parseInt(code.replace("UE", ""));
-        const aNum = getUENumber(a.subject?.code || "");
-        const bNum = getUENumber(b.subject?.code || "");
-        return aNum - bNum;
-      });
-    },
-  });
+  const { data: subject, isLoading: isLoadingSubject } = useSubjectDetails(subjectId);
+  const { data: files, refetch: refetchFiles } = useSubjectFiles(subjectId, selectedCategory);
 
   const handleDownload = async (fileId: string, filePath: string, fileName: string) => {
     try {
