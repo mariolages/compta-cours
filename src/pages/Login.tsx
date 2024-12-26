@@ -9,17 +9,26 @@ export default function Login() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check current session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate('/dashboard');
+    // Initialize session check
+    const initSession = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (session) {
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error('Session initialization error:', error);
       }
-    });
+    };
+
+    initSession();
 
     // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session);
       if (event === 'SIGNED_IN' && session) {
         navigate('/dashboard');
       }
@@ -46,15 +55,21 @@ export default function Login() {
       });
 
       if (error) {
+        console.error('Login error:', error);
         throw error;
       }
 
       // Check if user is banned
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('is_banned')
         .eq('id', data.user.id)
         .single();
+
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+        throw profileError;
+      }
 
       if (profile?.is_banned) {
         throw new Error('Votre compte a été banni');
