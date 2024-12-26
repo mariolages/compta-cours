@@ -47,55 +47,64 @@ export default function Admin() {
     };
 
     checkAdmin();
+    fetchUsers();
   }, [navigate]);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const fetchUsers = async () => {
-    const { data: profiles, error } = await supabase
-      .from('profiles')
-      .select('*');
+    try {
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger la liste des utilisateurs",
-      });
-      return;
+      if (error) {
+        console.error('Error fetching users:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger la liste des utilisateurs",
+        });
+        return;
+      }
+
+      setUsers(profiles || []);
+    } catch (error) {
+      console.error('Error in fetchUsers:', error);
+    } finally {
+      setIsLoading(false);
     }
-
-    setUsers(profiles);
-    setIsLoading(false);
   };
 
   const updateUserStatus = async (userId: string, field: 'is_validated' | 'is_banned', value: boolean) => {
-    console.log('Updating user status:', { userId, field, value });
-    
-    const { error } = await supabase
-      .from('profiles')
-      .update({ [field]: value })
-      .eq('id', userId);
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ [field]: value })
+        .eq('id', userId);
 
-    if (error) {
-      console.error('Error updating user status:', error);
+      if (error) {
+        console.error('Error updating user status:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de mettre à jour le statut de l'utilisateur",
+        });
+        return;
+      }
+
       toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de mettre à jour le statut de l'utilisateur",
+        title: "Succès",
+        description: `Le statut de l'utilisateur a été mis à jour`,
       });
-      return;
+
+      // Rafraîchir la liste immédiatement
+      await fetchUsers();
+    } catch (error) {
+      console.error('Error in updateUserStatus:', error);
+    } finally {
+      setIsLoading(false);
     }
-
-    // Refresh the users list after update
-    await fetchUsers();
-
-    toast({
-      title: "Succès",
-      description: "Le statut de l'utilisateur a été mis à jour",
-    });
   };
 
   if (isLoading) {
@@ -110,7 +119,16 @@ export default function Admin() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <h1 className="text-2xl font-bold mb-6">Administration des utilisateurs</h1>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Administration des utilisateurs</h1>
+            <Button 
+              onClick={fetchUsers}
+              variant="outline"
+              className="gap-2"
+            >
+              Rafraîchir la liste
+            </Button>
+          </div>
           
           <div className="overflow-x-auto">
             <Table>
