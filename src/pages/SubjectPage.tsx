@@ -7,7 +7,6 @@ import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { SubjectHeader } from "@/components/subject/SubjectHeader";
 import { SubjectTabs } from "@/components/subject/SubjectTabs";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { Subject } from "@/types/files";
 
 export default function SubjectPage() {
   const { subjectId } = useParams();
@@ -17,27 +16,35 @@ export default function SubjectPage() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Check authentication
+  // Check authentication and session
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        navigate('/login');
+        navigate('/login', { replace: true });
       }
     };
     checkAuth();
   }, [navigate]);
 
+  // Fetch subject details
   const { data: subject, isLoading: isLoadingSubject } = useQuery({
     queryKey: ["subject", subjectId],
     queryFn: async () => {
+      console.log("Fetching subject details for ID:", subjectId);
       const { data, error } = await supabase
         .from("subjects")
-        .select("*")
+        .select(`
+          id,
+          code,
+          name,
+          class_id
+        `)
         .eq("id", subjectId)
-        .single();
+        .maybeSingle();
 
       if (error) {
+        console.error("Error fetching subject:", error);
         toast({
           variant: "destructive",
           title: "Erreur",
@@ -49,9 +56,11 @@ export default function SubjectPage() {
     },
   });
 
+  // Fetch files for the subject
   const { data: files, refetch: refetchFiles } = useQuery({
     queryKey: ["subject-files", subjectId, selectedCategory],
     queryFn: async () => {
+      console.log("Fetching files for subject:", subjectId, "category:", selectedCategory);
       const { data, error } = await supabase
         .from("files")
         .select(`
@@ -59,13 +68,19 @@ export default function SubjectPage() {
           title,
           created_at,
           file_path,
-          category:category_id(id, name)
+          category:category_id(id, name),
+          subject:subject_id(
+            id,
+            code,
+            name
+          )
         `)
         .eq("subject_id", subjectId)
         .eq("category_id", selectedCategory)
         .order("created_at", { ascending: false });
 
       if (error) {
+        console.error("Error fetching files:", error);
         toast({
           variant: "destructive",
           title: "Erreur",
@@ -73,7 +88,20 @@ export default function SubjectPage() {
         });
         throw error;
       }
-      return data;
+
+      // Filter files to ensure they belong to UE subjects
+      const ueFiles = data.filter(file => {
+        const subjectCode = file.subject?.code || "";
+        return /^UE\d+$/.test(subjectCode);
+      });
+
+      // Sort files by UE number
+      return ueFiles.sort((a, b) => {
+        const getUENumber = (code: string) => parseInt(code.replace("UE", ""));
+        const aNum = getUENumber(a.subject?.code || "");
+        const bNum = getUENumber(b.subject?.code || "");
+        return aNum - bNum;
+      });
     },
   });
 
@@ -140,7 +168,7 @@ export default function SubjectPage() {
                   title: "Succès",
                   description: "Le cours a été supprimé avec succès",
                 });
-                navigate("/dashboard");
+                navigate("/dashboard", { replace: true });
               } catch (error) {
                 toast({
                   variant: "destructive",
