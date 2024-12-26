@@ -1,135 +1,173 @@
-import { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { UserList } from "@/components/admin/UserList";
+import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import type { UserProfile } from "@/types/admin";
 
-export default function Admin() {
+const Admin = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [logs, setLogs] = useState<any[]>([]);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchUsers();
+    checkAdminAccess();
   }, []);
 
-  const fetchUsers = async () => {
-    try {
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching users:', error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger la liste des utilisateurs",
-        });
-        return;
-      }
-
-      setUsers(profiles || []);
-    } catch (error) {
-      console.error('Error in fetchUsers:', error);
-    } finally {
-      setIsLoading(false);
+  const checkAdminAccess = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      navigate('/login');
+      return;
     }
-  };
 
-  const updateUserStatus = async (userId: string, field: 'is_validated' | 'is_banned', value: boolean) => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ [field]: value })
-        .eq('id', userId);
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single();
 
-      if (error) {
-        console.error('Error updating user status:', error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de mettre à jour le statut de l'utilisateur",
-        });
-        return;
-      }
-
-      toast({
-        title: "Succès",
-        description: `Le statut de l'utilisateur a été mis à jour`,
-      });
-
-      await fetchUsers();
-    } catch (error) {
-      console.error('Error in updateUserStatus:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const deleteUser = async (userId: string) => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      toast({
-        title: "Succès",
-        description: "L'utilisateur a été supprimé",
-      });
-
-      await fetchUsers();
-    } catch (error) {
-      console.error('Error in deleteUser:', error);
+    if (!profile?.is_admin) {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de supprimer l'utilisateur",
+        title: "Accès refusé",
+        description: "Vous n'avez pas les droits d'administrateur",
       });
-    } finally {
-      setIsLoading(false);
+      navigate('/dashboard');
+      return;
     }
+
+    // Si l'utilisateur est admin, charger les données
+    fetchUsers();
+    fetchLogs();
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  const fetchUsers = async () => {
+    const { data: profiles, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching users:', error);
+      return;
+    }
+
+    setUsers(profiles);
+  };
+
+  const fetchLogs = async () => {
+    const { data, error } = await supabase
+      .from('auth_logs')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching logs:', error);
+      return;
+    }
+
+    setLogs(data);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">Administration des utilisateurs</h1>
-            <Button 
-              onClick={fetchUsers}
-              variant="outline"
-              className="gap-2"
-            >
-              Rafraîchir la liste
-            </Button>
+    <div className="container mx-auto py-8">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold">Administration</h1>
+        <Button
+          variant="outline"
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour au tableau de bord
+        </Button>
+      </div>
+      
+      <div className="grid gap-8">
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">Utilisateurs</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Nom
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Admin
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {users.map((user) => (
+                  <tr key={user.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {user.full_name || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {user.email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {user.is_admin ? "Oui" : "Non"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {/* Add action buttons here if needed */}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          
-          <UserList 
-            users={users}
-            onUpdateStatus={updateUserStatus}
-            onDeleteUser={deleteUser}
-          />
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">Logs de connexion</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type d'événement
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {logs.map((log) => (
+                  <tr key={log.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {log.email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {log.event_type}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {new Date(log.created_at).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default Admin;

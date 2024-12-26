@@ -1,175 +1,114 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { WelcomeCard } from "@/components/dashboard/WelcomeCard";
-import { SearchBar } from "@/components/dashboard/SearchBar";
-import { SubjectsGrid } from "@/components/dashboard/SubjectsGrid";
-import { RecentFiles } from "@/components/dashboard/RecentFiles";
-import { FileUploadDialog } from "@/components/dashboard/FileUploadDialog";
-import { ProfileMenu } from "@/components/dashboard/ProfileMenu";
-import type { File } from "@/types/files";
-import type { Subject } from "@/types/subject";
+import { supabase } from "@/integrations/supabase/client";
+import { Plus, RefreshCw } from "lucide-react";
+import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
+import { SearchBar } from '@/components/dashboard/SearchBar';
+import { ProfileMenu } from '@/components/dashboard/ProfileMenu';
+import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
+import { SubjectsGrid } from '@/components/dashboard/SubjectsGrid';
+import type { Subject } from '@/types/files';
+import { useQuery } from '@tanstack/react-query';
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState("");
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [lastRefresh] = useState(new Date());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [lastRefresh] = useState<Date>(new Date());
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  // Check authentication and validation status
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
+  const { data: subjects = [], isLoading, error } = useQuery({
+    queryKey: ['subjects'],
+    queryFn: async () => {
+      console.log("Fetching subjects...");
+      const { data, error } = await supabase
+        .from('subjects')
+        .select('*');
       
-      if (!sessionData.session?.user) {
-        navigate("/login");
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_validated, is_banned")
-        .eq("id", sessionData.session.user.id)
-        .single();
-
-      if (!profile?.is_validated) {
-        navigate("/waiting-validation");
-        return;
-      }
-
-      if (profile?.is_banned) {
-        toast({
-          variant: "destructive",
-          title: "Accès restreint",
-          description: "Votre compte a été banni. Contactez un administrateur.",
-        });
-        navigate("/");
-      }
-    };
-
-    checkAuth();
-  }, [navigate, toast]);
-
-  const { data: files = [], refetch: refetchFiles } = useQuery({
-    queryKey: ["recent-files"],
-    queryFn: async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session?.user) return [];
-
-      const { data, error } = await supabase
-        .from("files")
-        .select(`
-          id,
-          title,
-          file_path,
-          created_at,
-          category:categories(id, name),
-          subject:subjects(id, code, name)
-        `)
-        .eq("user_id", sessionData.session.user.id)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
       if (error) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger les fichiers récents",
-        });
-        return [];
+        console.error("Error fetching subjects:", error);
+        throw error;
       }
-
-      return data as File[];
-    },
-  });
-
-  const { data: subjects = [] } = useQuery({
-    queryKey: ["subjects"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("subjects")
-        .select("*")
-        .order("code", { ascending: true });
-
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger les matières",
-        });
-        return [];
-      }
-
-      return data as Subject[];
-    },
-  });
-
-  const handleDeleteFile = async (fileId: string) => {
-    const { data: deletedFile } = await supabase
-      .from("files")
-      .delete()
-      .eq("id", fileId)
-      .select()
-      .single();
-
-    if (deletedFile) {
-      await supabase.storage
-        .from("dcg_files")
-        .remove([deletedFile.file_path]);
+      
+      // Sort subjects by extracting the UE number and comparing numerically
+      return data.sort((a, b) => {
+        const numA = parseInt(a.code.match(/\d+/)[0]);
+        const numB = parseInt(b.code.match(/\d+/)[0]);
+        return numA - numB;
+      });
     }
+  });
 
-    refetchFiles();
-  };
+  // Handle error outside of the query configuration
+  if (error) {
+    console.error("Query error:", error);
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible de charger les matières",
+    });
+  }
 
   const handleSubjectClick = (subjectId: number) => {
     navigate(`/subjects/${subjectId}`);
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Navigation Bar */}
-      <nav className="bg-white border-b border-gray-200 fixed w-full top-0 z-50">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex justify-between items-center">
-            <h1 className="text-xl font-semibold text-primary">DCGHub</h1>
-            <ProfileMenu />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                compta-cours.fr
+              </h1>
+            </div>
+            
+            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => window.location.reload()}
+                className="relative"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+              <ProfileMenu />
+            </div>
           </div>
         </div>
       </nav>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8 space-y-8 max-w-7xl pt-20">
+      <div className="container mx-auto px-4 py-8 space-y-8">
         <WelcomeCard lastRefresh={lastRefresh} />
-        
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-          />
-        </div>
+        <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
 
-        <SubjectsGrid 
-          subjects={subjects} 
-          onSubjectClick={handleSubjectClick}
-        />
-        
-        <RecentFiles
-          files={files}
-          searchQuery={searchQuery}
-          onDelete={handleDeleteFile}
-        />
-
-        <FileUploadDialog
-          open={isUploadOpen}
+        <FileUploadDialog 
+          open={isUploadOpen} 
           onOpenChange={setIsUploadOpen}
           onSuccess={() => {
-            refetchFiles();
             setIsUploadOpen(false);
           }}
         />
+
+        <Button
+          onClick={() => setIsUploadOpen(true)}
+          className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-primary hover:bg-primary-hover transition-all duration-300 animate-fade-in"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
       </div>
     </div>
   );

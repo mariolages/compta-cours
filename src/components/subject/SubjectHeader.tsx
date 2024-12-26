@@ -13,7 +13,7 @@ interface SubjectHeaderProps {
   code: string;
   name: string;
   onUploadClick: () => void;
-  onDeleteClick?: () => Promise<void>;
+  onDeleteClick: () => Promise<void>;
 }
 
 export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: SubjectHeaderProps) {

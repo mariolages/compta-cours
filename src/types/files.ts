@@ -5,11 +5,6 @@ export interface File {
     id: number;
     name: string;
   };
-  subject: {
-    id: number;
-    code: string;
-    name: string;
-  };
   created_at: string;
   file_path: string;
 }

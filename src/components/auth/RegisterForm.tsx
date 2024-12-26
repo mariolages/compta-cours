@@ -7,10 +7,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
+const ADMIN_CODE = "DCG2024"; // Code secret pour devenir admin
+
 export const RegisterForm = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [adminCode, setAdminCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -44,6 +47,8 @@ export const RegisterForm = () => {
       }
 
       if (user) {
+        const isAdmin = adminCode === ADMIN_CODE;
+        
         // Création du profil utilisateur
         const { error: profileError } = await supabase
           .from('profiles')
@@ -51,8 +56,7 @@ export const RegisterForm = () => {
             {
               id: user.id,
               full_name: name,
-              is_admin: false,
-              is_validated: false,
+              is_admin: isAdmin,
             }
           ]);
 
@@ -62,26 +66,27 @@ export const RegisterForm = () => {
           return;
         }
 
-        // Notifier l'administrateur
-        try {
-          const { error: notifyError } = await supabase.functions.invoke('notify-admin', {
-            body: { email },
-          });
+        // Connexion automatique après l'inscription
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-          if (notifyError) {
-            console.error('Error notifying admin:', notifyError);
-          }
-        } catch (notifyError) {
-          console.error('Failed to notify admin:', notifyError);
+        if (signInError) {
+          setError('Erreur lors de la connexion automatique');
+          console.error('Auto sign-in error:', signInError);
+          return;
         }
 
         toast({
           title: "Inscription réussie",
-          description: "Votre compte a été créé. Veuillez attendre la validation par un administrateur.",
+          description: isAdmin 
+            ? "Votre compte administrateur a été créé avec succès" 
+            : "Votre compte a été créé avec succès",
         });
         
-        // Redirection vers la page d'attente
-        navigate('/waiting-validation');
+        // Redirection vers la page appropriée
+        navigate('/dashboard');
       }
     } catch (error: any) {
       setError(error.message);
@@ -138,6 +143,17 @@ export const RegisterForm = () => {
             onChange={(e) => setPassword(e.target.value)}
             className="input-field"
             required
+            disabled={isLoading}
+          />
+        </div>
+
+        <div>
+          <Input
+            type="password"
+            placeholder="Code administrateur (optionnel)"
+            value={adminCode}
+            onChange={(e) => setAdminCode(e.target.value)}
+            className="input-field"
             disabled={isLoading}
           />
         </div>

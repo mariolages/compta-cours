@@ -1,13 +1,12 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { SubjectHeader } from "@/components/subject/SubjectHeader";
 import { SubjectTabs } from "@/components/subject/SubjectTabs";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { Subject } from '@/types/subject';
 
 export default function SubjectPage() {
   const { subjectId } = useParams();
@@ -17,16 +16,6 @@ export default function SubjectPage() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate('/login');
-      }
-    };
-    checkAuth();
-  }, [navigate]);
-
   const { data: subject, isLoading: isLoadingSubject } = useQuery({
     queryKey: ["subject", subjectId],
     queryFn: async () => {
@@ -34,7 +23,7 @@ export default function SubjectPage() {
         .from("subjects")
         .select("*")
         .eq("id", subjectId)
-        .maybeSingle();
+        .single();
 
       if (error) {
         toast({
@@ -46,7 +35,6 @@ export default function SubjectPage() {
       }
       return data as Subject;
     },
-    enabled: !!subjectId,
   });
 
   const { data: files, refetch: refetchFiles } = useQuery({
@@ -75,7 +63,6 @@ export default function SubjectPage() {
       }
       return data;
     },
-    enabled: !!subjectId,
   });
 
   const handleDownload = async (fileId: string, filePath: string, fileName: string) => {
@@ -128,6 +115,28 @@ export default function SubjectPage() {
             code={subject?.code || ""}
             name={subject?.name || ""}
             onUploadClick={() => setIsUploadOpen(true)}
+            onDeleteClick={async () => {
+              try {
+                const { error } = await supabase
+                  .from("subjects")
+                  .delete()
+                  .eq("id", subjectId);
+
+                if (error) throw error;
+
+                toast({
+                  title: "Succès",
+                  description: "Le cours a été supprimé avec succès",
+                });
+                navigate("/dashboard");
+              } catch (error) {
+                toast({
+                  variant: "destructive",
+                  title: "Erreur",
+                  description: "Impossible de supprimer le cours",
+                });
+              }
+            }}
           />
 
           <SubjectTabs
