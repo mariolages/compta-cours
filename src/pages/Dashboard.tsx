@@ -8,6 +8,7 @@ import { SearchBar } from "@/components/dashboard/SearchBar";
 import { SubjectsGrid } from "@/components/dashboard/SubjectsGrid";
 import { RecentFiles } from "@/components/dashboard/RecentFiles";
 import { FileUploadDialog } from "@/components/dashboard/FileUploadDialog";
+import { ProfileMenu } from "@/components/dashboard/ProfileMenu";
 import type { File } from "@/types/files";
 import type { Subject } from "@/types/subject";
 
@@ -127,7 +128,10 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-8 space-y-8 max-w-7xl">
-        <WelcomeCard lastRefresh={lastRefresh} />
+        <div className="flex justify-between items-center">
+          <WelcomeCard lastRefresh={lastRefresh} />
+          <ProfileMenu />
+        </div>
         
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <SearchBar
