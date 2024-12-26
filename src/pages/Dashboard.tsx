@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -9,8 +9,8 @@ import { SearchBar } from '@/components/dashboard/SearchBar';
 import { ProfileMenu } from '@/components/dashboard/ProfileMenu';
 import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { SubjectsGrid } from '@/components/dashboard/SubjectsGrid';
-import type { Subject } from '@/types/files';
 import { useQuery } from '@tanstack/react-query';
+import { useSessionContext } from '@supabase/auth-helpers-react';
 
 export default function Dashboard() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -18,6 +18,13 @@ export default function Dashboard() {
   const [lastRefresh] = useState<Date>(new Date());
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { session, isLoading: isSessionLoading } = useSessionContext();
+
+  useEffect(() => {
+    if (!isSessionLoading && !session) {
+      navigate('/login');
+    }
+  }, [session, isSessionLoading, navigate]);
 
   const { data: subjects = [], isLoading, error } = useQuery({
     queryKey: ['subjects'],
@@ -32,13 +39,13 @@ export default function Dashboard() {
         throw error;
       }
       
-      // Sort subjects by extracting the UE number and comparing numerically
       return data.sort((a, b) => {
         const numA = parseInt(a.code.match(/\d+/)[0]);
         const numB = parseInt(b.code.match(/\d+/)[0]);
         return numA - numB;
       });
-    }
+    },
+    enabled: !!session, // Only fetch when session exists
   });
 
   // Handle error outside of the query configuration
@@ -54,6 +61,18 @@ export default function Dashboard() {
   const handleSubjectClick = (subjectId: number) => {
     navigate(`/subjects/${subjectId}`);
   };
+
+  if (isSessionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return null; // Will redirect in useEffect
+  }
 
   if (isLoading) {
     return (
