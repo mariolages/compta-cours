@@ -51,6 +51,30 @@ export type Database = {
         }
         Relationships: []
       }
+      classes: {
+        Row: {
+          code: string
+          color: string
+          created_at: string
+          id: number
+          name: string
+        }
+        Insert: {
+          code: string
+          color?: string
+          created_at?: string
+          id?: number
+          name: string
+        }
+        Update: {
+          code?: string
+          color?: string
+          created_at?: string
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
       files: {
         Row: {
           category_id: number
@@ -180,24 +204,35 @@ export type Database = {
       }
       subjects: {
         Row: {
+          class_id: number
           code: string
           created_at: string
           id: number
           name: string
         }
         Insert: {
+          class_id: number
           code: string
           created_at?: string
           id?: number
           name: string
         }
         Update: {
+          class_id?: number
           code?: string
           created_at?: string
           id?: number
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subjects_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
