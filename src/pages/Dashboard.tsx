@@ -40,7 +40,11 @@ export default function Dashboard() {
         throw error;
       }
       
-      return data;
+      // Filter subjects to only include UE1 to UE14
+      return data.filter(subject => {
+        const ueNumber = parseInt(subject.code.replace('UE', ''));
+        return ueNumber >= 1 && ueNumber <= 14;
+      });
     },
     enabled: !!session,
     retry: 1,

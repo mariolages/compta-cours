@@ -9,13 +9,19 @@ interface SubjectsGridProps {
 }
 
 export const SubjectsGrid = ({ subjects, onSubjectClick }: SubjectsGridProps) => {
+  // Filter subjects to only show UE1 to UE14
+  const filteredSubjects = subjects.filter(subject => {
+    const ueNumber = parseInt(subject.code.replace('UE', ''));
+    return ueNumber >= 1 && ueNumber <= 14;
+  });
+
   return (
     <div className="space-y-4 animate-fade-in">
       <h2 className="text-2xl font-semibold text-gray-800 pl-2 border-l-4 border-primary">
         Matières
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {subjects.map((subject) => (
+        {filteredSubjects.map((subject) => (
           <Button
             key={subject.id}
             variant="ghost"
@@ -40,4 +46,4 @@ export const SubjectsGrid = ({ subjects, onSubjectClick }: SubjectsGridProps) =>
       </div>
     </div>
   );
-};
+}
