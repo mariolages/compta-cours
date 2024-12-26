@@ -24,15 +24,6 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
     );
   });
 
-  // Trier les fichiers par UE
-  const sortedFiles = [...filteredFiles].sort((a, b) => {
-    const getUENumber = (code: string) => {
-      const match = code.match(/UE(\d+)/);
-      return match ? parseInt(match[1]) : 0;
-    };
-    return getUENumber(a.subject.code) - getUENumber(b.subject.code);
-  });
-
   const handleDelete = async (fileId: string) => {
     try {
       const { error } = await supabase
@@ -59,7 +50,7 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
   return (
     <div className="space-y-4 animate-fade-in">
       <h2 className="text-2xl font-semibold text-gray-800 pl-2 border-l-4 border-primary">
-        Fichiers par UE
+        Fichiers récents
       </h2>
       <Card className="overflow-hidden bg-white/80 backdrop-blur-sm">
         <CardContent className="p-0">
@@ -68,10 +59,10 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    UE
+                    Nom du fichier
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nom du fichier
+                    Matière
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Catégorie
@@ -85,13 +76,13 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {sortedFiles.map((file) => (
+                {filteredFiles.map((file) => (
                   <tr key={file.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {file.subject.code}
+                      {file.title}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {file.title}
+                      {file.subject.code} - {file.subject.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {file.category.name}

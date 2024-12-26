@@ -1,13 +1,12 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { SubjectHeader } from "@/components/subject/SubjectHeader";
 import { SubjectTabs } from "@/components/subject/SubjectTabs";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useSubjectDetails } from "@/hooks/use-subject-details";
-import { useSubjectFiles } from "@/hooks/use-subject-files";
 
 export default function SubjectPage() {
   const { subjectId } = useParams();
@@ -17,19 +16,54 @@ export default function SubjectPage() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Check authentication and session
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate('/login', { replace: true });
-      }
-    };
-    checkAuth();
-  }, [navigate]);
+  const { data: subject, isLoading: isLoadingSubject } = useQuery({
+    queryKey: ["subject", subjectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("subjects")
+        .select("*")
+        .eq("id", subjectId)
+        .single();
 
-  const { data: subject, isLoading: isLoadingSubject } = useSubjectDetails(subjectId);
-  const { data: files, refetch: refetchFiles } = useSubjectFiles(subjectId, selectedCategory);
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les informations de la matière",
+        });
+        throw error;
+      }
+      return data as Subject;
+    },
+  });
+
+  const { data: files, refetch: refetchFiles } = useQuery({
+    queryKey: ["subject-files", subjectId, selectedCategory],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("files")
+        .select(`
+          id,
+          title,
+          created_at,
+          file_path,
+          category:category_id(id, name)
+        `)
+        .eq("subject_id", subjectId)
+        .eq("category_id", selectedCategory)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les fichiers",
+        });
+        throw error;
+      }
+      return data;
+    },
+  });
 
   const handleDownload = async (fileId: string, filePath: string, fileName: string) => {
     try {
@@ -94,7 +128,7 @@ export default function SubjectPage() {
                   title: "Succès",
                   description: "Le cours a été supprimé avec succès",
                 });
-                navigate("/dashboard", { replace: true });
+                navigate("/dashboard");
               } catch (error) {
                 toast({
                   variant: "destructive",

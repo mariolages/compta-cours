@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -9,6 +9,7 @@ import { SearchBar } from '@/components/dashboard/SearchBar';
 import { ProfileMenu } from '@/components/dashboard/ProfileMenu';
 import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { SubjectsGrid } from '@/components/dashboard/SubjectsGrid';
+import type { Subject } from '@/types/files';
 import { useQuery } from '@tanstack/react-query';
 
 export default function Dashboard() {
@@ -18,66 +19,26 @@ export default function Dashboard() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Check authentication
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate('/login', { replace: true });
-      }
-    };
-    checkAuth();
-  }, [navigate]);
-
   const { data: subjects = [], isLoading, error } = useQuery({
     queryKey: ['subjects'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
-
+      console.log("Fetching subjects...");
       const { data, error } = await supabase
         .from('subjects')
-        .select(`
-          id,
-          code,
-          name,
-          created_at,
-          files (
-            id,
-            title,
-            created_at,
-            file_path,
-            category_id,
-            category:categories(
-              id,
-              name
-            )
-          )
-        `)
-        .order('code');
+        .select('*');
       
       if (error) {
         console.error("Error fetching subjects:", error);
         throw error;
       }
       
-      // Filter to only include UE1 to UE14 and sort them numerically
-      return data
-        .filter(subject => /^UE\d+$/.test(subject.code))
-        .filter(subject => {
-          const num = parseInt(subject.code.slice(2));
-          return num >= 1 && num <= 14;
-        })
-        .sort((a, b) => {
-          const numA = parseInt(a.code.slice(2));
-          const numB = parseInt(b.code.slice(2));
-          return numA - numB;
-        });
-    },
-    retry: false,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+      // Sort subjects by extracting the UE number and comparing numerically
+      return data.sort((a, b) => {
+        const numA = parseInt(a.code.match(/\d+/)[0]);
+        const numB = parseInt(b.code.match(/\d+/)[0]);
+        return numA - numB;
+      });
+    }
   });
 
   // Handle error outside of the query configuration
