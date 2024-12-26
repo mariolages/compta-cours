@@ -9,7 +9,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-interface SubjectHeaderProps {
+export interface SubjectHeaderProps {
   code: string;
   name: string;
   onUploadClick: () => void;
@@ -26,11 +26,10 @@ export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: Subj
 
   const handleUpdateName = async () => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("subjects")
         .update({ name: newName })
-        .eq("code", code)
-        .select();
+        .eq("code", code);
 
       if (error) throw error;
 
