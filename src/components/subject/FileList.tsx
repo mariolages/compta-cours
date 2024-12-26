@@ -92,10 +92,6 @@ export function FileList({ files, onDownload }: FileListProps) {
 
   const toggleSort = () => {
     setSortOrder(current => current === 'asc' ? 'desc' : 'asc');
-    toast({
-      title: "Tri mis à jour",
-      description: `Les fichiers sont maintenant triés par date ${sortOrder === 'asc' ? 'décroissante' : 'croissante'}`,
-    });
   };
 
   if (!files || files.length === 0) {
