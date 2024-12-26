@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus } from "lucide-react";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { SearchBar } from '@/components/dashboard/SearchBar';
 import { ProfileMenu } from '@/components/dashboard/ProfileMenu';
@@ -39,18 +39,22 @@ export default function Dashboard() {
 
       const { data, error } = await supabase
         .from('subjects')
-        .select('*');
+        .select('*')
+        .order('code');
       
       if (error) {
         console.error("Error fetching subjects:", error);
         throw error;
       }
       
-      return data.sort((a, b) => {
-        const numA = parseInt(a.code.match(/\d+/)[0]);
-        const numB = parseInt(b.code.match(/\d+/)[0]);
-        return numA - numB;
-      });
+      // Filter to only include UE1 to UE14 and sort them numerically
+      return data
+        .filter(subject => /^UE\d+$/.test(subject.code) && parseInt(subject.code.slice(2)) <= 14)
+        .sort((a, b) => {
+          const numA = parseInt(a.code.slice(2));
+          const numB = parseInt(b.code.slice(2));
+          return numA - numB;
+        });
     },
     retry: false
   });
