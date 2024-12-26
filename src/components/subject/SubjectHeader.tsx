@@ -52,28 +52,25 @@ export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: Subj
   };
 
   return (
-    <div className="mb-6 md:mb-8 space-y-4 bg-white rounded-lg shadow-sm p-4 md:p-6">
+    <div className="mb-6 md:mb-8 space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate("/dashboard")}
-            className="hover:bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center"
+            className="hover:bg-gray-100"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900">{name}</h1>
-            <p className="text-sm md:text-base text-gray-500">{code}</p>
+            <h1 className="text-2xl md:text-3xl font-bold">{name}</h1>
+            <p className="text-gray-500">{code}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 mt-4 md:mt-0">
-          <Button 
-            onClick={onUploadClick} 
-            className="w-full md:w-auto bg-primary hover:bg-primary-hover text-white shadow-sm"
-          >
+        <div className="flex items-center gap-2">
+          <Button onClick={onUploadClick} className="w-full md:w-auto">
             {isMobile ? (
               <Upload className="h-5 w-5" />
             ) : (
@@ -83,40 +80,23 @@ export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: Subj
 
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
             <DialogTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-100"
-              >
+              <Button variant="ghost" size="icon">
                 <MoreVertical className="h-5 w-5" />
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md bg-white p-6">
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle className="text-xl font-semibold">Modifier le nom du cours</DialogTitle>
+                <DialogTitle>Modifier le nom du cours</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <Input
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="Nouveau nom du cours"
-                  className="w-full px-4 py-2 text-base"
                 />
-                <div className="flex gap-3">
-                  <Button 
-                    onClick={handleUpdateName} 
-                    className="flex-1 bg-primary hover:bg-primary-hover text-white"
-                  >
-                    Enregistrer
-                  </Button>
-                  <Button 
-                    onClick={() => setIsEditDialogOpen(false)}
-                    variant="outline" 
-                    className="flex-1"
-                  >
-                    Annuler
-                  </Button>
-                </div>
+                <Button onClick={handleUpdateName} className="w-full">
+                  Enregistrer
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
