@@ -1,13 +1,12 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { SubjectHeader } from "@/components/subject/SubjectHeader";
 import { SubjectTabs } from "@/components/subject/SubjectTabs";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { Subject } from "@/types/files";
 
 export default function SubjectPage() {
   const { subjectId } = useParams();
@@ -16,17 +15,6 @@ export default function SubjectPage() {
   const [selectedCategory, setSelectedCategory] = useState("1");
   const { toast } = useToast();
   const isMobile = useIsMobile();
-
-  // Check authentication
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate('/login');
-      }
-    };
-    checkAuth();
-  }, [navigate]);
 
   const { data: subject, isLoading: isLoadingSubject } = useQuery({
     queryKey: ["subject", subjectId],
@@ -45,7 +33,7 @@ export default function SubjectPage() {
         });
         throw error;
       }
-      return data;
+      return data as Subject;
     },
   });
 
