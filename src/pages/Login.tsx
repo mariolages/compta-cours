@@ -11,8 +11,8 @@ export default function Login() {
   const { session, isLoading } = useSessionContext();
 
   useEffect(() => {
-    if (session && !isLoading) {
-      navigate('/dashboard');
+    if (!isLoading && session) {
+      navigate('/dashboard', { replace: true });
     }
   }, [session, isLoading, navigate]);
 
@@ -79,6 +79,7 @@ export default function Login() {
     );
   }
 
+  // If already logged in, don't render the login form
   if (session) {
     return null;
   }

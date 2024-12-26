@@ -18,6 +18,7 @@ const queryClient = new QueryClient({
       retry: 1,
       staleTime: 5 * 60 * 1000, // 5 minutes
       refetchOnWindowFocus: false, // Prevent excessive refetching
+      refetchOnMount: false, // Prevent refetching on component mount
     },
   },
 });
