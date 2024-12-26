@@ -22,7 +22,7 @@ export default function Dashboard() {
 
   // Redirect to login if no session
   if (!isLoadingSession && !session) {
-    navigate('/login');
+    navigate('/login', { replace: true });
     return null;
   }
 
@@ -32,23 +32,22 @@ export default function Dashboard() {
       console.log("Fetching subjects...");
       const { data, error } = await supabase
         .from('subjects')
-        .select('*');
+        .select('*')
+        .order('code');
       
       if (error) {
         console.error("Error fetching subjects:", error);
         throw error;
       }
       
-      return data.sort((a, b) => {
-        const numA = parseInt(a.code.match(/\d+/)[0]);
-        const numB = parseInt(b.code.match(/\d+/)[0]);
-        return numA - numB;
-      });
+      return data;
     },
-    enabled: !!session, // Only fetch when session exists
+    enabled: !!session,
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 
-  // Handle error outside of the query configuration
   if (error) {
     console.error("Query error:", error);
     toast({
