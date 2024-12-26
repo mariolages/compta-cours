@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import type { File } from "@/types/files";
 import type { Subject } from "@/types/subject";
+import type { Class } from "@/types/class";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ export default function Dashboard() {
     checkAuth();
   }, [navigate, toast]);
 
-  const { data: classes = [] } = useQuery({
+  const { data: classes = [] } = useQuery<Class[]>({
     queryKey: ["classes"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -78,7 +79,7 @@ export default function Dashboard() {
     },
   });
 
-  const { data: subjects = [] } = useQuery({
+  const { data: subjects = [] } = useQuery<Subject[]>({
     queryKey: ["subjects", selectedClassId],
     queryFn: async () => {
       if (!selectedClassId) return [];
