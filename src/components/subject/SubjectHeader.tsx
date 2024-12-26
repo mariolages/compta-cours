@@ -1,11 +1,10 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
 import { MoreVertical, ArrowLeft, Upload } from "lucide-react";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -20,7 +19,6 @@ export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: Subj
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [newName, setNewName] = useState(name);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
@@ -38,7 +36,6 @@ export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: Subj
         description: "Le nom du cours a été mis à jour",
       });
 
-      queryClient.invalidateQueries({ queryKey: ["subject"] });
       setIsEditDialogOpen(false);
     } catch (error) {
       console.error("Erreur détaillée lors de la mise à jour:", error);
