@@ -21,9 +21,9 @@ export default function Dashboard() {
   // Check authentication and validation status
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: sessionData } = await supabase.auth.getSession();
       
-      if (!session) {
+      if (!sessionData.session?.user) {
         navigate("/login");
         return;
       }
@@ -31,7 +31,7 @@ export default function Dashboard() {
       const { data: profile } = await supabase
         .from("profiles")
         .select("is_validated, is_banned")
-        .eq("id", session.user.id)
+        .eq("id", sessionData.session.user.id)
         .single();
 
       if (!profile?.is_validated || profile?.is_banned) {
@@ -52,8 +52,8 @@ export default function Dashboard() {
   const { data: files = [], refetch: refetchFiles } = useQuery({
     queryKey: ["recent-files"],
     queryFn: async () => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.user) return [];
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user) return [];
 
       const { data, error } = await supabase
         .from("files")
@@ -65,7 +65,7 @@ export default function Dashboard() {
           category:categories(id, name),
           subject:subjects(id, code, name)
         `)
-        .eq("user_id", session.user.id)
+        .eq("user_id", sessionData.session.user.id)
         .order("created_at", { ascending: false })
         .limit(10);
 
@@ -124,6 +124,10 @@ export default function Dashboard() {
     navigate(`/subjects/${subjectId}`);
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-8 space-y-8 max-w-7xl">
@@ -132,7 +136,7 @@ export default function Dashboard() {
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <SearchBar
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
           />
         </div>
 
