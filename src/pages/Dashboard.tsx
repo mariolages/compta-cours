@@ -49,7 +49,8 @@ export default function Dashboard() {
             title,
             created_at,
             file_path,
-            category (
+            category_id,
+            category:categories(
               id,
               name
             )
