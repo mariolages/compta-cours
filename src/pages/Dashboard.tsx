@@ -124,10 +124,6 @@ export default function Dashboard() {
     navigate(`/subjects/${subjectId}`);
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-8 space-y-8 max-w-7xl">
@@ -136,7 +132,7 @@ export default function Dashboard() {
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <SearchBar
             value={searchQuery}
-            onChange={handleSearchChange}
+            onChange={setSearchQuery}
           />
         </div>
 
