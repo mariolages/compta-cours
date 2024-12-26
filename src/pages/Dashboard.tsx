@@ -15,32 +15,34 @@ import { ArrowLeft, Upload } from "lucide-react";
 import type { File } from "@/types/files";
 import type { Subject } from "@/types/subject";
 import type { Class } from "@/types/class";
-import { useSession } from "@supabase/auth-helpers-react";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const session = useSession(); // Use the session hook from auth-helpers-react
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const [lastRefresh] = useState(new Date());
 
-  // Check authentication and validation status
+  // Vérification de l'authentification
   useEffect(() => {
     const checkAuth = async () => {
-      // If no session, redirect to login
-      if (!session) {
-        navigate("/login");
-        return;
-      }
-
       try {
-        const { data: profile } = await supabase
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+
+        if (!session) {
+          navigate("/login");
+          return;
+        }
+
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("is_validated, is_banned")
           .eq("id", session.user.id)
           .single();
+
+        if (profileError) throw profileError;
 
         if (!profile?.is_validated) {
           navigate("/waiting-validation");
@@ -56,14 +58,20 @@ export default function Dashboard() {
           navigate("/");
         }
       } catch (error) {
-        console.error("Authentication check failed:", error);
+        console.error("Erreur d'authentification:", error);
+        toast({
+          variant: "destructive",
+          title: "Erreur d'authentification",
+          description: "Une erreur est survenue lors de la vérification de votre session.",
+        });
         navigate("/login");
       }
     };
 
     checkAuth();
-  }, [session, navigate, toast]);
+  }, [navigate, toast]);
 
+  // Récupération des classes
   const { data: classes = [] } = useQuery<Class[]>({
     queryKey: ["classes"],
     queryFn: async () => {
@@ -73,7 +81,7 @@ export default function Dashboard() {
         .order("name", { ascending: true });
 
       if (error) {
-        console.error("Error fetching classes:", error);
+        console.error("Erreur lors de la récupération des classes:", error);
         toast({
           variant: "destructive",
           title: "Erreur",
@@ -86,6 +94,7 @@ export default function Dashboard() {
     },
   });
 
+  // Récupération des matières
   const { data: subjects = [] } = useQuery<Subject[]>({
     queryKey: ["subjects", selectedClassId],
     queryFn: async () => {
@@ -98,7 +107,7 @@ export default function Dashboard() {
         .order("code", { ascending: true });
 
       if (error) {
-        console.error("Error fetching subjects:", error);
+        console.error("Erreur lors de la récupération des matières:", error);
         toast({
           variant: "destructive",
           title: "Erreur",
@@ -107,17 +116,18 @@ export default function Dashboard() {
         return [];
       }
 
-      console.log("Fetched subjects:", data);
+      console.log("Matières récupérées:", data);
       return data;
     },
     enabled: !!selectedClassId,
   });
 
+  // Récupération des fichiers récents
   const { data: files = [], refetch: refetchFiles } = useQuery({
     queryKey: ["recent-files"],
     queryFn: async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session?.user) return [];
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return [];
 
       const { data, error } = await supabase
         .from("files")
@@ -129,12 +139,12 @@ export default function Dashboard() {
           category:categories(id, name),
           subject:subjects(id, code, name)
         `)
-        .eq("user_id", sessionData.session.user.id)
+        .eq("user_id", session.user.id)
         .order("created_at", { ascending: false })
         .limit(10);
 
       if (error) {
-        console.error("Error fetching files:", error);
+        console.error("Erreur lors de la récupération des fichiers:", error);
         toast({
           variant: "destructive",
           title: "Erreur",
@@ -148,20 +158,35 @@ export default function Dashboard() {
   });
 
   const handleDeleteFile = async (fileId: string) => {
-    const { data: deletedFile } = await supabase
-      .from("files")
-      .delete()
-      .eq("id", fileId)
-      .select()
-      .single();
+    try {
+      const { data: deletedFile, error } = await supabase
+        .from("files")
+        .delete()
+        .eq("id", fileId)
+        .select()
+        .single();
 
-    if (deletedFile) {
-      await supabase.storage
-        .from("dcg_files")
-        .remove([deletedFile.file_path]);
+      if (error) throw error;
+
+      if (deletedFile) {
+        await supabase.storage
+          .from("dcg_files")
+          .remove([deletedFile.file_path]);
+      }
+
+      refetchFiles();
+      toast({
+        title: "Succès",
+        description: "Le fichier a été supprimé",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de supprimer le fichier",
+      });
     }
-
-    refetchFiles();
   };
 
   const handleSubjectClick = (subjectId: number) => {
@@ -169,7 +194,7 @@ export default function Dashboard() {
   };
 
   const handleClassClick = (classId: number) => {
-    console.log("Selected class ID:", classId);
+    console.log("ID de classe sélectionné:", classId);
     setSelectedClassId(classId);
   };
 
