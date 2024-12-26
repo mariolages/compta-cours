@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -6,6 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { MoreVertical, ArrowLeft, Upload } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -13,9 +13,10 @@ interface SubjectHeaderProps {
   code: string;
   name: string;
   onUploadClick: () => void;
+  onDeleteClick: () => Promise<void>;
 }
 
-export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps) {
+export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: SubjectHeaderProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [newName, setNewName] = useState(name);
   const { toast } = useToast();
@@ -25,10 +26,11 @@ export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps)
 
   const handleUpdateName = async () => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("subjects")
         .update({ name: newName })
-        .eq("code", code);
+        .eq("code", code)
+        .select();
 
       if (error) throw error;
 
