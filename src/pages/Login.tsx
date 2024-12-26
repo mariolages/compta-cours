@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -7,24 +7,43 @@ import { useToast } from "@/components/ui/use-toast";
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    // Initialize session check
     const initSession = async () => {
       try {
+        // Clear any existing session first
+        const { error: signOutError } = await supabase.auth.signOut();
+        if (signOutError) {
+          console.error('Error clearing session:', signOutError);
+        }
+
+        // Check for existing session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
+        if (sessionError) {
+          console.error('Session check error:', sessionError);
+          throw sessionError;
+        }
+
         if (session) {
+          console.log('Valid session found, redirecting to dashboard');
           navigate('/dashboard');
         }
       } catch (error) {
         console.error('Session initialization error:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur de session",
+          description: "Veuillez vous reconnecter",
+        });
+      } finally {
+        setIsInitializing(false);
       }
     };
 
     initSession();
 
-    // Listen for auth state changes
+    // Set up auth state change listener
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -34,21 +53,19 @@ export default function Login() {
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate, toast]);
 
   const handleLogin = async (email: string, password: string) => {
     try {
-      // Log the login attempt
-      await supabase
-        .from('auth_logs')
-        .insert([
-          { 
-            email: email,
-            event_type: 'login_attempt'
-          }
-        ]);
+      console.log('Starting login process for:', email);
+      
+      // Clear any existing session
+      await supabase.auth.signOut();
 
+      // Attempt login
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -57,6 +74,13 @@ export default function Login() {
       if (error) {
         console.error('Login error:', error);
         throw error;
+      }
+
+      // Verify the session was created
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        console.error('Session verification failed:', sessionError);
+        throw new Error('Failed to create session');
       }
 
       // Check if user is banned
@@ -75,20 +99,9 @@ export default function Login() {
         throw new Error('Votre compte a été banni');
       }
 
-      // Log successful login
-      await supabase
-        .from('auth_logs')
-        .insert([
-          { 
-            user_id: data.user.id,
-            email: email,
-            event_type: 'login_success'
-          }
-        ]);
-
       return data;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login process error:', error);
       toast({
         variant: "destructive",
         title: "Erreur de connexion",
@@ -97,6 +110,14 @@ export default function Login() {
       throw error;
     }
   };
+
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">
