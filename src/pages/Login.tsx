@@ -3,30 +3,18 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { useSessionContext } from '@supabase/auth-helpers-react';
 
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { session, isLoading } = useSessionContext();
 
   useEffect(() => {
-    // Check current session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate('/dashboard');
-      }
-    });
-
-    // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        navigate('/dashboard');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    if (session && !isLoading) {
+      navigate('/dashboard');
+    }
+  }, [session, isLoading, navigate]);
 
   const handleLogin = async (email: string, password: string) => {
     try {
@@ -82,6 +70,18 @@ export default function Login() {
       throw error;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (session) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex">

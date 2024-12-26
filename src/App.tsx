@@ -17,6 +17,7 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false, // Prevent excessive refetching
     },
   },
 });
@@ -40,8 +41,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => {
-  console.log("App rendering, checking routes configuration");
-  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
