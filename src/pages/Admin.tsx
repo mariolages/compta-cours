@@ -33,33 +33,8 @@ export default function Admin() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAdmin = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        navigate('/login');
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile?.is_admin) {
-        toast({
-          variant: "destructive",
-          title: "Accès refusé",
-          description: "Vous n'avez pas les droits d'administration.",
-        });
-        navigate('/dashboard');
-      }
-    };
-
-    checkAdmin();
     fetchUsers();
-  }, [navigate]);
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -120,21 +95,13 @@ export default function Admin() {
   const deleteUser = async (userId: string) => {
     setIsLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("Non authentifié");
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
 
-      const response = await fetch(`${process.env.VITE_SUPABASE_URL}/functions/v1/delete-user`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Erreur lors de la suppression");
+      if (error) {
+        throw new Error(error.message);
       }
 
       toast({
@@ -148,7 +115,7 @@ export default function Admin() {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: error.message || "Impossible de supprimer l'utilisateur",
+        description: "Impossible de supprimer l'utilisateur",
       });
     } finally {
       setIsLoading(false);
