@@ -25,6 +25,7 @@ interface FileListProps {
 export function FileList({ files, onDownload }: FileListProps) {
   const { toast } = useToast();
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortType, setSortType] = useState<'date' | 'alpha'>('date');
   const queryClient = useQueryClient();
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
@@ -94,19 +95,48 @@ export function FileList({ files, onDownload }: FileListProps) {
     setSortOrder(current => current === 'asc' ? 'desc' : 'asc');
   };
 
+  const toggleSortType = () => {
+    setSortType(current => current === 'date' ? 'alpha' : 'date');
+  };
+
   if (!files || files.length === 0) {
     return <EmptyFileList />;
   }
 
   const sortedFiles = [...files].sort((a, b) => {
-    const dateA = new Date(a.created_at).getTime();
-    const dateB = new Date(b.created_at).getTime();
-    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    if (sortType === 'date') {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    } else {
+      // Extraction des nombres du titre
+      const getNumber = (str: string) => {
+        const match = str.match(/\d+/);
+        return match ? parseInt(match[0]) : 0;
+      };
+      
+      const numA = getNumber(a.title);
+      const numB = getNumber(b.title);
+      
+      if (numA !== numB) {
+        return sortOrder === 'asc' ? numA - numB : numB - numA;
+      }
+      
+      // Si pas de nombres ou nombres égaux, trier alphabétiquement
+      return sortOrder === 'asc' 
+        ? a.title.localeCompare(b.title)
+        : b.title.localeCompare(a.title);
+    }
   });
 
   return (
     <div className="space-y-6">
-      <FileListHeader sortOrder={sortOrder} onSortToggle={toggleSort} />
+      <FileListHeader 
+        sortOrder={sortOrder} 
+        onSortToggle={toggleSort}
+        sortType={sortType}
+        onSortTypeToggle={toggleSortType}
+      />
       <div className="space-y-4">
         {sortedFiles.map((file) => (
           <FileCard
