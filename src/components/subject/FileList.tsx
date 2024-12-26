@@ -23,6 +23,8 @@ interface FileListProps {
 }
 
 export function FileList({ files, onDownload }: FileListProps) {
+  console.log("FileList rendering with files:", files);
+  
   const { toast } = useToast();
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const queryClient = useQueryClient();
@@ -99,6 +101,7 @@ export function FileList({ files, onDownload }: FileListProps) {
   };
 
   if (!files || files.length === 0) {
+    console.log("No files to display");
     return <EmptyFileList />;
   }
 
@@ -107,6 +110,8 @@ export function FileList({ files, onDownload }: FileListProps) {
     const dateB = new Date(b.created_at).getTime();
     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
+
+  console.log("Displaying sorted files:", sortedFiles);
 
   return (
     <div className="space-y-6">

@@ -30,8 +30,7 @@ export function useSubjectFiles(subjectId: string | undefined, selectedCategory:
           )
         `)
         .eq("subject_id", subjectId)
-        .eq("category_id", selectedCategory)
-        .order("created_at", { ascending: false });
+        .eq("category_id", selectedCategory);
 
       if (error) {
         console.error("Error fetching files:", error);
@@ -43,11 +42,15 @@ export function useSubjectFiles(subjectId: string | undefined, selectedCategory:
         throw error;
       }
 
+      console.log("Files fetched:", data);
+
       // Filter files to ensure they belong to UE subjects
       const ueFiles = data.filter(file => {
         const subjectCode = file.subject?.code || "";
         return /^UE\d+$/.test(subjectCode);
       });
+
+      console.log("UE files filtered:", ueFiles);
 
       // Sort files by UE number
       return ueFiles.sort((a, b) => {
@@ -57,5 +60,6 @@ export function useSubjectFiles(subjectId: string | undefined, selectedCategory:
         return aNum - bNum;
       });
     },
+    enabled: !!subjectId && !!selectedCategory,
   });
 }
