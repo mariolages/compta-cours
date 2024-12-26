@@ -120,6 +120,10 @@ export default function Dashboard() {
     refetchFiles();
   };
 
+  const handleSubjectClick = (subjectId: number) => {
+    navigate(`/subjects/${subjectId}`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-8 space-y-8 max-w-7xl">
@@ -132,7 +136,10 @@ export default function Dashboard() {
           />
         </div>
 
-        <SubjectsGrid subjects={subjects} onUploadClick={() => setIsUploadOpen(true)} />
+        <SubjectsGrid 
+          subjects={subjects} 
+          onSubjectClick={handleSubjectClick}
+        />
         
         <RecentFiles
           files={files}
