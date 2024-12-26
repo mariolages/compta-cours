@@ -1,7 +1,7 @@
 import { BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Subject } from "@/types/files";
+import type { Subject } from "@/types/subject";
 
 interface SubjectsGridProps {
   subjects: Subject[];
