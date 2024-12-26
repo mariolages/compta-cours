@@ -9,7 +9,7 @@ import type { File } from "@/types/files";
 
 interface FileListProps {
   files: File[];
-  onDownload: (file: File) => void;
+  onDownload: (fileId: string, filePath: string, fileName: string) => void;
 }
 
 export function FileList({ files, onDownload }: FileListProps) {
@@ -29,7 +29,7 @@ export function FileList({ files, onDownload }: FileListProps) {
 
       if (error) throw error;
 
-      queryClient.invalidateQueries(['files']);
+      queryClient.invalidateQueries({ queryKey: ['subject-files'] });
       toast({
         title: "Succès",
         description: "Le fichier a été supprimé avec succès",
@@ -43,25 +43,25 @@ export function FileList({ files, onDownload }: FileListProps) {
     }
   };
 
-  const handleEdit = (file: File) => {
-    setEditingFileId(file.id);
-    setNewTitle(file.title);
+  const handleRenameClick = (fileId: string, currentTitle: string) => {
+    setEditingFileId(fileId);
+    setNewTitle(currentTitle);
   };
 
-  const handleSave = async () => {
+  const handleRenameSubmit = async (fileId: string) => {
     if (!editingFileId || !newTitle) return;
 
     try {
       const { error } = await supabase
         .from('files')
         .update({ title: newTitle })
-        .eq('id', editingFileId);
+        .eq('id', fileId);
 
       if (error) throw error;
 
       setEditingFileId(null);
       setNewTitle("");
-      queryClient.invalidateQueries(['files']);
+      queryClient.invalidateQueries({ queryKey: ['subject-files'] });
       toast({
         title: "Succès",
         description: "Le titre a été mis à jour avec succès",
@@ -102,8 +102,8 @@ export function FileList({ files, onDownload }: FileListProps) {
         return match ? parseInt(match[1]) : 0;
       };
       
-      const ueA = getUENumber(a.subject.code);
-      const ueB = getUENumber(b.subject.code);
+      const ueA = getUENumber(a.subject?.code || '');
+      const ueB = getUENumber(b.subject?.code || '');
       
       if (ueA !== ueB) {
         return sortOrder === 'asc' ? ueA - ueB : ueB - ueA;
@@ -132,14 +132,14 @@ export function FileList({ files, onDownload }: FileListProps) {
           <FileCard
             key={file.id}
             file={file}
-            isEditing={editingFileId === file.id}
+            editingFileId={editingFileId}
             newTitle={newTitle}
-            onEdit={() => handleEdit(file)}
-            onSave={handleSave}
-            onCancel={() => setEditingFileId(null)}
-            onTitleChange={setNewTitle}
-            onDelete={() => handleDelete(file.id)}
-            onDownload={() => onDownload(file)}
+            onRenameClick={handleRenameClick}
+            onRenameSubmit={handleRenameSubmit}
+            onRenameCancel={() => setEditingFileId(null)}
+            onNewTitleChange={setNewTitle}
+            onDelete={handleDelete}
+            onDownload={onDownload}
           />
         ))}
       </div>

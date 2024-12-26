@@ -48,7 +48,8 @@ export default function SubjectPage() {
           title,
           created_at,
           file_path,
-          category:category_id(id, name)
+          category:category_id(id, name),
+          subject:subject_id(id, code, name)
         `)
         .eq("subject_id", subjectId)
         .eq("category_id", selectedCategory)
