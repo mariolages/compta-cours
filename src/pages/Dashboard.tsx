@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -9,7 +9,6 @@ import { SearchBar } from '@/components/dashboard/SearchBar';
 import { ProfileMenu } from '@/components/dashboard/ProfileMenu';
 import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { SubjectsGrid } from '@/components/dashboard/SubjectsGrid';
-import type { Subject } from '@/types/files';
 import { useQuery } from '@tanstack/react-query';
 
 export default function Dashboard() {
@@ -19,10 +18,25 @@ export default function Dashboard() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Check authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/login', { replace: true });
+      }
+    };
+    checkAuth();
+  }, [navigate]);
+
   const { data: subjects = [], isLoading, error } = useQuery({
     queryKey: ['subjects'],
     queryFn: async () => {
-      console.log("Fetching subjects...");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
       const { data, error } = await supabase
         .from('subjects')
         .select('*');
@@ -32,13 +46,13 @@ export default function Dashboard() {
         throw error;
       }
       
-      // Sort subjects by extracting the UE number and comparing numerically
       return data.sort((a, b) => {
         const numA = parseInt(a.code.match(/\d+/)[0]);
         const numB = parseInt(b.code.match(/\d+/)[0]);
         return numA - numB;
       });
-    }
+    },
+    retry: false
   });
 
   // Handle error outside of the query configuration
