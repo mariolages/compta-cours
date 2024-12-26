@@ -3,18 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { WelcomeCard } from "@/components/dashboard/WelcomeCard";
-import { SearchBar } from "@/components/dashboard/SearchBar";
-import { SubjectsGrid } from "@/components/dashboard/SubjectsGrid";
-import { ClassesGrid } from "@/components/dashboard/ClassesGrid";
-import { RecentFiles } from "@/components/dashboard/RecentFiles";
-import { FileUploadDialog } from "@/components/dashboard/FileUploadDialog";
-import { ProfileMenu } from "@/components/dashboard/ProfileMenu";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Upload } from "lucide-react";
-import type { File } from "@/types/files";
-import type { Subject } from "@/types/subject";
-import type { Class } from "@/types/class";
+import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { DashboardContent } from "@/components/dashboard/DashboardContent";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -24,14 +15,18 @@ export default function Dashboard() {
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const [lastRefresh] = useState(new Date());
 
-  // Vérification de l'authentification
+  // Vérification de l'authentification avec meilleure gestion des erreurs
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
+        if (sessionError) {
+          console.error("Erreur de session:", sessionError);
+          throw sessionError;
+        }
 
         if (!session) {
+          console.log("Pas de session active, redirection vers login");
           navigate("/login");
           return;
         }
@@ -42,14 +37,19 @@ export default function Dashboard() {
           .eq("id", session.user.id)
           .single();
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error("Erreur de profil:", profileError);
+          throw profileError;
+        }
 
         if (!profile?.is_validated) {
+          console.log("Profil non validé, redirection");
           navigate("/waiting-validation");
           return;
         }
 
         if (profile?.is_banned) {
+          console.log("Compte banni, redirection");
           toast({
             variant: "destructive",
             title: "Accès restreint",
@@ -58,7 +58,7 @@ export default function Dashboard() {
           navigate("/");
         }
       } catch (error) {
-        console.error("Erreur d'authentification:", error);
+        console.error("Erreur d'authentification détaillée:", error);
         toast({
           variant: "destructive",
           title: "Erreur d'authentification",
@@ -71,16 +71,23 @@ export default function Dashboard() {
     checkAuth();
   }, [navigate, toast]);
 
-  // Récupération des classes
-  const { data: classes = [] } = useQuery<Class[]>({
+  // Récupération des classes avec meilleure gestion des erreurs
+  const { data: classes = [] } = useQuery({
     queryKey: ["classes"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("classes")
-        .select("*")
-        .order("name", { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from("classes")
+          .select("*")
+          .order("name", { ascending: true });
 
-      if (error) {
+        if (error) {
+          console.error("Erreur détaillée lors de la récupération des classes:", error);
+          throw error;
+        }
+
+        return data || [];
+      } catch (error) {
         console.error("Erreur lors de la récupération des classes:", error);
         toast({
           variant: "destructive",
@@ -89,24 +96,30 @@ export default function Dashboard() {
         });
         return [];
       }
-
-      return data;
     },
   });
 
-  // Récupération des matières
-  const { data: subjects = [] } = useQuery<Subject[]>({
+  // Récupération des matières avec meilleure gestion des erreurs
+  const { data: subjects = [] } = useQuery({
     queryKey: ["subjects", selectedClassId],
     queryFn: async () => {
       if (!selectedClassId) return [];
 
-      const { data, error } = await supabase
-        .from("subjects")
-        .select("*")
-        .eq("class_id", selectedClassId)
-        .order("code", { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from("subjects")
+          .select("*")
+          .eq("class_id", selectedClassId)
+          .order("code", { ascending: true });
 
-      if (error) {
+        if (error) {
+          console.error("Erreur détaillée lors de la récupération des matières:", error);
+          throw error;
+        }
+
+        console.log("Matières récupérées:", data);
+        return data || [];
+      } catch (error) {
         console.error("Erreur lors de la récupération des matières:", error);
         toast({
           variant: "destructive",
@@ -115,35 +128,43 @@ export default function Dashboard() {
         });
         return [];
       }
-
-      console.log("Matières récupérées:", data);
-      return data;
     },
     enabled: !!selectedClassId,
   });
 
-  // Récupération des fichiers récents
+  // Récupération des fichiers récents avec meilleure gestion des erreurs
   const { data: files = [], refetch: refetchFiles } = useQuery({
     queryKey: ["recent-files"],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return [];
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
+          console.log("Pas de session utilisateur pour les fichiers");
+          return [];
+        }
 
-      const { data, error } = await supabase
-        .from("files")
-        .select(`
-          id,
-          title,
-          file_path,
-          created_at,
-          category:categories(id, name),
-          subject:subjects(id, code, name)
-        `)
-        .eq("user_id", session.user.id)
-        .order("created_at", { ascending: false })
-        .limit(10);
+        const { data, error } = await supabase
+          .from("files")
+          .select(`
+            id,
+            title,
+            file_path,
+            created_at,
+            category:categories(id, name),
+            subject:subjects(id, code, name)
+          `)
+          .eq("user_id", session.user.id)
+          .order("created_at", { ascending: false })
+          .limit(10);
 
-      if (error) {
+        if (error) {
+          console.error("Erreur détaillée lors de la récupération des fichiers:", error);
+          throw error;
+        }
+
+        console.log("Fichiers récupérés:", data);
+        return data || [];
+      } catch (error) {
         console.error("Erreur lors de la récupération des fichiers:", error);
         toast({
           variant: "destructive",
@@ -152,8 +173,6 @@ export default function Dashboard() {
         });
         return [];
       }
-
-      return data as File[];
     },
   });
 
@@ -180,7 +199,7 @@ export default function Dashboard() {
         description: "Le fichier a été supprimé",
       });
     } catch (error) {
-      console.error("Erreur lors de la suppression:", error);
+      console.error("Erreur détaillée lors de la suppression:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -189,92 +208,35 @@ export default function Dashboard() {
     }
   };
 
-  const handleSubjectClick = (subjectId: number) => {
-    navigate(`/subjects/${subjectId}`);
-  };
-
-  const handleClassClick = (classId: number) => {
-    console.log("ID de classe sélectionné:", classId);
-    setSelectedClassId(classId);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <nav className="bg-white border-b border-gray-200 fixed w-full top-0 z-50">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              {selectedClassId && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSelectedClassId(null)}
-                  className="hover:bg-gray-100 rounded-full w-10 h-10"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              )}
-              <h1 className="text-xl font-semibold text-primary">DCGHub</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button 
-                onClick={() => setIsUploadOpen(true)}
-                className="bg-primary hover:bg-primary-hover text-white"
-              >
-                <Upload className="h-5 w-5 mr-2" />
-                Déposer des fichiers
-              </Button>
-              <ProfileMenu />
-            </div>
-          </div>
-        </div>
-      </nav>
+      <DashboardHeader
+        selectedClassId={selectedClassId}
+        onBackClick={() => setSelectedClassId(null)}
+        onUploadClick={() => setIsUploadOpen(true)}
+      />
 
-      <div className="container mx-auto px-4 py-8 space-y-8 max-w-7xl pt-20">
-        <WelcomeCard lastRefresh={lastRefresh} />
-        
-        {selectedClassId ? (
-          <>
-            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-              <SearchBar
-                value={searchQuery}
-                onChange={setSearchQuery}
-              />
-            </div>
+      <DashboardContent
+        selectedClassId={selectedClassId}
+        subjects={subjects}
+        classes={classes}
+        files={files}
+        searchQuery={searchQuery}
+        lastRefresh={lastRefresh}
+        onSearchChange={setSearchQuery}
+        onSubjectClick={(subjectId) => navigate(`/subjects/${subjectId}`)}
+        onClassClick={setSelectedClassId}
+        onDeleteFile={handleDeleteFile}
+      />
 
-            {subjects && subjects.length > 0 ? (
-              <SubjectsGrid 
-                subjects={subjects} 
-                onSubjectClick={handleSubjectClick}
-              />
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Aucune matière n'est disponible pour cette classe.</p>
-              </div>
-            )}
-            
-            <RecentFiles
-              files={files}
-              searchQuery={searchQuery}
-              onDelete={handleDeleteFile}
-            />
-          </>
-        ) : (
-          <ClassesGrid 
-            classes={classes}
-            onClassClick={handleClassClick}
-          />
-        )}
-
-        <FileUploadDialog
-          open={isUploadOpen}
-          onOpenChange={setIsUploadOpen}
-          onSuccess={() => {
-            refetchFiles();
-            setIsUploadOpen(false);
-          }}
-        />
-      </div>
+      <FileUploadDialog
+        open={isUploadOpen}
+        onOpenChange={setIsUploadOpen}
+        onSuccess={() => {
+          refetchFiles();
+          setIsUploadOpen(false);
+        }}
+      />
     </div>
   );
 }
