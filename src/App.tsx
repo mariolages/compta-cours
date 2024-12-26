@@ -2,8 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useSession } from '@supabase/auth-helpers-react';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -14,28 +13,10 @@ import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
 import WaitingValidation from "./pages/WaitingValidation";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const session = useSession();
-  
-  if (!session) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  return <>{children}</>;
-};
+const queryClient = new QueryClient();
 
 const App = () => {
   console.log("App rendering, checking routes configuration");
-  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -46,42 +27,12 @@ const App = () => {
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/subjects/:subjectId" element={<SubjectPage />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            
-            {/* Protected Routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/subjects/:subjectId"
-              element={
-                <ProtectedRoute>
-                  <SubjectPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute>
-                  <Admin />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/waiting-validation"
-              element={
-                <ProtectedRoute>
-                  <WaitingValidation />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/waiting-validation" element={<WaitingValidation />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
