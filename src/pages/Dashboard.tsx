@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { WelcomeCard } from "@/components/dashboard/WelcomeCard";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { SubjectsGrid } from "@/components/dashboard/SubjectsGrid";
 import { RecentFiles } from "@/components/dashboard/RecentFiles";
 import { FileUploadDialog } from "@/components/dashboard/FileUploadDialog";
+import { ProfileMenu } from "@/components/dashboard/ProfileMenu";
 import type { File } from "@/types/files";
 import type { Subject } from "@/types/subject";
 
@@ -15,6 +17,7 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [lastRefresh] = useState(new Date());
 
   // Check authentication and validation status
   useEffect(() => {
@@ -127,7 +130,20 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="container mx-auto px-4 py-8 space-y-8 max-w-7xl">
+      {/* Navigation Bar */}
+      <nav className="bg-white border-b border-gray-200 fixed w-full top-0 z-50">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex justify-between items-center">
+            <h1 className="text-xl font-semibold text-primary">DCGHub</h1>
+            <ProfileMenu />
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-8 space-y-8 max-w-7xl pt-20">
+        <WelcomeCard lastRefresh={lastRefresh} />
+        
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <SearchBar
             value={searchQuery}

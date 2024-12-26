@@ -11,7 +11,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { User, LogOut } from 'lucide-react';
+import { User, LogOut, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -19,6 +19,7 @@ export const ProfileMenu = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -36,7 +37,7 @@ export const ProfileMenu = () => {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('full_name')
+        .select('full_name, is_admin')
         .eq('id', user.id)
         .single();
       
@@ -47,6 +48,7 @@ export const ProfileMenu = () => {
 
       if (profile) {
         setFullName(profile.full_name || '');
+        setIsAdmin(profile.is_admin || false);
       }
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
@@ -115,6 +117,12 @@ export const ProfileMenu = () => {
           <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>
             Modifier le profil
           </DropdownMenuItem>
+          {isAdmin && (
+            <DropdownMenuItem onClick={() => navigate('/admin')} className="text-primary">
+              <Shield className="h-4 w-4 mr-2" />
+              Administration
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={handleLogout} className="text-red-600">
             <LogOut className="h-4 w-4 mr-2" />
             Déconnexion
