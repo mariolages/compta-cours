@@ -1,173 +1,159 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import type { UserProfile } from "@/types/admin";
 
-const Admin = () => {
+export default function Admin() {
   const [users, setUsers] = useState<UserProfile[]>([]);
-  const [logs, setLogs] = useState<any[]>([]);
-  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    checkAdminAccess();
+    const checkAdmin = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        navigate('/login');
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.is_admin) {
+        toast({
+          variant: "destructive",
+          title: "Accès refusé",
+          description: "Vous n'avez pas les droits d'administration.",
+        });
+        navigate('/dashboard');
+      }
+    };
+
+    checkAdmin();
+  }, [navigate]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('*');
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger la liste des utilisateurs",
+        });
+        return;
+      }
+
+      setUsers(profiles);
+      setIsLoading(false);
+    };
+
+    fetchUsers();
   }, []);
 
-  const checkAdminAccess = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
-    const { data: profile } = await supabase
+  const updateUserStatus = async (userId: string, field: 'is_validated' | 'is_banned', value: boolean) => {
+    const { error } = await supabase
       .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single();
+      .update({ [field]: value })
+      .eq('id', userId);
 
-    if (!profile?.is_admin) {
+    if (error) {
       toast({
         variant: "destructive",
-        title: "Accès refusé",
-        description: "Vous n'avez pas les droits d'administrateur",
+        title: "Erreur",
+        description: "Impossible de mettre à jour le statut de l'utilisateur",
       });
-      navigate('/dashboard');
       return;
     }
 
-    // Si l'utilisateur est admin, charger les données
-    fetchUsers();
-    fetchLogs();
+    setUsers(users.map(user => 
+      user.id === userId ? { ...user, [field]: value } : user
+    ));
+
+    toast({
+      title: "Succès",
+      description: "Le statut de l'utilisateur a été mis à jour",
+    });
   };
 
-  const fetchUsers = async () => {
-    const { data: profiles, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching users:', error);
-      return;
-    }
-
-    setUsers(profiles);
-  };
-
-  const fetchLogs = async () => {
-    const { data, error } = await supabase
-      .from('auth_logs')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching logs:', error);
-      return;
-    }
-
-    setLogs(data);
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Administration</h1>
-        <Button
-          variant="outline"
-          onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Retour au tableau de bord
-        </Button>
-      </div>
-      
-      <div className="grid gap-8">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Utilisateurs</h2>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <h1 className="text-2xl font-bold mb-6">Administration des utilisateurs</h1>
+          
           <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nom
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Admin
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Validé</TableHead>
+                  <TableHead>Banni</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {users.map((user) => (
-                  <tr key={user.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {user.full_name || "N/A"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {user.email}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {user.is_admin ? "Oui" : "Non"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {/* Add action buttons here if needed */}
-                    </td>
-                  </tr>
+                  <TableRow key={user.id}>
+                    <TableCell>{user.full_name || "Sans nom"}</TableCell>
+                    <TableCell>
+                      {user.is_admin ? (
+                        <Badge>Admin</Badge>
+                      ) : (
+                        <Badge variant="secondary">Utilisateur</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Switch
+                        checked={user.is_validated ?? false}
+                        onCheckedChange={(checked) => 
+                          updateUserStatus(user.id, 'is_validated', checked)
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Switch
+                        checked={user.is_banned ?? false}
+                        onCheckedChange={(checked) => 
+                          updateUserStatus(user.id, 'is_banned', checked)
+                        }
+                      />
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Logs de connexion</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type d'événement
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {logs.map((log) => (
-                  <tr key={log.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {log.email}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {log.event_type}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {new Date(log.created_at).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default Admin;
+}
