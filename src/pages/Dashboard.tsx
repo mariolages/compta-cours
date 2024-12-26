@@ -15,10 +15,12 @@ import { ArrowLeft, Upload } from "lucide-react";
 import type { File } from "@/types/files";
 import type { Subject } from "@/types/subject";
 import type { Class } from "@/types/class";
+import { useSession } from "@supabase/auth-helpers-react";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const session = useSession(); // Use the session hook from auth-helpers-react
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
@@ -27,36 +29,40 @@ export default function Dashboard() {
   // Check authentication and validation status
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      if (!sessionData.session?.user) {
+      // If no session, redirect to login
+      if (!session) {
         navigate("/login");
         return;
       }
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_validated, is_banned")
-        .eq("id", sessionData.session.user.id)
-        .single();
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_validated, is_banned")
+          .eq("id", session.user.id)
+          .single();
 
-      if (!profile?.is_validated) {
-        navigate("/waiting-validation");
-        return;
-      }
+        if (!profile?.is_validated) {
+          navigate("/waiting-validation");
+          return;
+        }
 
-      if (profile?.is_banned) {
-        toast({
-          variant: "destructive",
-          title: "Accès restreint",
-          description: "Votre compte a été banni. Contactez un administrateur.",
-        });
-        navigate("/");
+        if (profile?.is_banned) {
+          toast({
+            variant: "destructive",
+            title: "Accès restreint",
+            description: "Votre compte a été banni. Contactez un administrateur.",
+          });
+          navigate("/");
+        }
+      } catch (error) {
+        console.error("Authentication check failed:", error);
+        navigate("/login");
       }
     };
 
     checkAuth();
-  }, [navigate, toast]);
+  }, [session, navigate, toast]);
 
   const { data: classes = [] } = useQuery<Class[]>({
     queryKey: ["classes"],
