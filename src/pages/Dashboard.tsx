@@ -67,6 +67,7 @@ export default function Dashboard() {
         .order("name", { ascending: true });
 
       if (error) {
+        console.error("Error fetching classes:", error);
         toast({
           variant: "destructive",
           title: "Erreur",
@@ -91,6 +92,7 @@ export default function Dashboard() {
         .order("code", { ascending: true });
 
       if (error) {
+        console.error("Error fetching subjects:", error);
         toast({
           variant: "destructive",
           title: "Erreur",
@@ -99,7 +101,8 @@ export default function Dashboard() {
         return [];
       }
 
-      return data as Subject[];
+      console.log("Fetched subjects:", data);
+      return data;
     },
     enabled: !!selectedClassId,
   });
@@ -125,6 +128,7 @@ export default function Dashboard() {
         .limit(10);
 
       if (error) {
+        console.error("Error fetching files:", error);
         toast({
           variant: "destructive",
           title: "Erreur",
@@ -159,12 +163,12 @@ export default function Dashboard() {
   };
 
   const handleClassClick = (classId: number) => {
+    console.log("Selected class ID:", classId);
     setSelectedClassId(classId);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Navigation Bar */}
       <nav className="bg-white border-b border-gray-200 fixed w-full top-0 z-50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
@@ -195,7 +199,6 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      {/* Main Content */}
       <div className="container mx-auto px-4 py-8 space-y-8 max-w-7xl pt-20">
         <WelcomeCard lastRefresh={lastRefresh} />
         
@@ -208,10 +211,16 @@ export default function Dashboard() {
               />
             </div>
 
-            <SubjectsGrid 
-              subjects={subjects} 
-              onSubjectClick={handleSubjectClick}
-            />
+            {subjects && subjects.length > 0 ? (
+              <SubjectsGrid 
+                subjects={subjects} 
+                onSubjectClick={handleSubjectClick}
+              />
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">Aucune matière n'est disponible pour cette classe.</p>
+              </div>
+            )}
             
             <RecentFiles
               files={files}
