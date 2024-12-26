@@ -120,19 +120,21 @@ export default function Admin() {
   const deleteUser = async (userId: string) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Non authentifié");
 
-      if (error) {
-        console.error('Error deleting user:', error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de supprimer l'utilisateur",
-        });
-        return;
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erreur lors de la suppression");
       }
 
       toast({
@@ -143,6 +145,11 @@ export default function Admin() {
       await fetchUsers();
     } catch (error) {
       console.error('Error in deleteUser:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: error.message || "Impossible de supprimer l'utilisateur",
+      });
     } finally {
       setIsLoading(false);
     }
