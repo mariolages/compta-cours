@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -7,21 +7,29 @@ import { useToast } from "@/components/ui/use-toast";
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check current session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate('/dashboard');
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          navigate('/dashboard', { replace: true });
+        }
+      } catch (error) {
+        console.error('Session check error:', error);
+      } finally {
+        setIsLoading(false);
       }
-    });
+    };
 
-    // Listen for auth state changes
+    checkSession();
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       }
     });
 
@@ -30,24 +38,12 @@ export default function Login() {
 
   const handleLogin = async (email: string, password: string) => {
     try {
-      // Log the login attempt
-      await supabase
-        .from('auth_logs')
-        .insert([
-          { 
-            email: email,
-            event_type: 'login_attempt'
-          }
-        ]);
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       // Check if user is banned
       const { data: profile } = await supabase
@@ -83,9 +79,14 @@ export default function Login() {
     }
   };
 
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    </div>;
+  }
+
   return (
     <div className="min-h-screen flex">
-      {/* Left side with background and text */}
       <div className="hidden lg:flex lg:w-1/2 bg-zinc-900 text-white p-12 flex-col justify-between relative">
         <div className="flex items-center gap-3">
           <img src="/logo.png" alt="Logo" className="h-8 w-8" />
@@ -96,7 +97,6 @@ export default function Login() {
         </h2>
       </div>
 
-      {/* Right side with login form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
