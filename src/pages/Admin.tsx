@@ -50,34 +50,37 @@ export default function Admin() {
   }, [navigate]);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('*');
-
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger la liste des utilisateurs",
-        });
-        return;
-      }
-
-      setUsers(profiles);
-      setIsLoading(false);
-    };
-
     fetchUsers();
   }, []);
 
+  const fetchUsers = async () => {
+    const { data: profiles, error } = await supabase
+      .from('profiles')
+      .select('*');
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger la liste des utilisateurs",
+      });
+      return;
+    }
+
+    setUsers(profiles);
+    setIsLoading(false);
+  };
+
   const updateUserStatus = async (userId: string, field: 'is_validated' | 'is_banned', value: boolean) => {
+    console.log('Updating user status:', { userId, field, value });
+    
     const { error } = await supabase
       .from('profiles')
       .update({ [field]: value })
       .eq('id', userId);
 
     if (error) {
+      console.error('Error updating user status:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -86,9 +89,8 @@ export default function Admin() {
       return;
     }
 
-    setUsers(users.map(user => 
-      user.id === userId ? { ...user, [field]: value } : user
-    ));
+    // Refresh the users list after update
+    await fetchUsers();
 
     toast({
       title: "Succès",
