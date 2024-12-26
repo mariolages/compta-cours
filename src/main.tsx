@@ -4,8 +4,14 @@ import { supabase } from "@/integrations/supabase/client"
 import App from './App.tsx'
 import './index.css'
 
+// Initialize Supabase session
+const initialSession = await supabase.auth.getSession();
+
 createRoot(document.getElementById("root")!).render(
-  <SessionContextProvider supabaseClient={supabase}>
+  <SessionContextProvider 
+    supabaseClient={supabase}
+    initialSession={initialSession.data.session}
+  >
     <App />
   </SessionContextProvider>
 );
