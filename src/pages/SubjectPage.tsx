@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +16,13 @@ export default function SubjectPage() {
   const [selectedCategory, setSelectedCategory] = useState("1");
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const { session, isLoading: isSessionLoading } = useSessionContext();
+  const { session } = useSessionContext();
+
+  useEffect(() => {
+    if (!session) {
+      navigate('/login');
+    }
+  }, [session, navigate]);
 
   const { data: subject, isLoading: isLoadingSubject } = useQuery({
     queryKey: ["subject", subjectId],
@@ -41,11 +47,10 @@ export default function SubjectPage() {
       }
       return data as Subject;
     },
-    enabled: !!session,
-    retry: false
+    enabled: !!session && !!subjectId
   });
 
-  const { data: files, refetch: refetchFiles } = useQuery({
+  const { data: files = [], refetch: refetchFiles } = useQuery({
     queryKey: ["subject-files", subjectId, selectedCategory],
     queryFn: async () => {
       if (!subjectId) {
@@ -78,8 +83,7 @@ export default function SubjectPage() {
       }
       return data;
     },
-    enabled: !!session && !!subjectId,
-    retry: false
+    enabled: !!session && !!subjectId
   });
 
   const handleDownload = async (fileId: string, filePath: string, fileName: string) => {
@@ -115,17 +119,16 @@ export default function SubjectPage() {
     }
   };
 
-  if (isSessionLoading || isLoadingSubject) {
+  if (!session) {
+    return null;
+  }
+
+  if (isLoadingSubject) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
-  }
-
-  if (!session) {
-    navigate('/login');
-    return null;
   }
 
   return (
@@ -138,16 +141,10 @@ export default function SubjectPage() {
             onUploadClick={() => setIsUploadOpen(true)}
           />
           <SubjectTabs
-            files={files || []}
+            files={files}
             selectedCategory={selectedCategory}
             onCategoryChange={setSelectedCategory}
             onDownload={handleDownload}
-            isUploadOpen={isUploadOpen}
-            onUploadOpenChange={setIsUploadOpen}
-            onUploadSuccess={() => {
-              refetchFiles();
-              setIsUploadOpen(false);
-            }}
             isMobile={isMobile}
           />
         </div>
