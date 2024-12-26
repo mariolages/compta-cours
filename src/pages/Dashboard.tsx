@@ -11,7 +11,7 @@ import { RecentFiles } from "@/components/dashboard/RecentFiles";
 import { FileUploadDialog } from "@/components/dashboard/FileUploadDialog";
 import { ProfileMenu } from "@/components/dashboard/ProfileMenu";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Upload } from "lucide-react";
 import type { File } from "@/types/files";
 import type { Subject } from "@/types/subject";
 import type { Class } from "@/types/class";
@@ -181,7 +181,16 @@ export default function Dashboard() {
               )}
               <h1 className="text-xl font-semibold text-primary">DCGHub</h1>
             </div>
-            <ProfileMenu />
+            <div className="flex items-center gap-4">
+              <Button 
+                onClick={() => setIsUploadOpen(true)}
+                className="bg-primary hover:bg-primary-hover text-white"
+              >
+                <Upload className="h-5 w-5 mr-2" />
+                Déposer des fichiers
+              </Button>
+              <ProfileMenu />
+            </div>
           </div>
         </div>
       </nav>
