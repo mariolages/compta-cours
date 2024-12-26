@@ -13,10 +13,9 @@ interface SubjectHeaderProps {
   code: string;
   name: string;
   onUploadClick: () => void;
-  onDeleteClick: () => Promise<void>;
 }
 
-export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: SubjectHeaderProps) {
+export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [newName, setNewName] = useState(name);
   const { toast } = useToast();
@@ -26,11 +25,10 @@ export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: Subj
 
   const handleUpdateName = async () => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("subjects")
         .update({ name: newName })
-        .eq("code", code)
-        .select();
+        .eq("code", code);
 
       if (error) throw error;
 

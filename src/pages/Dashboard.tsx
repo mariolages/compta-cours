@@ -26,18 +26,14 @@ export default function Dashboard() {
     }
   }, [session, isSessionLoading, navigate]);
 
-  const { data: subjects = [], isLoading, error } = useQuery({
+  const { data: subjects = [], isLoading } = useQuery({
     queryKey: ['subjects'],
     queryFn: async () => {
-      console.log("Fetching subjects...");
       const { data, error } = await supabase
         .from('subjects')
         .select('*');
       
-      if (error) {
-        console.error("Error fetching subjects:", error);
-        throw error;
-      }
+      if (error) throw error;
       
       return data.sort((a, b) => {
         const numA = parseInt(a.code.match(/\d+/)[0]);
@@ -45,24 +41,15 @@ export default function Dashboard() {
         return numA - numB;
       });
     },
-    enabled: !!session, // Only fetch when session exists
+    enabled: !!session,
+    retry: false
   });
-
-  // Handle error outside of the query configuration
-  if (error) {
-    console.error("Query error:", error);
-    toast({
-      variant: "destructive",
-      title: "Erreur",
-      description: "Impossible de charger les matières",
-    });
-  }
 
   const handleSubjectClick = (subjectId: number) => {
     navigate(`/subjects/${subjectId}`);
   };
 
-  if (isSessionLoading) {
+  if (isSessionLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -71,15 +58,7 @@ export default function Dashboard() {
   }
 
   if (!session) {
-    return null; // Will redirect in useEffect
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
+    return null;
   }
 
   return (
