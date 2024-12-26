@@ -6,32 +6,9 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
-      classes: {
-        Row: {
-          id: number
-          name: string
-          code: string
-          color: string
-          created_at: string
-        }
-        Insert: {
-          id?: number
-          name: string
-          code: string
-          color?: string
-          created_at?: string
-        }
-        Update: {
-          id?: number
-          name?: string
-          code?: string
-          color?: string
-          created_at?: string
-        }
-      }
       auth_logs: {
         Row: {
           created_at: string | null
@@ -68,6 +45,30 @@ export interface Database {
           name: string
         }
         Update: {
+          created_at?: string
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      classes: {
+        Row: {
+          code: string
+          color: string
+          created_at: string
+          id: number
+          name: string
+        }
+        Insert: {
+          code: string
+          color?: string
+          created_at?: string
+          id?: number
+          name: string
+        }
+        Update: {
+          code?: string
+          color?: string
           created_at?: string
           id?: number
           name?: string
