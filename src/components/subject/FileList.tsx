@@ -24,6 +24,7 @@ interface FileListProps {
 
 export function FileList({ files, onDownload }: FileListProps) {
   console.log("FileList rendering with files:", files);
+  console.log("Files data structure:", JSON.stringify(files, null, 2));
   
   const { toast } = useToast();
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');

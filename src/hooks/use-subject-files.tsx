@@ -8,12 +8,15 @@ export function useSubjectFiles(subjectId: string | undefined, selectedCategory:
   return useQuery({
     queryKey: ["subject-files", subjectId, selectedCategory],
     queryFn: async () => {
-      console.log("Fetching files for subject:", subjectId, "category:", selectedCategory);
+      console.log("Starting file fetch for:", { subjectId, selectedCategory });
       
       if (!subjectId) {
         console.error("No subject ID provided");
         return [];
       }
+
+      const { data: session } = await supabase.auth.getSession();
+      console.log("Current session:", session);
 
       const { data, error } = await supabase
         .from("files")
@@ -42,23 +45,32 @@ export function useSubjectFiles(subjectId: string | undefined, selectedCategory:
         throw error;
       }
 
-      console.log("Files fetched:", data);
+      console.log("Raw data from Supabase:", data);
 
       // Filter files to ensure they belong to UE subjects
-      const ueFiles = data.filter(file => {
+      const ueFiles = data?.filter(file => {
         const subjectCode = file.subject?.code || "";
-        return /^UE\d+$/.test(subjectCode);
-      });
+        const isUE = /^UE\d+$/.test(subjectCode);
+        console.log("Filtering file:", { 
+          file, 
+          subjectCode, 
+          isUE 
+        });
+        return isUE;
+      }) || [];
 
-      console.log("UE files filtered:", ueFiles);
+      console.log("Filtered UE files:", ueFiles);
 
       // Sort files by UE number
-      return ueFiles.sort((a, b) => {
+      const sortedFiles = ueFiles.sort((a, b) => {
         const getUENumber = (code: string) => parseInt(code.replace("UE", ""));
         const aNum = getUENumber(a.subject?.code || "");
         const bNum = getUENumber(b.subject?.code || "");
         return aNum - bNum;
       });
+
+      console.log("Final sorted files:", sortedFiles);
+      return sortedFiles;
     },
     enabled: !!subjectId && !!selectedCategory,
   });
