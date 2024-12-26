@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Login() {
@@ -10,53 +10,48 @@ export default function Login() {
   const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     const initSession = async () => {
       try {
-        // Clear any existing session first
-        const { error: signOutError } = await supabase.auth.signOut();
-        if (signOutError) {
-          console.error('Error clearing session:', signOutError);
-        }
-
         // Check for existing session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
         if (sessionError) {
           console.error('Session check error:', sessionError);
           throw sessionError;
         }
 
-        if (session) {
+        if (session && mounted) {
           console.log('Valid session found, redirecting to dashboard');
           navigate('/dashboard');
         }
       } catch (error) {
         console.error('Session initialization error:', error);
-        toast({
-          variant: "destructive",
-          title: "Erreur de session",
-          description: "Veuillez vous reconnecter",
-        });
+        // Don't show error toast here as it might be a normal "no session" state
       } finally {
-        setIsInitializing(false);
+        if (mounted) {
+          setIsInitializing(false);
+        }
       }
     };
 
     initSession();
 
-    // Set up auth state change listener
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session);
-      if (event === 'SIGNED_IN' && session) {
+      if (event === 'SIGNED_IN' && session && mounted) {
         navigate('/dashboard');
       }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate, toast]);
+  }, [navigate]);
 
   const handleLogin = async (email: string, password: string) => {
     try {
@@ -76,13 +71,6 @@ export default function Login() {
         throw error;
       }
 
-      // Verify the session was created
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) {
-        console.error('Session verification failed:', sessionError);
-        throw new Error('Failed to create session');
-      }
-
       // Check if user is banned
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -100,7 +88,7 @@ export default function Login() {
       }
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login process error:', error);
       toast({
         variant: "destructive",
