@@ -1,36 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { UserList } from "@/components/admin/UserList";
 import type { UserProfile } from "@/types/admin";
 
 export default function Admin() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchUsers();
@@ -145,81 +123,11 @@ export default function Admin() {
             </Button>
           </div>
           
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Validé</TableHead>
-                  <TableHead>Banni</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>{user.full_name || "Sans nom"}</TableCell>
-                    <TableCell>
-                      {user.is_admin ? (
-                        <Badge>Admin</Badge>
-                      ) : (
-                        <Badge variant="secondary">Utilisateur</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={Boolean(user.is_validated)}
-                        onCheckedChange={(checked) => 
-                          updateUserStatus(user.id, 'is_validated', checked)
-                        }
-                        className="data-[state=checked]:bg-primary"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={Boolean(user.is_banned)}
-                        onCheckedChange={(checked) => 
-                          updateUserStatus(user.id, 'is_banned', checked)
-                        }
-                        className="data-[state=checked]:bg-primary"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button 
-                            variant="destructive"
-                            size="sm"
-                            disabled={user.is_admin}
-                          >
-                            Supprimer
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Cette action est irréversible. L'utilisateur et toutes ses données seront supprimés définitivement.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Annuler</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteUser(user.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Supprimer
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <UserList 
+            users={users}
+            onUpdateStatus={updateUserStatus}
+            onDeleteUser={deleteUser}
+          />
         </div>
       </div>
     </div>
