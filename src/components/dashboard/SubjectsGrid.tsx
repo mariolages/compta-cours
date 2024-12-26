@@ -9,11 +9,17 @@ interface SubjectsGridProps {
 }
 
 export const SubjectsGrid = ({ subjects, onSubjectClick }: SubjectsGridProps) => {
-  // Filter subjects to only show UE1 to UE14
-  const filteredSubjects = subjects.filter(subject => {
-    const ueNumber = parseInt(subject.code.replace('UE', ''));
-    return ueNumber >= 1 && ueNumber <= 14;
-  });
+  // Filter and sort subjects to only show UE1 to UE14 in ascending order
+  const sortedSubjects = subjects
+    .filter(subject => {
+      const ueNumber = parseInt(subject.code.replace('UE', ''));
+      return ueNumber >= 1 && ueNumber <= 14;
+    })
+    .sort((a, b) => {
+      const ueNumberA = parseInt(a.code.replace('UE', ''));
+      const ueNumberB = parseInt(b.code.replace('UE', ''));
+      return ueNumberA - ueNumberB;
+    });
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -21,7 +27,7 @@ export const SubjectsGrid = ({ subjects, onSubjectClick }: SubjectsGridProps) =>
         Matières
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredSubjects.map((subject) => (
+        {sortedSubjects.map((subject) => (
           <Button
             key={subject.id}
             variant="ghost"
