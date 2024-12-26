@@ -35,13 +35,16 @@ export default function Dashboard() {
         .eq("id", sessionData.session.user.id)
         .single();
 
-      if (!profile?.is_validated || profile?.is_banned) {
+      if (!profile?.is_validated) {
+        navigate("/waiting-validation");
+        return;
+      }
+
+      if (profile?.is_banned) {
         toast({
           variant: "destructive",
           title: "Accès restreint",
-          description: profile?.is_banned 
-            ? "Votre compte a été banni. Contactez un administrateur."
-            : "Votre compte n'a pas encore été validé. Veuillez patienter.",
+          description: "Votre compte a été banni. Contactez un administrateur.",
         });
         navigate("/");
       }
