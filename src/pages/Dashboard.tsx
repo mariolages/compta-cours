@@ -18,13 +18,7 @@ export default function Dashboard() {
   const [lastRefresh] = useState<Date>(new Date());
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { session, isLoading: isSessionLoading } = useSessionContext();
-
-  useEffect(() => {
-    if (!isSessionLoading && !session) {
-      navigate('/login');
-    }
-  }, [session, isSessionLoading, navigate]);
+  const { session } = useSessionContext();
 
   const { data: subjects = [], isLoading } = useQuery({
     queryKey: ['subjects'],
@@ -33,7 +27,10 @@ export default function Dashboard() {
         .from('subjects')
         .select('*');
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching subjects:", error);
+        throw error;
+      }
       
       return data.sort((a, b) => {
         const numA = parseInt(a.code.match(/\d+/)[0]);
@@ -41,15 +38,14 @@ export default function Dashboard() {
         return numA - numB;
       });
     },
-    enabled: !!session,
-    retry: false
+    enabled: !!session
   });
 
   const handleSubjectClick = (subjectId: number) => {
     navigate(`/subjects/${subjectId}`);
   };
 
-  if (isSessionLoading || isLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -58,6 +54,7 @@ export default function Dashboard() {
   }
 
   if (!session) {
+    navigate('/login');
     return null;
   }
 
