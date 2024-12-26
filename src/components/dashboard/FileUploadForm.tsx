@@ -65,6 +65,7 @@ export function FileUploadForm({
             <SelectItem value="11">UE11 - Contrôle de gestion</SelectItem>
             <SelectItem value="12">UE12 - Anglais des affaires</SelectItem>
             <SelectItem value="13">UE13 - Communication professionnelle</SelectItem>
+            <SelectItem value="14">UE14 - Relations professionnelles</SelectItem>
           </SelectContent>
         </Select>
       </div>

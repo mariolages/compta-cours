@@ -5,13 +5,17 @@ import App from './App.tsx'
 import './index.css'
 
 // Initialize Supabase session
-const initialSession = await supabase.auth.getSession();
+const initializeApp = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
 
-createRoot(document.getElementById("root")!).render(
-  <SessionContextProvider 
-    supabaseClient={supabase}
-    initialSession={initialSession.data.session}
-  >
-    <App />
-  </SessionContextProvider>
-);
+  createRoot(document.getElementById("root")!).render(
+    <SessionContextProvider 
+      supabaseClient={supabase}
+      initialSession={session}
+    >
+      <App />
+    </SessionContextProvider>
+  );
+};
+
+initializeApp();
