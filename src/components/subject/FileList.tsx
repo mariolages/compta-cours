@@ -1,36 +1,26 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { FileCard } from "./FileCard";
-import { FileListHeader } from "./FileListHeader";
 import { EmptyFileList } from "./EmptyFileList";
-
-interface File {
-  id: string;
-  title: string;
-  category: {
-    id: number;
-    name: string;
-  };
-  created_at: string;
-  file_path: string;
-}
+import { FileListHeader } from "./FileListHeader";
+import type { File } from "@/types/files";
 
 interface FileListProps {
-  files: File[] | undefined;
-  onDownload: (fileId: string, filePath: string, fileName: string) => void;
+  files: File[];
+  onDownload: (file: File) => void;
 }
 
 export function FileList({ files, onDownload }: FileListProps) {
   const { toast } = useToast();
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [sortType, setSortType] = useState<'date' | 'alpha'>('date');
+  const [sortType, setSortType] = useState<'date' | 'alpha' | 'ue'>('date');
   const queryClient = useQueryClient();
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
 
-  const handleDeleteFile = async (fileId: string) => {
+  const handleDelete = async (fileId: string) => {
     try {
       const { error } = await supabase
         .from('files')
@@ -39,14 +29,12 @@ export function FileList({ files, onDownload }: FileListProps) {
 
       if (error) throw error;
 
+      queryClient.invalidateQueries(['files']);
       toast({
         title: "Succès",
-        description: "Le fichier a été supprimé",
+        description: "Le fichier a été supprimé avec succès",
       });
-
-      queryClient.invalidateQueries({ queryKey: ["subject-files"] });
     } catch (error) {
-      console.error("Erreur lors de la suppression:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -55,40 +43,36 @@ export function FileList({ files, onDownload }: FileListProps) {
     }
   };
 
-  const handleRenameClick = (fileId: string, currentTitle: string) => {
-    setEditingFileId(fileId);
-    setNewTitle(currentTitle);
+  const handleEdit = (file: File) => {
+    setEditingFileId(file.id);
+    setNewTitle(file.title);
   };
 
-  const handleRenameSubmit = async (fileId: string) => {
+  const handleSave = async () => {
+    if (!editingFileId || !newTitle) return;
+
     try {
       const { error } = await supabase
         .from('files')
         .update({ title: newTitle })
-        .eq('id', fileId);
+        .eq('id', editingFileId);
 
       if (error) throw error;
 
+      setEditingFileId(null);
+      setNewTitle("");
+      queryClient.invalidateQueries(['files']);
       toast({
         title: "Succès",
-        description: "Le fichier a été renommé",
+        description: "Le titre a été mis à jour avec succès",
       });
-
-      setEditingFileId(null);
-      queryClient.invalidateQueries({ queryKey: ["subject-files"] });
     } catch (error) {
-      console.error("Erreur lors du renommage:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de renommer le fichier",
+        description: "Impossible de mettre à jour le titre",
       });
     }
-  };
-
-  const handleRenameCancel = () => {
-    setEditingFileId(null);
-    setNewTitle("");
   };
 
   const toggleSort = () => {
@@ -96,7 +80,11 @@ export function FileList({ files, onDownload }: FileListProps) {
   };
 
   const toggleSortType = () => {
-    setSortType(current => current === 'date' ? 'alpha' : 'date');
+    setSortType(current => {
+      if (current === 'date') return 'alpha';
+      if (current === 'alpha') return 'ue';
+      return 'date';
+    });
   };
 
   if (!files || files.length === 0) {
@@ -108,21 +96,23 @@ export function FileList({ files, onDownload }: FileListProps) {
       const dateA = new Date(a.created_at).getTime();
       const dateB = new Date(b.created_at).getTime();
       return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-    } else {
-      // Extraction des nombres du titre
-      const getNumber = (str: string) => {
-        const match = str.match(/\d+/);
-        return match ? parseInt(match[0]) : 0;
+    } else if (sortType === 'ue') {
+      const getUENumber = (str: string) => {
+        const match = str.match(/UE(\d+)/i);
+        return match ? parseInt(match[1]) : 0;
       };
       
-      const numA = getNumber(a.title);
-      const numB = getNumber(b.title);
+      const ueA = getUENumber(a.subject.code);
+      const ueB = getUENumber(b.subject.code);
       
-      if (numA !== numB) {
-        return sortOrder === 'asc' ? numA - numB : numB - numA;
+      if (ueA !== ueB) {
+        return sortOrder === 'asc' ? ueA - ueB : ueB - ueA;
       }
       
-      // Si pas de nombres ou nombres égaux, trier alphabétiquement
+      return sortOrder === 'asc' 
+        ? a.title.localeCompare(b.title)
+        : b.title.localeCompare(a.title);
+    } else {
       return sortOrder === 'asc' 
         ? a.title.localeCompare(b.title)
         : b.title.localeCompare(a.title);
@@ -142,14 +132,14 @@ export function FileList({ files, onDownload }: FileListProps) {
           <FileCard
             key={file.id}
             file={file}
-            editingFileId={editingFileId}
+            isEditing={editingFileId === file.id}
             newTitle={newTitle}
-            onDownload={onDownload}
-            onDelete={handleDeleteFile}
-            onRenameClick={handleRenameClick}
-            onRenameSubmit={handleRenameSubmit}
-            onRenameCancel={handleRenameCancel}
-            onNewTitleChange={setNewTitle}
+            onEdit={() => handleEdit(file)}
+            onSave={handleSave}
+            onCancel={() => setEditingFileId(null)}
+            onTitleChange={setNewTitle}
+            onDelete={() => handleDelete(file.id)}
+            onDownload={() => onDownload(file)}
           />
         ))}
       </div>
