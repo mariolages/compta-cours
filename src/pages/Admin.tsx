@@ -13,6 +13,17 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { UserProfile } from "@/types/admin";
 
 export default function Admin() {
@@ -98,10 +109,40 @@ export default function Admin() {
         description: `Le statut de l'utilisateur a été mis à jour`,
       });
 
-      // Rafraîchir la liste immédiatement
       await fetchUsers();
     } catch (error) {
       console.error('Error in updateUserStatus:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Error deleting user:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de supprimer l'utilisateur",
+        });
+        return;
+      }
+
+      toast({
+        title: "Succès",
+        description: "L'utilisateur a été supprimé",
+      });
+
+      await fetchUsers();
+    } catch (error) {
+      console.error('Error in deleteUser:', error);
     } finally {
       setIsLoading(false);
     }
@@ -138,6 +179,7 @@ export default function Admin() {
                   <TableHead>Statut</TableHead>
                   <TableHead>Validé</TableHead>
                   <TableHead>Banni</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -166,6 +208,36 @@ export default function Admin() {
                           updateUserStatus(user.id, 'is_banned', checked)
                         }
                       />
+                    </TableCell>
+                    <TableCell>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="destructive"
+                            size="sm"
+                            disabled={user.is_admin}
+                          >
+                            Supprimer
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Cette action est irréversible. L'utilisateur et toutes ses données seront supprimés définitivement.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuler</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteUser(user.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Supprimer
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </TableCell>
                   </TableRow>
                 ))}
