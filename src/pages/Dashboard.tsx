@@ -127,11 +127,19 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="container mx-auto px-4 py-8 space-y-8 max-w-7xl">
-        <div className="flex justify-between items-center">
-          <WelcomeCard lastRefresh={lastRefresh} />
-          <ProfileMenu />
+      {/* Navigation Bar */}
+      <nav className="bg-white border-b border-gray-200 fixed w-full top-0 z-50">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex justify-between items-center">
+            <h1 className="text-xl font-semibold text-primary">DCGHub</h1>
+            <ProfileMenu />
+          </div>
         </div>
+      </nav>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-8 space-y-8 max-w-7xl pt-20">
+        <WelcomeCard lastRefresh={lastRefresh} />
         
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <SearchBar
