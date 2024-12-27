@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, FileText, CheckSquare, Archive, CheckCircle, Headphones } from "lucide-react";
+import { BookOpen, FileText, CheckSquare, Archive, CheckCircle, Headphones, BrainCircuit } from "lucide-react";
 import { FileList } from "./FileList";
 import {
   Select,
@@ -24,6 +24,7 @@ const categories = [
   { id: "4", title: "Sujets d'examen", icon: Archive },
   { id: "5", title: "Corrections de sujets", icon: CheckCircle },
   { id: "6", title: "Podcasts", icon: Headphones },
+  { id: "7", title: "Quiz", icon: BrainCircuit },
 ];
 
 export function SubjectTabs({ files, selectedCategory, onCategoryChange, onDownload, isMobile }: SubjectTabsProps) {
