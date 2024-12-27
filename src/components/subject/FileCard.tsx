@@ -46,10 +46,15 @@ export function FileCard({
   const isEditing = editingFileId === file.id;
 
   const handleTabChange = (value: string) => {
-    const tabTrigger = document.querySelector(`[data-state][value="${value}"]`) as HTMLButtonElement;
-    if (tabTrigger) {
-      tabTrigger.click();
-    }
+    // Trouver tous les éléments de type TabsTrigger
+    const tabTriggers = document.querySelectorAll('[role="tab"]');
+    
+    // Parcourir les éléments pour trouver celui avec la valeur correspondante
+    tabTriggers.forEach((trigger) => {
+      if (trigger instanceof HTMLElement && trigger.getAttribute('value') === value) {
+        trigger.click();
+      }
+    });
   };
 
   return (
