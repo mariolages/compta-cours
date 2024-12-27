@@ -15,9 +15,10 @@ interface QuizListProps {
 export function QuizList({ files }: QuizListProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const { toast } = useToast();
+  const currentFile = files?.[0];
 
   const { data: quizzes, isLoading } = useQuery({
-    queryKey: ["quizzes", files[0]?.id],
+    queryKey: ["quizzes", currentFile?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("quizzes")
@@ -25,7 +26,7 @@ export function QuizList({ files }: QuizListProps) {
           *,
           file:file_id(title)
         `)
-        .eq("file_id", files[0]?.id);
+        .eq("file_id", currentFile?.id);
 
       if (error) {
         toast({
@@ -38,8 +39,23 @@ export function QuizList({ files }: QuizListProps) {
 
       return data;
     },
-    enabled: !!files.length,
+    enabled: !!currentFile?.id,
   });
+
+  if (!files || files.length === 0) {
+    return (
+      <Card className="p-8 bg-gray-50/50 border-dashed">
+        <div className="text-center space-y-3">
+          <p className="text-lg font-medium text-gray-600">
+            Aucun fichier n'est disponible pour créer un quiz.
+          </p>
+          <p className="text-gray-500">
+            Veuillez d'abord ajouter un fichier dans cette catégorie.
+          </p>
+        </div>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return (
