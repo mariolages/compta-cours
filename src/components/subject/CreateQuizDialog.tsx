@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Loader2 } from "lucide-react";
 import type { File } from "@/types/files";
 
 interface CreateQuizDialogProps {
@@ -25,28 +25,54 @@ export function CreateQuizDialog({ open, onOpenChange, files }: CreateQuizDialog
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!files[0]) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Aucun fichier sélectionné",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Create the quiz
+      // Télécharger le contenu du fichier
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from("dcg_files")
+        .download(files[0].file_path);
+
+      if (downloadError) throw downloadError;
+
+      // Lire le contenu du fichier
+      const text = await fileData.text();
+      
+      // Créer le quiz
       const { data: quiz, error: quizError } = await supabase
         .from("quizzes")
         .insert({
           title,
           description,
-          file_id: files[0]?.id,
+          file_id: files[0].id,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
         })
         .select()
         .single();
 
       if (quizError) throw quizError;
 
-      // Generate 10 questions automatically
-      const questions = Array.from({ length: 10 }, (_, i) => ({
+      // Générer des questions à partir du contenu
+      const paragraphs = text.split('\n').filter(p => p.length > 50);
+      const questions = paragraphs.slice(0, 10).map((paragraph, i) => ({
         quiz_id: quiz.id,
-        question: `Question ${i + 1} sur ${files[0]?.title}`,
-        correct_answer: "Réponse correcte",
-        options: JSON.stringify(["Option 1", "Option 2", "Option 3", "Option 4"]),
+        question: `Question ${i + 1} : Que signifie "${paragraph.slice(0, 100)}..." ?`,
+        correct_answer: "La bonne réponse",
+        options: JSON.stringify([
+          "La bonne réponse",
+          "Une réponse incorrecte",
+          "Une autre réponse incorrecte",
+          "Encore une réponse incorrecte"
+        ]),
       }));
 
       const { error: questionsError } = await supabase
@@ -108,7 +134,7 @@ export function CreateQuizDialog({ open, onOpenChange, files }: CreateQuizDialog
             <Label className="text-base">Fichier source</Label>
             <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <BookOpen className="h-5 w-5 text-primary" />
-              <p className="text-gray-700">{files[0]?.title}</p>
+              <p className="text-gray-700">{files[0]?.title || "Aucun fichier sélectionné"}</p>
             </div>
           </div>
 
@@ -127,7 +153,14 @@ export function CreateQuizDialog({ open, onOpenChange, files }: CreateQuizDialog
               disabled={isLoading}
               className="min-w-[100px] bg-primary hover:bg-primary-hover"
             >
-              {isLoading ? "Création..." : "Créer le quiz"}
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Création...
+                </div>
+              ) : (
+                "Créer le quiz"
+              )}
             </Button>
           </div>
         </form>
