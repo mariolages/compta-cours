@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, FileText, CheckSquare, Archive, CheckCircle, Headphones, BrainCircuit } from "lucide-react";
 import { FileList } from "./FileList";
+import { QuizList } from "./QuizList";
 import {
   Select,
   SelectContent,
@@ -51,7 +52,11 @@ export function SubjectTabs({ files, selectedCategory, onCategoryChange, onDownl
           </SelectContent>
         </Select>
         <div className="bg-white rounded-xl shadow-sm p-4">
-          <FileList files={files} onDownload={onDownload} />
+          {selectedCategory === "7" ? (
+            <QuizList files={files} />
+          ) : (
+            <FileList files={files} onDownload={onDownload} />
+          )}
         </div>
       </div>
     );
@@ -80,7 +85,11 @@ export function SubjectTabs({ files, selectedCategory, onCategoryChange, onDownl
               value={category.id}
               className="focus-visible:outline-none focus-visible:ring-0"
             >
-              <FileList files={files} onDownload={onDownload} />
+              {category.id === "7" ? (
+                <QuizList files={files} />
+              ) : (
+                <FileList files={files} onDownload={onDownload} />
+              )}
             </TabsContent>
           ))}
         </div>
