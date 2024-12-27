@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus } from "lucide-react";
+import { Plus, BookOpen, ArrowRight } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +17,7 @@ export function QuizList({ files }: QuizListProps) {
   const { toast } = useToast();
 
   const { data: quizzes, isLoading } = useQuery({
-    queryKey: ["quizzes", files[0]?.subject_id],
+    queryKey: ["quizzes", files[0]?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("quizzes")
@@ -50,35 +50,57 @@ export function QuizList({ files }: QuizListProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Quiz disponibles</h2>
-        <Button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-2">
+        <h2 className="text-2xl font-semibold text-gray-900">Quiz disponibles</h2>
+        <Button 
+          onClick={() => setIsCreateOpen(true)} 
+          className="flex items-center gap-2 bg-primary hover:bg-primary-hover transition-all duration-300"
+        >
           <Plus className="h-4 w-4" />
           Créer un quiz
         </Button>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-6">
         {quizzes?.map((quiz) => (
-          <Card key={quiz.id} className="p-4">
+          <Card 
+            key={quiz.id} 
+            className="p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary animate-fade-in"
+          >
             <div className="flex justify-between items-center">
-              <div>
-                <h3 className="font-medium">{quiz.title}</h3>
-                <p className="text-sm text-gray-500">
-                  Basé sur : {quiz.file?.title}
-                </p>
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-gray-900">{quiz.title}</h3>
+                <div className="flex items-center gap-2 text-gray-500">
+                  <BookOpen className="h-4 w-4" />
+                  <p className="text-sm">
+                    Basé sur : {quiz.file?.title}
+                  </p>
+                </div>
+                {quiz.description && (
+                  <p className="text-sm text-gray-600 mt-2">{quiz.description}</p>
+                )}
               </div>
-              <Button variant="outline">Commencer</Button>
+              <Button 
+                variant="outline"
+                className="flex items-center gap-2 hover:bg-primary hover:text-white transition-all duration-300"
+              >
+                <span>Commencer</span>
+                <ArrowRight className="h-4 w-4" />
+              </Button>
             </div>
           </Card>
         ))}
 
         {!quizzes?.length && (
-          <Card className="p-8">
-            <div className="text-center text-gray-500">
-              <p>Aucun quiz n'a encore été créé pour ce cours.</p>
-              <p>Cliquez sur "Créer un quiz" pour en ajouter un.</p>
+          <Card className="p-8 bg-gray-50/50 border-dashed">
+            <div className="text-center space-y-3">
+              <p className="text-lg font-medium text-gray-600">
+                Aucun quiz n'a encore été créé pour ce cours.
+              </p>
+              <p className="text-gray-500">
+                Cliquez sur "Créer un quiz" pour en ajouter un.
+              </p>
             </div>
           </Card>
         )}

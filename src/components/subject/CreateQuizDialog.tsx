@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { BookOpen } from "lucide-react";
 import type { File } from "@/types/files";
 
 interface CreateQuizDialogProps {
@@ -74,48 +75,58 @@ export function CreateQuizDialog({ open, onOpenChange, files }: CreateQuizDialog
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[525px] p-6">
         <DialogHeader>
-          <DialogTitle>Créer un nouveau quiz</DialogTitle>
+          <DialogTitle className="text-2xl font-semibold">Créer un nouveau quiz</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Titre du quiz</Label>
+        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+          <div className="space-y-4">
+            <Label htmlFor="title" className="text-base">Titre du quiz</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ex: Quiz sur le chapitre 1"
+              className="h-12"
               required
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description (optionnelle)</Label>
+          <div className="space-y-4">
+            <Label htmlFor="description" className="text-base">Description (optionnelle)</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Décrivez brièvement le contenu du quiz..."
+              className="min-h-[100px] resize-none"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Fichier source</Label>
-            <p className="text-sm text-gray-500">{files[0]?.title}</p>
+          <div className="space-y-4">
+            <Label className="text-base">Fichier source</Label>
+            <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <BookOpen className="h-5 w-5 text-primary" />
+              <p className="text-gray-700">{files[0]?.title}</p>
+            </div>
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-3 pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
+              className="min-w-[100px]"
             >
               Annuler
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              className="min-w-[100px] bg-primary hover:bg-primary-hover"
+            >
               {isLoading ? "Création..." : "Créer le quiz"}
             </Button>
           </div>
