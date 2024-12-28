@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AudioPlayer } from "./AudioPlayer";
 import type { File } from "@/types/files";
+import { CreateQuizDialog } from "./quiz/CreateQuizDialog";
 
 interface FileCardProps {
   file: File;
