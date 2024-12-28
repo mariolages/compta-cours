@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Loader2 } from "lucide-react";
+import { Loader2, BookOpen } from "lucide-react";
 import type { File } from "@/types/files";
 
 interface CreateQuizDialogProps {
@@ -22,10 +22,51 @@ export function CreateQuizDialog({ open, onOpenChange, files }: CreateQuizDialog
   const [description, setDescription] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const currentFile = files[0];
+
+  const generateQuestions = (text: string) => {
+    // Diviser le texte en paragraphes significatifs
+    const paragraphs = text
+      .split(/\n\n+/)
+      .filter(p => p.trim().length > 100)
+      .map(p => p.trim());
+
+    // Générer des questions variées pour chaque paragraphe
+    const questions = paragraphs.slice(0, 5).map((paragraph, index) => {
+      const questionTypes = [
+        "Quelle est la principale idée présentée dans ce passage : ",
+        "Que signifie le concept suivant : ",
+        "Quel est le point clé abordé dans : ",
+        "Comment peut-on expliquer : ",
+        "Quelle est la définition de : "
+      ];
+
+      // Extraire une phrase clé du paragraphe
+      const keyPhrase = paragraph.split('.')[0];
+      const questionType = questionTypes[index % questionTypes.length];
+      const question = `${questionType}"${keyPhrase.slice(0, 100)}..." ?`;
+
+      // Générer des réponses plausibles
+      const correctAnswer = paragraph.split('.')[1]?.trim() || "La réponse correcte basée sur le contenu";
+      const incorrectAnswers = [
+        "Une réponse incorrecte mais plausible",
+        "Une autre interprétation possible mais inexacte",
+        "Une réponse qui semble correcte mais ne l'est pas"
+      ];
+
+      return {
+        question,
+        correct_answer: correctAnswer,
+        options: JSON.stringify([correctAnswer, ...incorrectAnswers])
+      };
+    });
+
+    return questions;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!files[0]) {
+    if (!currentFile) {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -40,20 +81,24 @@ export function CreateQuizDialog({ open, onOpenChange, files }: CreateQuizDialog
       // Télécharger le contenu du fichier
       const { data: fileData, error: downloadError } = await supabase.storage
         .from("dcg_files")
-        .download(files[0].file_path);
+        .download(currentFile.file_path);
 
       if (downloadError) throw downloadError;
 
       // Lire le contenu du fichier
       const text = await fileData.text();
       
+      if (text.length < 200) {
+        throw new Error("Le contenu du fichier est trop court pour générer un quiz");
+      }
+
       // Créer le quiz
       const { data: quiz, error: quizError } = await supabase
         .from("quizzes")
         .insert({
           title,
           description,
-          file_id: files[0].id,
+          file_id: currentFile.id,
           user_id: (await supabase.auth.getUser()).data.user?.id,
         })
         .select()
@@ -61,23 +106,16 @@ export function CreateQuizDialog({ open, onOpenChange, files }: CreateQuizDialog
 
       if (quizError) throw quizError;
 
-      // Générer des questions à partir du contenu
-      const paragraphs = text.split('\n').filter(p => p.length > 50);
-      const questions = paragraphs.slice(0, 10).map((paragraph, i) => ({
-        quiz_id: quiz.id,
-        question: `Question ${i + 1} : Que signifie "${paragraph.slice(0, 100)}..." ?`,
-        correct_answer: "La bonne réponse",
-        options: JSON.stringify([
-          "La bonne réponse",
-          "Une réponse incorrecte",
-          "Une autre réponse incorrecte",
-          "Encore une réponse incorrecte"
-        ]),
-      }));
-
+      // Générer et insérer les questions
+      const questions = generateQuestions(text);
       const { error: questionsError } = await supabase
         .from("quiz_questions")
-        .insert(questions);
+        .insert(
+          questions.map(q => ({
+            quiz_id: quiz.id,
+            ...q
+          }))
+        );
 
       if (questionsError) throw questionsError;
 
@@ -92,7 +130,7 @@ export function CreateQuizDialog({ open, onOpenChange, files }: CreateQuizDialog
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de créer le quiz",
+        description: error instanceof Error ? error.message : "Impossible de créer le quiz",
       });
     } finally {
       setIsLoading(false);
@@ -134,7 +172,7 @@ export function CreateQuizDialog({ open, onOpenChange, files }: CreateQuizDialog
             <Label className="text-base">Fichier source</Label>
             <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <BookOpen className="h-5 w-5 text-primary" />
-              <p className="text-gray-700">{files[0]?.title || "Aucun fichier sélectionné"}</p>
+              <p className="text-gray-700">{currentFile?.title || "Aucun fichier sélectionné"}</p>
             </div>
           </div>
 
