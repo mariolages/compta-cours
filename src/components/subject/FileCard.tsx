@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AudioPlayer } from "./AudioPlayer";
 import type { File } from "@/types/files";
 
 interface FileCardProps {
@@ -44,9 +45,9 @@ export function FileCard({
 }: FileCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isEditing = editingFileId === file.id;
+  const isPodcast = file.category?.id === 6;
 
   const handleTabChange = (value: string) => {
-    // On utilise un sélecteur plus précis pour trouver le bon onglet
     const tabTrigger = document.querySelector(`button[role="tab"][value="${value}"]`);
     if (tabTrigger && tabTrigger instanceof HTMLElement) {
       tabTrigger.click();
@@ -87,15 +88,17 @@ export function FileCard({
               <h3 className="text-lg font-medium text-gray-900 truncate">
                 {file.title}
               </h3>
-              <Button
-                variant="outline"
-                size="sm"
-                className="hidden md:flex items-center gap-2 hover:bg-primary hover:text-white transition-colors"
-                onClick={() => handleTabChange("7")}
-              >
-                <BrainCircuit className="h-4 w-4" />
-                Créer un quiz
-              </Button>
+              {!isPodcast && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="hidden md:flex items-center gap-2 hover:bg-primary hover:text-white transition-colors"
+                  onClick={() => handleTabChange("7")}
+                >
+                  <BrainCircuit className="h-4 w-4" />
+                  Créer un quiz
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -137,20 +140,28 @@ export function FileCard({
                 <Trash2 className="h-4 w-4" />
                 Supprimer
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="flex items-center gap-2 md:hidden"
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  handleTabChange("7");
-                }}
-              >
-                <BrainCircuit className="h-4 w-4" />
-                Créer un quiz
-              </DropdownMenuItem>
+              {!isPodcast && (
+                <DropdownMenuItem
+                  className="flex items-center gap-2 md:hidden"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    handleTabChange("7");
+                  }}
+                >
+                  <BrainCircuit className="h-4 w-4" />
+                  Créer un quiz
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
+
+      {isPodcast && (
+        <div className="mt-4">
+          <AudioPlayer filePath={file.file_path} />
+        </div>
+      )}
     </Card>
   );
 }
