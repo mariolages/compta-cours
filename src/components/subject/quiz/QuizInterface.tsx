@@ -90,6 +90,13 @@ export function QuizInterface({ quizId, onClose }: QuizInterfaceProps) {
     );
   }
 
+  // Ensure options is properly parsed from JSON if it's a string
+  const options = Array.isArray(currentQuestion.options) 
+    ? currentQuestion.options 
+    : typeof currentQuestion.options === 'string' 
+      ? JSON.parse(currentQuestion.options)
+      : currentQuestion.options;
+
   return (
     <Card className="p-6 space-y-6">
       <div className="space-y-4">
@@ -105,7 +112,7 @@ export function QuizInterface({ quizId, onClose }: QuizInterfaceProps) {
       </div>
 
       <div className="grid gap-3">
-        {JSON.parse(currentQuestion.options).map((option: string, index: number) => (
+        {options.map((option: string, index: number) => (
           <Button
             key={index}
             variant={selectedAnswer === option ? "default" : "outline"}
