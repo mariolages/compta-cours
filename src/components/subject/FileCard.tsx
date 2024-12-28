@@ -8,8 +8,7 @@ import {
   Pencil, 
   Trash2, 
   Check, 
-  X,
-  BrainCircuit
+  X
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -19,7 +18,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AudioPlayer } from "./AudioPlayer";
 import type { File } from "@/types/files";
-import { CreateQuizDialog } from "./quiz/CreateQuizDialog";
 
 interface FileCardProps {
   file: File;
@@ -47,13 +45,6 @@ export function FileCard({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isEditing = editingFileId === file.id;
   const isPodcast = file.category?.id === 6;
-
-  const handleTabChange = (value: string) => {
-    const tabTrigger = document.querySelector(`button[role="tab"][value="${value}"]`);
-    if (tabTrigger && tabTrigger instanceof HTMLElement) {
-      tabTrigger.click();
-    }
-  };
 
   return (
     <Card className="p-4 hover:shadow-md transition-shadow duration-300">
@@ -89,17 +80,6 @@ export function FileCard({
               <h3 className="text-lg font-medium text-gray-900 truncate">
                 {file.title}
               </h3>
-              {!isPodcast && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="hidden md:flex items-center gap-2 hover:bg-primary hover:text-white transition-colors"
-                  onClick={() => handleTabChange("7")}
-                >
-                  <BrainCircuit className="h-4 w-4" />
-                  Créer un quiz
-                </Button>
-              )}
             </div>
           )}
         </div>
@@ -141,18 +121,6 @@ export function FileCard({
                 <Trash2 className="h-4 w-4" />
                 Supprimer
               </DropdownMenuItem>
-              {!isPodcast && (
-                <DropdownMenuItem
-                  className="flex items-center gap-2 md:hidden"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    handleTabChange("7");
-                  }}
-                >
-                  <BrainCircuit className="h-4 w-4" />
-                  Créer un quiz
-                </DropdownMenuItem>
-              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
