@@ -8,6 +8,7 @@ import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { SearchBar } from '@/components/dashboard/SearchBar';
 import { ProfileMenu } from '@/components/dashboard/ProfileMenu';
 import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
+import { ClassesGrid } from '@/components/dashboard/ClassesGrid';
 import { SubjectsGrid } from '@/components/dashboard/SubjectsGrid';
 import { useQuery } from '@tanstack/react-query';
 import { useSessionContext } from '@supabase/auth-helpers-react';
@@ -15,6 +16,7 @@ import { useSessionContext } from '@supabase/auth-helpers-react';
 export default function Dashboard() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const [lastRefresh] = useState<Date>(new Date());
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -26,46 +28,46 @@ export default function Dashboard() {
     return null;
   }
 
-  const { data: subjects = [], isLoading, error } = useQuery({
-    queryKey: ['subjects'],
+  // Fetch classes
+  const { data: classes = [], isLoading: isLoadingClasses } = useQuery({
+    queryKey: ['classes'],
     queryFn: async () => {
-      console.log("Fetching subjects...");
       const { data, error } = await supabase
-        .from('subjects')
+        .from('classes')
         .select('*')
         .order('code');
       
-      if (error) {
-        console.error("Error fetching subjects:", error);
-        throw error;
-      }
-      
-      // Filter subjects to only include UE1 to UE14
-      return data.filter(subject => {
-        const ueNumber = parseInt(subject.code.replace('UE', ''));
-        return ueNumber >= 1 && ueNumber <= 14;
-      });
+      if (error) throw error;
+      return data;
     },
     enabled: !!session,
-    retry: 1,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
   });
 
-  if (error) {
-    console.error("Query error:", error);
-    toast({
-      variant: "destructive",
-      title: "Erreur",
-      description: "Impossible de charger les matières",
-    });
-  }
+  // Fetch subjects for selected class
+  const { data: subjects = [], isLoading: isLoadingSubjects } = useQuery({
+    queryKey: ['subjects', selectedClassId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('subjects')
+        .select('*')
+        .eq('class_id', selectedClassId)
+        .order('code');
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session && !!selectedClassId,
+  });
+
+  const handleClassClick = (classId: number) => {
+    setSelectedClassId(classId);
+  };
 
   const handleSubjectClick = (subjectId: number) => {
     navigate(`/subjects/${subjectId}`);
   };
 
-  if (isLoadingSession || isLoading) {
+  if (isLoadingSession || isLoadingClasses) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -78,7 +80,16 @@ export default function Dashboard() {
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
+            <div className="flex items-center gap-4">
+              {selectedClassId && (
+                <Button
+                  variant="ghost"
+                  onClick={() => setSelectedClassId(null)}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  ← Retour
+                </Button>
+              )}
               <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
                 compta-cours.fr
               </h1>
@@ -103,7 +114,12 @@ export default function Dashboard() {
 
       <div className="container mx-auto px-4 py-8 space-y-8">
         <WelcomeCard lastRefresh={lastRefresh} />
-        <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
+        
+        {selectedClassId ? (
+          <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
+        ) : (
+          <ClassesGrid classes={classes} onClassClick={handleClassClick} />
+        )}
 
         <FileUploadDialog 
           open={isUploadOpen} 
