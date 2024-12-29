@@ -32,19 +32,22 @@ export default function Index() {
             </Button>
           </div>
 
-          <div className="mt-12 space-y-8">
-            <div className="grid gap-8 md:grid-cols-3">
-              <div className="p-6 bg-white rounded-xl shadow-sm">
-                <h3 className="text-xl font-semibold mb-2">DCG 1ère année</h3>
-                <p className="text-gray-600">UE1, UE5, UE9</p>
-              </div>
-              <div className="p-6 bg-white rounded-xl shadow-sm">
-                <h3 className="text-xl font-semibold mb-2">DCG 2ème année</h3>
-                <p className="text-gray-600">UE2, UE4, UE6, UE10</p>
-              </div>
-              <div className="p-6 bg-white rounded-xl shadow-sm">
-                <h3 className="text-xl font-semibold mb-2">DCG 3ème année</h3>
-                <p className="text-gray-600">UE3, UE7, UE8, UE11, UE12, UE13</p>
+          <div className="mt-12">
+            <div className="p-6 bg-white rounded-xl shadow-sm">
+              <h3 className="text-2xl font-semibold mb-4">DCG 1ère année</h3>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-semibold text-primary">UE1</h4>
+                  <p className="text-gray-600">Fondamentaux du droit</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-semibold text-primary">UE5</h4>
+                  <p className="text-gray-600">Économie contemporaine</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-semibold text-primary">UE9</h4>
+                  <p className="text-gray-600">Comptabilité</p>
+                </div>
               </div>
             </div>
           </div>
