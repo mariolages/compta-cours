@@ -1,4 +1,4 @@
-import { BookOpen, Balance, ChartBar, Briefcase, Computer, Calculator } from "lucide-react";
+import { BookOpen, Scale, ChartBar, Briefcase, Computer, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Subject } from "@/types/subject";
@@ -11,7 +11,7 @@ interface SubjectsGridProps {
 export const SubjectsGrid = ({ subjects, onSubjectClick }: SubjectsGridProps) => {
   const getSubjectIcon = (code: string) => {
     if (code.startsWith('UE1') || code.startsWith('UE2') || code.startsWith('UE3') || code.startsWith('UE4') || code.startsWith('DRT')) {
-      return Balance;
+      return Scale;
     }
     if (code.startsWith('UE5') || code.startsWith('UE6') || code.startsWith('ECO')) {
       return ChartBar;
