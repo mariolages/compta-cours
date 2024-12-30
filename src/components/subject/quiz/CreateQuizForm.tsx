@@ -3,14 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Save } from "lucide-react";
-import { FileImportForm } from "./FileImportForm";
-import { ManualQuestionForm } from "./ManualQuestionForm";
+import { Loader2, Save, Eye } from "lucide-react";
+import { QuestionAccordion } from "./QuestionAccordion";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface CreateQuizFormProps {
   fileId?: string;
@@ -34,11 +33,19 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
   const [questions, setQuestions] = useState<Question[]>([
     { question: "", options: ["", "", ""], correct_answers: [], explanation: "" }
   ]);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSaveQuestion = (index: number) => {
+    toast({
+      title: "Question enregistrée",
+      description: `La question ${index + 1} a été enregistrée avec succès.`,
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent, isDraft: boolean = false) => {
     e.preventDefault();
     
     if (!title.trim()) {
@@ -46,15 +53,6 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
         variant: "destructive",
         title: "Erreur",
         description: "Le titre du quiz est requis",
-      });
-      return;
-    }
-
-    if (questions.some(q => !q.question.trim() || q.options.some(o => !o.trim()) || q.correct_answers.length === 0)) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Toutes les questions doivent être complètes avec leurs options et au moins une réponse correcte",
       });
       return;
     }
@@ -72,6 +70,7 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
           time_limit: timeLimit,
           shuffle_questions: shuffleQuestions,
           shuffle_answers: shuffleAnswers,
+          is_draft: isDraft,
         })
         .select()
         .single();
@@ -95,7 +94,7 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
       queryClient.invalidateQueries({ queryKey: ["quizzes"] });
       toast({
         title: "Succès",
-        description: "Le quiz a été créé avec succès",
+        description: isDraft ? "Le brouillon a été enregistré" : "Le quiz a été créé avec succès",
       });
       onSuccess();
     } catch (error) {
@@ -111,7 +110,7 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-6">
       <div className="space-y-4">
         <div>
           <Label htmlFor="title">Titre du quiz</Label>
@@ -134,8 +133,8 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
           />
         </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
             <Label htmlFor="timeLimit">Limite de temps (minutes)</Label>
             <Input
               id="timeLimit"
@@ -143,63 +142,99 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
               value={timeLimit || ""}
               onChange={(e) => setTimeLimit(e.target.value ? parseInt(e.target.value) : null)}
               placeholder="Optionnel"
-              className="w-32"
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <Label htmlFor="shuffleQuestions">Mélanger les questions</Label>
-            <Switch
-              id="shuffleQuestions"
-              checked={shuffleQuestions}
-              onCheckedChange={setShuffleQuestions}
-            />
-          </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="shuffleQuestions">Mélanger les questions</Label>
+              <Switch
+                id="shuffleQuestions"
+                checked={shuffleQuestions}
+                onCheckedChange={setShuffleQuestions}
+              />
+            </div>
 
-          <div className="flex items-center justify-between">
-            <Label htmlFor="shuffleAnswers">Mélanger les réponses</Label>
-            <Switch
-              id="shuffleAnswers"
-              checked={shuffleAnswers}
-              onCheckedChange={setShuffleAnswers}
-            />
+            <div className="flex items-center justify-between">
+              <Label htmlFor="shuffleAnswers">Mélanger les réponses</Label>
+              <Switch
+                id="shuffleAnswers"
+                checked={shuffleAnswers}
+                onCheckedChange={setShuffleAnswers}
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      <Tabs defaultValue="manual" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="manual">Saisie manuelle</TabsTrigger>
-          <TabsTrigger value="import">Importer un fichier</TabsTrigger>
-        </TabsList>
+      <QuestionAccordion
+        questions={questions}
+        onQuestionsChange={setQuestions}
+        onSaveQuestion={handleSaveQuestion}
+      />
 
-        <TabsContent value="manual" className="mt-4">
-          <ManualQuestionForm
-            questions={questions}
-            onQuestionsChange={setQuestions}
-          />
-        </TabsContent>
-
-        <TabsContent value="import" className="mt-4">
-          <FileImportForm onQuestionsImported={setQuestions} />
-        </TabsContent>
-      </Tabs>
-
-      <div className="flex justify-end pt-4">
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? (
-            <div className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Création...
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Save className="h-4 w-4" />
-              Créer le quiz
-            </div>
-          )}
+      <div className="flex justify-between gap-4 pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setIsPreviewOpen(true)}
+          className="flex items-center gap-2"
+        >
+          <Eye className="h-4 w-4" />
+          Aperçu du quiz
         </Button>
+
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={(e) => handleSubmit(e, true)}
+            disabled={isLoading}
+          >
+            Sauvegarder en brouillon
+          </Button>
+
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Création...
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Save className="h-4 w-4" />
+                Publier le quiz
+              </div>
+            )}
+          </Button>
+        </div>
       </div>
+
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-2xl">
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">{title || "Sans titre"}</h2>
+            {description && <p className="text-gray-600">{description}</p>}
+            
+            <div className="space-y-6">
+              {questions.map((question, index) => (
+                <div key={index} className="space-y-4 p-4 border rounded-lg">
+                  <h3 className="font-medium">Question {index + 1}</h3>
+                  <p>{question.question}</p>
+                  <div className="space-y-2">
+                    {question.options.map((option, optionIndex) => (
+                      <div key={optionIndex} className="flex items-center gap-2">
+                        <input type="radio" disabled />
+                        <span>{option}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }
