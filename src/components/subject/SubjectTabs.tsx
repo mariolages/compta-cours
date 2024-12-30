@@ -28,8 +28,8 @@ const categories = [
   { id: "7", title: "Quiz", icon: BrainCircuit },
 ];
 
-export function SubjectTabs({ files, selectedCategory, onCategoryChange, onDownload, isMobile }: SubjectTabsProps) {
-  const filteredFiles = files.filter((file: any) => file.category_id === parseInt(selectedCategory));
+export function SubjectTabs({ files = [], selectedCategory, onCategoryChange, onDownload, isMobile }: SubjectTabsProps) {
+  const filteredFiles = files?.filter((file: any) => file.category_id === parseInt(selectedCategory)) || [];
 
   if (isMobile) {
     return (
