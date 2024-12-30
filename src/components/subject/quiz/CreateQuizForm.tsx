@@ -13,7 +13,7 @@ import { FileImportForm } from "./FileImportForm";
 import { ManualQuestionForm } from "./ManualQuestionForm";
 
 interface CreateQuizFormProps {
-  fileId: string;
+  fileId?: string;
   onSuccess: () => void;
 }
 
@@ -62,13 +62,12 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
     setIsLoading(true);
 
     try {
-      // Create quiz
       const { data: quiz, error: quizError } = await supabase
         .from("quizzes")
         .insert({
           title,
           description,
-          file_id: fileId,
+          file_id: fileId || null,
           user_id: (await supabase.auth.getUser()).data.user?.id,
           time_limit: timeLimit,
           shuffle_questions: shuffleQuestions,
@@ -79,7 +78,6 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
 
       if (quizError) throw quizError;
 
-      // Create questions
       const { error: questionsError } = await supabase
         .from("quiz_questions")
         .insert(
