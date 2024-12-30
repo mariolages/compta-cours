@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, FileText, CheckSquare, Archive, CheckCircle, Headphones, BrainCircuit } from "lucide-react";
 import { FileList } from "./FileList";
-import { QuizList } from "./QuizList";
+import { QuizList } from "./quiz/QuizList";
 import {
   Select,
   SelectContent,
@@ -29,6 +29,8 @@ const categories = [
 ];
 
 export function SubjectTabs({ files, selectedCategory, onCategoryChange, onDownload, isMobile }: SubjectTabsProps) {
+  const filteredFiles = files.filter((file: any) => file.category_id === parseInt(selectedCategory));
+
   if (isMobile) {
     return (
       <div className="space-y-6">
@@ -53,9 +55,9 @@ export function SubjectTabs({ files, selectedCategory, onCategoryChange, onDownl
         </Select>
         <div className="bg-white rounded-xl shadow-sm p-4">
           {selectedCategory === "7" ? (
-            <QuizList files={files} />
+            <QuizList files={filteredFiles} />
           ) : (
-            <FileList files={files} onDownload={onDownload} />
+            <FileList files={filteredFiles} onDownload={onDownload} />
           )}
         </div>
       </div>
@@ -86,9 +88,9 @@ export function SubjectTabs({ files, selectedCategory, onCategoryChange, onDownl
               className="focus-visible:outline-none focus-visible:ring-0"
             >
               {category.id === "7" ? (
-                <QuizList files={files} />
+                <QuizList files={filteredFiles} />
               ) : (
-                <FileList files={files} onDownload={onDownload} />
+                <FileList files={filteredFiles} onDownload={onDownload} />
               )}
             </TabsContent>
           ))}

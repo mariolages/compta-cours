@@ -63,7 +63,7 @@ export function QuizList({ files }: QuizListProps) {
         <h2 className="text-2xl font-semibold text-gray-900">Quiz disponibles</h2>
         <Button
           onClick={() => setIsCreateOpen(true)}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-primary hover:bg-primary-hover"
         >
           <Plus className="h-4 w-4" />
           Créer un quiz
