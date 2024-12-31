@@ -33,6 +33,24 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const validateQuestions = (questions: Question[]) => {
+    const invalidQuestions = questions.filter(q => 
+      !q.question.trim() || 
+      q.options.some(o => !o.trim()) ||
+      q.correct_answers.length === 0
+    );
+
+    if (invalidQuestions.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "Erreur de validation",
+        description: "Toutes les questions doivent avoir un énoncé, des options et au moins une bonne réponse",
+      });
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent, isDraft: boolean = false) => {
     e.preventDefault();
     
@@ -45,19 +63,7 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
       return;
     }
 
-    // Validate questions
-    const invalidQuestions = questions.filter(q => 
-      !q.question.trim() || 
-      q.options.some(o => !o.trim()) ||
-      q.correct_answers.length === 0
-    );
-
-    if (invalidQuestions.length > 0) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Toutes les questions doivent avoir un énoncé, des options et au moins une bonne réponse",
-      });
+    if (!validateQuestions(questions)) {
       return;
     }
 
@@ -80,7 +86,10 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
         .select()
         .single();
 
-      if (quizError) throw quizError;
+      if (quizError) {
+        console.error("Erreur lors de la création du quiz:", quizError);
+        throw quizError;
+      }
 
       console.log("Quiz créé:", quiz);
 
@@ -96,7 +105,10 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
           }))
         );
 
-      if (questionsError) throw questionsError;
+      if (questionsError) {
+        console.error("Erreur lors de la création des questions:", questionsError);
+        throw questionsError;
+      }
 
       queryClient.invalidateQueries({ queryKey: ["quizzes"] });
       toast({
@@ -131,18 +143,20 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
         setShuffleAnswers={setShuffleAnswers}
       />
 
-      <ScrollArea className="h-[50vh] pr-4">
-        <QuestionAccordion
-          questions={questions}
-          onQuestionsChange={setQuestions}
-          onSaveQuestion={(index) => {
-            toast({
-              title: "Question enregistrée",
-              description: `La question ${index + 1} a été enregistrée`,
-            });
-          }}
-        />
-      </ScrollArea>
+      <div className="border rounded-lg p-4 bg-white">
+        <ScrollArea className="h-[400px] pr-4">
+          <QuestionAccordion
+            questions={questions}
+            onQuestionsChange={setQuestions}
+            onSaveQuestion={(index) => {
+              toast({
+                title: "Question enregistrée",
+                description: `La question ${index + 1} a été enregistrée`,
+              });
+            }}
+          />
+        </ScrollArea>
+      </div>
 
       <QuizFormActions
         isLoading={isLoading}

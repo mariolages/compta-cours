@@ -2,7 +2,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, Plus, Save } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Check, Plus, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 interface Question {
@@ -33,6 +35,19 @@ export function QuestionAccordion({ questions, onQuestionsChange, onSaveQuestion
     onQuestionsChange(newQuestions);
   };
 
+  const toggleCorrectAnswer = (questionIndex: number, option: string) => {
+    const newQuestions = [...questions];
+    const currentAnswers = newQuestions[questionIndex].correct_answers;
+    
+    if (currentAnswers.includes(option)) {
+      newQuestions[questionIndex].correct_answers = currentAnswers.filter(a => a !== option);
+    } else {
+      newQuestions[questionIndex].correct_answers = [...currentAnswers, option];
+    }
+    
+    onQuestionsChange(newQuestions);
+  };
+
   const handleSaveQuestion = (index: number) => {
     onSaveQuestion(index);
     setSavedQuestions([...savedQuestions, index]);
@@ -46,6 +61,13 @@ export function QuestionAccordion({ questions, onQuestionsChange, onSaveQuestion
       ...questions,
       { question: "", options: ["", "", ""], correct_answers: [], explanation: "" }
     ]);
+  };
+
+  const removeQuestion = (index: number) => {
+    if (questions.length > 1) {
+      const newQuestions = questions.filter((_, i) => i !== index);
+      onQuestionsChange(newQuestions);
+    }
   };
 
   return (
@@ -80,22 +102,53 @@ export function QuestionAccordion({ questions, onQuestionsChange, onSaveQuestion
                 <div className="space-y-2">
                   <Label>Options de réponse</Label>
                   {question.options.map((option, optionIndex) => (
-                    <Input
-                      key={optionIndex}
-                      value={option}
-                      onChange={(e) => handleOptionChange(index, optionIndex, e.target.value)}
-                      placeholder={`Option ${optionIndex + 1}`}
-                    />
+                    <div key={optionIndex} className="flex items-center gap-4">
+                      <Input
+                        value={option}
+                        onChange={(e) => handleOptionChange(index, optionIndex, e.target.value)}
+                        placeholder={`Option ${optionIndex + 1}`}
+                      />
+                      <Checkbox
+                        checked={question.correct_answers.includes(option)}
+                        onCheckedChange={() => toggleCorrectAnswer(index, option)}
+                      />
+                    </div>
                   ))}
                 </div>
 
-                <Button
-                  onClick={() => handleSaveQuestion(index)}
-                  className="w-full flex items-center gap-2"
-                >
-                  <Save className="h-4 w-4" />
-                  Enregistrer la question
-                </Button>
+                <div>
+                  <Label>Explication (optionnelle)</Label>
+                  <Textarea
+                    value={question.explanation}
+                    onChange={(e) => handleQuestionChange(index, "explanation", e.target.value)}
+                    placeholder="Expliquez pourquoi ces réponses sont correctes..."
+                  />
+                </div>
+
+                <div className="flex justify-between gap-2">
+                  {questions.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => removeQuestion(index)}
+                      className="flex items-center gap-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Supprimer
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleSaveQuestion(index)}
+                    className="flex items-center gap-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    Enregistrer
+                  </Button>
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -103,9 +156,10 @@ export function QuestionAccordion({ questions, onQuestionsChange, onSaveQuestion
       </Accordion>
 
       <Button
-        onClick={addQuestion}
+        type="button"
         variant="outline"
-        className="w-full flex items-center gap-2"
+        onClick={addQuestion}
+        className="w-full flex items-center gap-2 justify-center"
       >
         <Plus className="h-4 w-4" />
         Ajouter une question
