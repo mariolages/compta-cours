@@ -51,7 +51,7 @@ export function QuestionAccordion({ questions, onQuestionsChange, onSaveQuestion
 
   return (
     <div className="space-y-4">
-      <ScrollArea className="h-[60vh] pr-4">
+      <ScrollArea className="h-[60vh] pr-4 overflow-y-auto">
         <Accordion type="single" collapsible className="w-full space-y-4">
           {questions.map((question, index) => (
             <AccordionItem key={index} value={`question-${index}`} className="border rounded-lg p-4">
