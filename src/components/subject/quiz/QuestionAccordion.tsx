@@ -2,6 +2,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Check, Plus, Save } from "lucide-react";
 import { useState } from "react";
 
@@ -50,57 +51,59 @@ export function QuestionAccordion({ questions, onQuestionsChange, onSaveQuestion
 
   return (
     <div className="space-y-4">
-      <Accordion type="single" collapsible className="w-full space-y-4">
-        {questions.map((question, index) => (
-          <AccordionItem key={index} value={`question-${index}`} className="border rounded-lg p-4">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-4">
-                <span className="text-lg font-medium">
-                  Question {index + 1}
-                </span>
-                {savedQuestions.includes(index) && (
-                  <span className="flex items-center gap-2 text-green-600 text-sm">
-                    <Check className="h-4 w-4" />
-                    Question enregistrée
+      <ScrollArea className="h-[60vh] pr-4">
+        <Accordion type="single" collapsible className="w-full space-y-4">
+          {questions.map((question, index) => (
+            <AccordionItem key={index} value={`question-${index}`} className="border rounded-lg p-4">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-4">
+                  <span className="text-lg font-medium">
+                    Question {index + 1}
                   </span>
-                )}
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="pt-4 space-y-4">
-              <div className="space-y-4">
-                <div>
-                  <Label>Question</Label>
-                  <Input
-                    value={question.question}
-                    onChange={(e) => handleQuestionChange(index, "question", e.target.value)}
-                    placeholder="Saisissez votre question..."
-                  />
+                  {savedQuestions.includes(index) && (
+                    <span className="flex items-center gap-2 text-green-600 text-sm">
+                      <Check className="h-4 w-4" />
+                      Question enregistrée
+                    </span>
+                  )}
                 </div>
-
-                <div className="space-y-2">
-                  <Label>Options de réponse</Label>
-                  {question.options.map((option, optionIndex) => (
+              </AccordionTrigger>
+              <AccordionContent className="pt-4 space-y-4">
+                <div className="space-y-4">
+                  <div>
+                    <Label>Question</Label>
                     <Input
-                      key={optionIndex}
-                      value={option}
-                      onChange={(e) => handleOptionChange(index, optionIndex, e.target.value)}
-                      placeholder={`Option ${optionIndex + 1}`}
+                      value={question.question}
+                      onChange={(e) => handleQuestionChange(index, "question", e.target.value)}
+                      placeholder="Saisissez votre question..."
                     />
-                  ))}
-                </div>
+                  </div>
 
-                <Button
-                  onClick={() => handleSaveQuestion(index)}
-                  className="w-full flex items-center gap-2"
-                >
-                  <Save className="h-4 w-4" />
-                  Enregistrer la question
-                </Button>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+                  <div className="space-y-2">
+                    <Label>Options de réponse</Label>
+                    {question.options.map((option, optionIndex) => (
+                      <Input
+                        key={optionIndex}
+                        value={option}
+                        onChange={(e) => handleOptionChange(index, optionIndex, e.target.value)}
+                        placeholder={`Option ${optionIndex + 1}`}
+                      />
+                    ))}
+                  </div>
+
+                  <Button
+                    onClick={() => handleSaveQuestion(index)}
+                    className="w-full flex items-center gap-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    Enregistrer la question
+                  </Button>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </ScrollArea>
 
       <Button
         onClick={addQuestion}

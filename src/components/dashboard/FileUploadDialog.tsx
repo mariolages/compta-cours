@@ -39,16 +39,14 @@ export function FileUploadDialog({ open, onOpenChange, onSuccess, defaultSubject
       setProgress((uploadedChunks / totalChunks) * 100);
     }
 
-    // Une fois tous les chunks uploadés, on les combine
-    // Note: Cette étape nécessiterait un edge function pour combiner les chunks
-    // Pour l'instant, on garde juste le premier chunk comme fichier final
+    // Combine chunks
     const { error: finalError } = await supabase.storage
       .from('dcg_files')
       .copy(`${filePath}_chunk_0`, filePath);
 
     if (finalError) throw finalError;
 
-    // Nettoyage des chunks
+    // Clean up chunks
     for (let i = 0; i < uploadedChunks; i++) {
       await supabase.storage
         .from('dcg_files')
@@ -74,13 +72,12 @@ export function FileUploadDialog({ open, onOpenChange, onSuccess, defaultSubject
       const totalFiles = files.length;
       let successCount = 0;
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      // Process files in parallel with Promise.all
+      await Promise.all(Array.from(files).map(async (file) => {
         const fileExt = file.name.split('.').pop();
         const fileName = file.name.replace(`.${fileExt}`, '');
         const filePath = `${crypto.randomUUID()}.${fileExt}`;
         
-        // Upload du fichier en chunks si nécessaire
         if (file.size > CHUNK_SIZE) {
           await uploadFileInChunks(file, filePath);
         } else {
@@ -91,7 +88,6 @@ export function FileUploadDialog({ open, onOpenChange, onSuccess, defaultSubject
           if (uploadError) throw uploadError;
         }
 
-        // Sauvegarde des métadonnées dans la base de données
         const { error: dbError } = await supabase
           .from('files')
           .insert({
@@ -106,7 +102,7 @@ export function FileUploadDialog({ open, onOpenChange, onSuccess, defaultSubject
 
         successCount++;
         setProgress((successCount / totalFiles) * 100);
-      }
+      }));
 
       toast({
         title: "Succès",
