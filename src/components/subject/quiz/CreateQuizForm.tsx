@@ -10,6 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Save, Eye } from "lucide-react";
 import { QuestionAccordion } from "./QuestionAccordion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CreateQuizFormProps {
   fileId?: string;
@@ -38,13 +39,6 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const handleSaveQuestion = (index: number) => {
-    toast({
-      title: "Question enregistrée",
-      description: `La question ${index + 1} a été enregistrée avec succès.`,
-    });
-  };
-
   const handleSubmit = async (e: React.FormEvent, isDraft: boolean = false) => {
     e.preventDefault();
     
@@ -58,6 +52,7 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
     }
 
     setIsLoading(true);
+    console.log("Création du quiz...", { title, description, fileId, questions });
 
     try {
       const { data: quiz, error: quizError } = await supabase
@@ -76,6 +71,8 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
         .single();
 
       if (quizError) throw quizError;
+
+      console.log("Quiz créé:", quiz);
 
       const { error: questionsError } = await supabase
         .from("quiz_questions")
@@ -102,7 +99,7 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de créer le quiz",
+        description: error instanceof Error ? error.message : "Impossible de créer le quiz",
       });
     } finally {
       setIsLoading(false);
@@ -167,11 +164,18 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
         </div>
       </div>
 
-      <QuestionAccordion
-        questions={questions}
-        onQuestionsChange={setQuestions}
-        onSaveQuestion={handleSaveQuestion}
-      />
+      <ScrollArea className="h-[50vh] pr-4">
+        <QuestionAccordion
+          questions={questions}
+          onQuestionsChange={setQuestions}
+          onSaveQuestion={(index) => {
+            toast({
+              title: "Question enregistrée",
+              description: `La question ${index + 1} a été enregistrée`,
+            });
+          }}
+        />
+      </ScrollArea>
 
       <div className="flex justify-between gap-4 pt-4">
         <Button
