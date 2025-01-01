@@ -76,14 +76,22 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
       return;
     }
 
+    if (!fileId) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de créer le quiz sans fichier associé",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const user = await supabase.auth.getUser();
-      const userId = user.data.user?.id;
-
-      if (!userId || !fileId) {
-        throw new Error("Données manquantes pour la création du quiz");
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user?.id) {
+        throw new Error("Vous devez être connecté pour créer un quiz");
       }
 
       const { data: quiz, error: quizError } = await supabase
@@ -92,7 +100,7 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
           title,
           description,
           file_id: fileId,
-          user_id: userId,
+          user_id: user.id,
           time_limit: timeLimit,
           shuffle_questions: shuffleQuestions,
           shuffle_answers: shuffleAnswers,
