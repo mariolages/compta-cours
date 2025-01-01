@@ -34,6 +34,15 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
   const queryClient = useQueryClient();
 
   const validateQuestions = (questions: Question[]) => {
+    if (questions.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Erreur de validation",
+        description: "Vous devez ajouter au moins une question",
+      });
+      return false;
+    }
+
     const invalidQuestions = questions.filter(q => 
       !q.question.trim() || 
       q.options.some(o => !o.trim()) ||
@@ -73,8 +82,8 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
       const user = await supabase.auth.getUser();
       const userId = user.data.user?.id;
 
-      if (!userId) {
-        throw new Error("Utilisateur non connecté");
+      if (!userId || !fileId) {
+        throw new Error("Données manquantes pour la création du quiz");
       }
 
       const { data: quiz, error: quizError } = await supabase
@@ -87,24 +96,23 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
           time_limit: timeLimit,
           shuffle_questions: shuffleQuestions,
           shuffle_answers: shuffleAnswers,
-          is_draft: isDraft,
         })
         .select()
         .single();
 
       if (quizError) throw quizError;
 
+      const questionsToInsert = questions.map(q => ({
+        quiz_id: quiz.id,
+        question: q.question,
+        options: q.options,
+        correct_answers: q.correct_answers,
+        explanation: q.explanation,
+      }));
+
       const { error: questionsError } = await supabase
         .from("quiz_questions")
-        .insert(
-          questions.map(q => ({
-            quiz_id: quiz.id,
-            question: q.question,
-            options: q.options,
-            correct_answers: q.correct_answers,
-            explanation: q.explanation,
-          }))
-        );
+        .insert(questionsToInsert);
 
       if (questionsError) throw questionsError;
 
@@ -116,12 +124,12 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
       });
       
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating quiz:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de créer le quiz. Veuillez réessayer.",
+        description: error.message || "Impossible de créer le quiz. Veuillez réessayer.",
       });
     } finally {
       setIsLoading(false);

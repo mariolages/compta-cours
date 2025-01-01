@@ -20,13 +20,17 @@ export function QuizList({ files }: QuizListProps) {
   const { data: quizzes, isLoading } = useQuery({
     queryKey: ["quizzes", currentFile?.id],
     queryFn: async () => {
+      if (!currentFile?.id) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from("quizzes")
         .select(`
           *,
           file:file_id(title)
         `)
-        .eq("file_id", currentFile?.id);
+        .eq("file_id", currentFile.id);
 
       if (error) {
         toast({

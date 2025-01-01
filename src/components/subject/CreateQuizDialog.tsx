@@ -11,6 +11,10 @@ interface CreateQuizDialogProps {
 export function CreateQuizDialog({ open, onOpenChange, files }: CreateQuizDialogProps) {
   const currentFile = files[0];
 
+  if (!currentFile) {
+    return null;
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px]">
@@ -22,7 +26,7 @@ export function CreateQuizDialog({ open, onOpenChange, files }: CreateQuizDialog
           </DialogDescription>
         </DialogHeader>
         <CreateQuizForm
-          fileId={currentFile?.id}
+          fileId={currentFile.id}
           onSuccess={() => onOpenChange(false)}
         />
       </DialogContent>
