@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, FileText, CheckSquare, Archive, CheckCircle, Headphones, BrainCircuit } from "lucide-react";
 import { FileList } from "./FileList";
-import { QuizList } from "./quiz/QuizList";
+import { QuizList } from "./QuizList";
 import {
   Select,
   SelectContent,
