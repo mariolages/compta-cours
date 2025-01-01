@@ -68,16 +68,22 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
     }
 
     setIsLoading(true);
-    console.log("Création du quiz...", { title, description, fileId, questions });
 
     try {
+      const user = await supabase.auth.getUser();
+      const userId = user.data.user?.id;
+
+      if (!userId) {
+        throw new Error("Utilisateur non connecté");
+      }
+
       const { data: quiz, error: quizError } = await supabase
         .from("quizzes")
         .insert({
           title,
           description,
-          file_id: fileId || null,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          file_id: fileId,
+          user_id: userId,
           time_limit: timeLimit,
           shuffle_questions: shuffleQuestions,
           shuffle_answers: shuffleAnswers,
@@ -86,12 +92,7 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
         .select()
         .single();
 
-      if (quizError) {
-        console.error("Erreur lors de la création du quiz:", quizError);
-        throw quizError;
-      }
-
-      console.log("Quiz créé:", quiz);
+      if (quizError) throw quizError;
 
       const { error: questionsError } = await supabase
         .from("quiz_questions")
@@ -105,23 +106,22 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
           }))
         );
 
-      if (questionsError) {
-        console.error("Erreur lors de la création des questions:", questionsError);
-        throw questionsError;
-      }
+      if (questionsError) throw questionsError;
 
-      queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+      await queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+      
       toast({
         title: "Succès",
         description: isDraft ? "Le brouillon a été enregistré" : "Le quiz a été créé avec succès",
       });
+      
       onSuccess();
     } catch (error) {
       console.error("Error creating quiz:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de créer le quiz",
+        description: "Impossible de créer le quiz. Veuillez réessayer.",
       });
     } finally {
       setIsLoading(false);
