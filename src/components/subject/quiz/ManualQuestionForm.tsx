@@ -4,13 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2 } from "lucide-react";
-
-interface Question {
-  question: string;
-  options: string[];
-  correct_answers: string[];
-  explanation?: string;
-}
+import { Question } from "./QuestionAccordion";
 
 interface ManualQuestionFormProps {
   questions: Question[];

@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Check, Plus, Save, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-interface Question {
+export interface Question {
   question: string;
   options: string[];
   correct_answers: string[];

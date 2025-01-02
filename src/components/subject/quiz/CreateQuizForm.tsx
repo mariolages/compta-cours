@@ -3,7 +3,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { QuestionAccordion } from "./QuestionAccordion";
+import { QuestionAccordion, Question } from "./QuestionAccordion";
 import { QuizSettings } from "./QuizSettings";
 import { QuizFormActions } from "./QuizFormActions";
 
@@ -19,7 +19,7 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
   const [timeLimit, setTimeLimit] = useState<number | null>(null);
   const [shuffleQuestions, setShuffleQuestions] = useState(true);
   const [shuffleAnswers, setShuffleAnswers] = useState(true);
-  const [questions, setQuestions] = useState([
+  const [questions, setQuestions] = useState<Question[]>([
     { question: "", options: ["", "", ""], correct_answers: [], explanation: "" }
   ]);
   
