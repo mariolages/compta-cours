@@ -17,7 +17,7 @@ export function CreateQuizDialog({ open, onOpenChange, files }: CreateQuizDialog
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px]">
+      <DialogContent className="sm:max-w-[800px] h-[90vh]">
         <DialogHeader>
           <DialogTitle>Créer un nouveau quiz</DialogTitle>
           <DialogDescription>
@@ -25,10 +25,12 @@ export function CreateQuizDialog({ open, onOpenChange, files }: CreateQuizDialog
             Vous pouvez ajouter autant de questions que vous le souhaitez.
           </DialogDescription>
         </DialogHeader>
-        <CreateQuizForm
-          fileId={currentFile.id}
-          onSuccess={() => onOpenChange(false)}
-        />
+        <div className="flex-1 overflow-y-auto pr-2">
+          <CreateQuizForm
+            fileId={currentFile.id}
+            onSuccess={() => onOpenChange(false)}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
