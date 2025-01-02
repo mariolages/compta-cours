@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2 } from "lucide-react";
-import { Question } from "./QuestionAccordion";
+import type { Question } from "@/types/quiz";
 
 interface ManualQuestionFormProps {
   questions: Question[];
@@ -52,7 +52,7 @@ export function ManualQuestionForm({ questions, onQuestionsChange }: ManualQuest
   return (
     <div className="space-y-8">
       {questions.map((question, questionIndex) => (
-        <div key={questionIndex} className="space-y-4 p-4 border rounded-lg bg-gray-50">
+        <div key={questionIndex} className="space-y-4 p-4 border rounded-lg bg-gray-50/50 hover:bg-white transition-colors">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium">Question {questionIndex + 1}</h3>
             {questions.length > 1 && (
@@ -60,6 +60,7 @@ export function ManualQuestionForm({ questions, onQuestionsChange }: ManualQuest
                 variant="ghost"
                 size="icon"
                 onClick={() => removeQuestion(questionIndex)}
+                className="text-red-500 hover:text-red-600 hover:bg-red-50"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -72,6 +73,7 @@ export function ManualQuestionForm({ questions, onQuestionsChange }: ManualQuest
               value={question.question}
               onChange={(e) => updateQuestion(questionIndex, "question", e.target.value)}
               placeholder="Saisissez votre question..."
+              className="bg-white"
             />
           </div>
 
@@ -83,11 +85,16 @@ export function ManualQuestionForm({ questions, onQuestionsChange }: ManualQuest
                   value={option}
                   onChange={(e) => updateOption(questionIndex, optionIndex, e.target.value)}
                   placeholder={`Option ${optionIndex + 1}`}
+                  className="bg-white"
                 />
-                <Checkbox
-                  checked={question.correct_answers.includes(option)}
-                  onCheckedChange={() => toggleCorrectAnswer(questionIndex, option)}
-                />
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    checked={question.correct_answers.includes(option)}
+                    onCheckedChange={() => toggleCorrectAnswer(questionIndex, option)}
+                    className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                  />
+                  <Label className="text-sm text-gray-500">Bonne réponse</Label>
+                </div>
               </div>
             ))}
           </div>
@@ -98,6 +105,7 @@ export function ManualQuestionForm({ questions, onQuestionsChange }: ManualQuest
               value={question.explanation}
               onChange={(e) => updateQuestion(questionIndex, "explanation", e.target.value)}
               placeholder="Expliquez pourquoi ces réponses sont correctes..."
+              className="bg-white"
             />
           </div>
         </div>
@@ -106,7 +114,7 @@ export function ManualQuestionForm({ questions, onQuestionsChange }: ManualQuest
       <Button
         type="button"
         variant="outline"
-        className="w-full"
+        className="w-full bg-white hover:bg-gray-50"
         onClick={addQuestion}
       >
         <Plus className="h-4 w-4 mr-2" />

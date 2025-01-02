@@ -3,9 +3,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { QuestionAccordion, Question } from "./QuestionAccordion";
+import { QuestionAccordion } from "./QuestionAccordion";
 import { QuizSettings } from "./QuizSettings";
 import { QuizFormActions } from "./QuizFormActions";
+import type { Question } from "@/types/quiz";
 
 interface CreateQuizFormProps {
   fileId?: string;
@@ -26,7 +27,7 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const validateQuestions = (questions: any[]) => {
+  const validateQuestions = (questions: Question[]) => {
     if (questions.length === 0) {
       toast({
         variant: "destructive",
@@ -38,7 +39,7 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
 
     const invalidQuestions = questions.filter(q => 
       !q.question.trim() || 
-      q.options.some((o: string) => !o.trim()) ||
+      q.options.some(o => !o.trim()) ||
       q.correct_answers.length === 0
     );
 
