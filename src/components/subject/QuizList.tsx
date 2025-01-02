@@ -58,6 +58,21 @@ export function QuizList({ files }: QuizListProps) {
     );
   }
 
+  if (!files || files.length === 0) {
+    return (
+      <Card className="p-8 bg-gray-50/50 border-dashed border-2 mx-auto max-w-2xl mt-12">
+        <div className="text-center space-y-3">
+          <p className="text-lg font-medium text-gray-600">
+            Aucun fichier n'est disponible pour créer un quiz.
+          </p>
+          <p className="text-gray-500">
+            Veuillez d'abord ajouter un fichier dans cette catégorie.
+          </p>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-8 mt-12">
       <div className="flex justify-between items-center max-w-4xl mx-auto">
@@ -115,7 +130,7 @@ export function QuizList({ files }: QuizListProps) {
             </Card>
           ))}
 
-          {!quizzes?.length && (
+          {quizzes?.length === 0 && (
             <Card className="p-8 bg-gray-50/50 border-dashed border-2">
               <div className="text-center space-y-3">
                 <p className="text-lg font-medium text-gray-600">
