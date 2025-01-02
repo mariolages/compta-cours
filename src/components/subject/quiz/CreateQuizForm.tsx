@@ -12,13 +12,6 @@ interface CreateQuizFormProps {
   onSuccess: () => void;
 }
 
-interface Question {
-  question: string;
-  options: string[];
-  correct_answers: string[];
-  explanation?: string;
-}
-
 export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [title, setTitle] = useState("");
@@ -26,14 +19,14 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
   const [timeLimit, setTimeLimit] = useState<number | null>(null);
   const [shuffleQuestions, setShuffleQuestions] = useState(true);
   const [shuffleAnswers, setShuffleAnswers] = useState(true);
-  const [questions, setQuestions] = useState<Question[]>([
+  const [questions, setQuestions] = useState([
     { question: "", options: ["", "", ""], correct_answers: [], explanation: "" }
   ]);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const validateQuestions = (questions: Question[]) => {
+  const validateQuestions = (questions: any[]) => {
     if (questions.length === 0) {
       toast({
         variant: "destructive",
@@ -45,7 +38,7 @@ export function CreateQuizForm({ fileId, onSuccess }: CreateQuizFormProps) {
 
     const invalidQuestions = questions.filter(q => 
       !q.question.trim() || 
-      q.options.some(o => !o.trim()) ||
+      q.options.some((o: string) => !o.trim()) ||
       q.correct_answers.length === 0
     );
 

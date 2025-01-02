@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, BookOpen, ArrowRight } from "lucide-react";
+import { Plus, BookOpen, ArrowRight, Clock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateQuizDialog } from "./CreateQuizDialog";
+import { QuizInterface } from "./quiz/QuizInterface";
 import type { File } from "@/types/files";
 
 interface QuizListProps {
@@ -14,6 +15,7 @@ interface QuizListProps {
 
 export function QuizList({ files }: QuizListProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
   const { toast } = useToast();
   const currentFile = files?.[0];
 
@@ -28,6 +30,7 @@ export function QuizList({ files }: QuizListProps) {
         .from("quizzes")
         .select(`
           *,
+          quiz_questions (count),
           file:file_id(title)
         `)
         .eq("file_id", currentFile.id);
@@ -46,11 +49,12 @@ export function QuizList({ files }: QuizListProps) {
     enabled: !!currentFile?.id,
   });
 
-  if (isLoading) {
+  if (selectedQuizId) {
     return (
-      <div className="flex items-center justify-center p-8 mt-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <QuizInterface
+        quizId={selectedQuizId}
+        onClose={() => setSelectedQuizId(null)}
+      />
     );
   }
 
@@ -67,49 +71,64 @@ export function QuizList({ files }: QuizListProps) {
         </Button>
       </div>
 
-      <div className="grid gap-6 max-w-4xl mx-auto">
-        {quizzes?.map((quiz) => (
-          <Card 
-            key={quiz.id} 
-            className="p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary animate-fade-in bg-white"
-          >
-            <div className="flex justify-between items-center">
-              <div className="space-y-2">
-                <h3 className="text-xl font-semibold text-gray-900">{quiz.title}</h3>
-                <div className="flex items-center gap-2 text-gray-500">
-                  <BookOpen className="h-4 w-4" />
-                  <p className="text-sm">
-                    Basé sur : {quiz.file?.title}
-                  </p>
+      {isLoading ? (
+        <div className="flex items-center justify-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <div className="grid gap-6 max-w-4xl mx-auto">
+          {quizzes?.map((quiz) => (
+            <Card 
+              key={quiz.id} 
+              className="p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary animate-fade-in bg-white"
+            >
+              <div className="flex justify-between items-center">
+                <div className="space-y-2">
+                  <h3 className="text-xl font-semibold text-gray-900">{quiz.title}</h3>
+                  <div className="flex items-center gap-4 text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-4 w-4" />
+                      <p className="text-sm">
+                        {quiz.quiz_questions?.[0]?.count || 0} questions
+                      </p>
+                    </div>
+                    {quiz.time_limit && (
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        <p className="text-sm">{quiz.time_limit} minutes</p>
+                      </div>
+                    )}
+                  </div>
+                  {quiz.description && (
+                    <p className="text-sm text-gray-600 mt-2">{quiz.description}</p>
+                  )}
                 </div>
-                {quiz.description && (
-                  <p className="text-sm text-gray-600 mt-2">{quiz.description}</p>
-                )}
+                <Button 
+                  variant="outline"
+                  onClick={() => setSelectedQuizId(quiz.id)}
+                  className="flex items-center gap-2 hover:bg-primary hover:text-white transition-all duration-300"
+                >
+                  <span>Commencer</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
               </div>
-              <Button 
-                variant="outline"
-                className="flex items-center gap-2 hover:bg-primary hover:text-white transition-all duration-300"
-              >
-                <span>Commencer</span>
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ))}
 
-        {!quizzes?.length && (
-          <Card className="p-8 bg-gray-50/50 border-dashed border-2">
-            <div className="text-center space-y-3">
-              <p className="text-lg font-medium text-gray-600">
-                Aucun quiz n'a encore été créé pour ce cours.
-              </p>
-              <p className="text-gray-500">
-                Cliquez sur "Créer un quiz" pour en ajouter un.
-              </p>
-            </div>
-          </Card>
-        )}
-      </div>
+          {!quizzes?.length && (
+            <Card className="p-8 bg-gray-50/50 border-dashed border-2">
+              <div className="text-center space-y-3">
+                <p className="text-lg font-medium text-gray-600">
+                  Aucun quiz n'a encore été créé pour ce cours.
+                </p>
+                <p className="text-gray-500">
+                  Cliquez sur "Créer un quiz" pour en ajouter un.
+                </p>
+              </div>
+            </Card>
+          )}
+        </div>
+      )}
 
       <CreateQuizDialog
         open={isCreateOpen}
