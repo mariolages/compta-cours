@@ -58,38 +58,36 @@ export function QuizList({ files }: QuizListProps) {
     );
   }
 
-  if (!files || files.length === 0) {
-    return (
-      <Card className="p-8 bg-gray-50/50 border-dashed border-2 mx-auto max-w-2xl mt-12">
-        <div className="text-center space-y-3">
-          <p className="text-lg font-medium text-gray-600">
-            Aucun fichier n'est disponible pour créer un quiz.
-          </p>
-          <p className="text-gray-500">
-            Veuillez d'abord ajouter un fichier dans cette catégorie.
-          </p>
-        </div>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-8 mt-12">
       <div className="flex justify-between items-center max-w-4xl mx-auto">
         <h2 className="text-2xl font-semibold text-gray-900">Quiz disponibles</h2>
-        <Button 
-          onClick={() => setIsCreateOpen(true)} 
-          className="flex items-center gap-2 bg-primary hover:bg-primary-hover transition-all duration-300"
-        >
-          <Plus className="h-4 w-4" />
-          Créer un quiz
-        </Button>
+        {files && files.length > 0 && (
+          <Button 
+            onClick={() => setIsCreateOpen(true)} 
+            className="flex items-center gap-2 bg-primary hover:bg-primary/90 transition-all duration-300"
+          >
+            <Plus className="h-4 w-4" />
+            Créer un quiz
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
+      ) : !files || files.length === 0 ? (
+        <Card className="p-8 bg-gray-50/50 border-dashed border-2 mx-auto max-w-2xl">
+          <div className="text-center space-y-3">
+            <p className="text-lg font-medium text-gray-600">
+              Aucun fichier n'est disponible pour créer un quiz.
+            </p>
+            <p className="text-gray-500">
+              Veuillez d'abord ajouter un fichier dans cette catégorie.
+            </p>
+          </div>
+        </Card>
       ) : (
         <div className="grid gap-6 max-w-4xl mx-auto">
           {quizzes?.map((quiz) => (
