@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, CreditCard, Lock, Shield, Star, Home } from "lucide-react";
+import { Check, CreditCard, Lock, Shield, Star, ArrowLeft } from "lucide-react";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -62,11 +62,11 @@ export default function Subscription() {
         <div className="flex justify-between items-center">
           <Button
             variant="ghost"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/dashboard")}
             className="flex items-center gap-2 text-primary hover:text-primary-dark"
           >
-            <Home className="h-5 w-5" />
-            Retour à l'accueil
+            <ArrowLeft className="h-5 w-5" />
+            Retour au tableau de bord
           </Button>
         </div>
 
