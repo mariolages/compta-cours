@@ -55,7 +55,7 @@ const ProtectedRoute = ({ children, adminOnly = false, requireSubscription = tru
         .select('*')
         .eq('user_id', session?.user?.id)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
