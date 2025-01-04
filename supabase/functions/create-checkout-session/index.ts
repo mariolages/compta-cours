@@ -13,6 +13,13 @@ serve(async (req) => {
   }
 
   try {
+    // Get the authorization header first
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('Missing Authorization header');
+      throw new Error('Missing Authorization header');
+    }
+
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -23,12 +30,6 @@ serve(async (req) => {
         },
       }
     );
-
-    // Get the authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing Authorization header');
-    }
 
     // Verify the JWT token
     const token = authHeader.replace('Bearer ', '');

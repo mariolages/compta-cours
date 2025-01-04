@@ -45,6 +45,9 @@ export const SubscriptionPlans = () => {
       if (subscriptionData) {
         const { data: stripeDetails, error: stripeError } = await supabase.functions.invoke('get-subscription-details', {
           body: { subscriptionId: subscriptionData.stripe_subscription_id },
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+          },
         });
 
         if (stripeError) throw stripeError;
@@ -78,6 +81,9 @@ export const SubscriptionPlans = () => {
         body: { 
           priceId: 'price_1QdaT0II3n6IJC5vJGKapUGb',
           returnUrl: `${window.location.origin}/dashboard`
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
 
@@ -120,6 +126,9 @@ export const SubscriptionPlans = () => {
       const { error } = await supabase.functions.invoke('cancel-subscription', {
         body: {
           subscriptionId: subscription.stripe_subscription_id,
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
 
