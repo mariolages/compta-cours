@@ -73,6 +73,35 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
           return;
         }
 
+        // Check if profile exists, if not create it
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (!existingProfile) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: user.id,
+                full_name: email.split('@')[0],
+                is_admin: false,
+                is_validated: false
+              }
+            ]);
+
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+            toast({
+              variant: "destructive",
+              title: "Attention",
+              description: "Votre profil n'a pas pu être créé. Certaines fonctionnalités pourraient être limitées.",
+            });
+          }
+        }
+
         // Log successful login
         await supabase
           .from('auth_logs')
