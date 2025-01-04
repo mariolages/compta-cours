@@ -10,7 +10,7 @@ export const SubscriptionHeader = () => {
       <Button
         variant="ghost"
         onClick={() => navigate("/dashboard")}
-        className="flex items-center gap-2 text-primary hover:text-primary-dark"
+        className="flex items-center gap-2 text-primary hover:bg-primary/5"
       >
         <ArrowLeft className="h-5 w-5" />
         Retour au tableau de bord
