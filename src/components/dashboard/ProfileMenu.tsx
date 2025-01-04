@@ -35,6 +35,7 @@ export const ProfileMenu = ({ user, profile }: { user: any; profile: any }) => {
         <span className="text-sm font-normal">
           {profile?.full_name || user?.email}
         </span>
+        <span className="text-xs text-gray-400">Premium</span>
         <Avatar className="h-8 w-8">
           <AvatarFallback className="bg-secondary text-gray-500 text-xs">
             {profile?.full_name
