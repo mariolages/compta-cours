@@ -43,7 +43,6 @@ export const SubscriptionPlans = () => {
     try {
       setIsLoading(true);
       console.log('Starting checkout session creation...');
-      console.log('Session token:', session.access_token);
       
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
@@ -67,7 +66,6 @@ export const SubscriptionPlans = () => {
 
       if (data?.url) {
         console.log('Redirecting to:', data.url);
-        console.log('Checkout session response:', data);
         window.location.href = data.url;
       } else {
         toast({
