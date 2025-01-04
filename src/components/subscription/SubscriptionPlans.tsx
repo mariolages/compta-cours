@@ -16,7 +16,7 @@ export const SubscriptionPlans = () => {
   const handleSubscribe = async (priceId: string) => {
     try {
       setIsLoading(true);
-      console.log('Starting checkout session creation...');
+      console.log('Starting checkout session creation with price ID:', priceId);
 
       if (!session) {
         toast({
