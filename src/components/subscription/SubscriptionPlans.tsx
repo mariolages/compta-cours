@@ -43,16 +43,20 @@ export const SubscriptionPlans = () => {
     try {
       setIsLoading(true);
       console.log('Starting checkout session creation...');
+
+      // Refresh the session to ensure we have a valid token
+      const { data: { session: currentSession }, error: refreshError } = await supabase.auth.refreshSession();
       
-      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        throw sessionError;
+      if (refreshError) {
+        console.error('Error refreshing session:', refreshError);
+        throw new Error('Impossible de rafraîchir votre session. Veuillez vous reconnecter.');
       }
 
       if (!currentSession) {
-        throw new Error('No active session found');
+        throw new Error('Session invalide. Veuillez vous reconnecter.');
       }
+
+      console.log('Session refreshed successfully');
 
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 

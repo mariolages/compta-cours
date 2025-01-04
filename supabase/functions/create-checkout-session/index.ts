@@ -33,10 +33,16 @@ serve(async (req) => {
       throw new Error('Authorization header missing');
     }
 
-    // Initialize Supabase client with service role key
+    // Initialize Supabase admin client with service role key
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
     );
 
     // Verify the JWT token
@@ -112,8 +118,8 @@ serve(async (req) => {
     console.error('Error creating checkout session:', error);
     return new Response(
       JSON.stringify({ 
-        error: 'Authentication failed',
-        details: error.message
+        error: error.message || 'An error occurred',
+        details: error.toString()
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
