@@ -58,8 +58,8 @@ export const SubscriptionCard = ({ subscription }: SubscriptionCardProps) => {
 
       if (data?.url) {
         console.log('Redirecting to:', data.url);
-        // Force la redirection dans une nouvelle fenêtre
-        window.open(data.url, '_blank');
+        // Redirection directe vers la page de paiement Stripe
+        window.location.href = data.url;
       } else {
         toast({
           variant: "destructive",
