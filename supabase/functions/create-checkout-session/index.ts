@@ -20,29 +20,23 @@ serve(async (req) => {
     console.log('Price ID received:', priceId);
     console.log('Return URL received:', returnUrl);
 
-    // Create Supabase client with service role key
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
-
     // Get the JWT from the Authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Missing Authorization header');
     }
 
-    // Get user from the token
     const token = authHeader.replace('Bearer ', '');
     console.log('Token received:', token);
 
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+    // Create Supabase client with service role key
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
+
+    // Get user from the token
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getSession(token);
     
     if (userError) {
       console.error('Error fetching user:', userError);
