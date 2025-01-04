@@ -6,10 +6,22 @@ export const isCourseCategory = (categoryId: string): boolean => {
   return categoryId === "1";
 };
 
+export const isChapterOne = (title: string | undefined): boolean => {
+  // Check if the title contains "chapitre 1", "chap 1", "chap. 1", "ch 1", "ch. 1"
+  const pattern = /^(?:chapitre|chap\.?|ch\.?)\s*1(?:\s|$)/i;
+  return title ? pattern.test(title.toLowerCase()) : false;
+};
+
 export const hasAccessToContent = (
   hasSubscription: boolean,
   classCode: string | undefined,
-  categoryId: string
+  categoryId: string,
+  fileTitle?: string
 ): boolean => {
-  return hasSubscription || (isFirstYearClass(classCode) && isCourseCategory(categoryId));
+  if (hasSubscription) return true;
+  
+  // Non-subscribed users can only access:
+  // 1. Course category (categoryId === "1")
+  // 2. Files with titles that indicate they are chapter 1
+  return isCourseCategory(categoryId) && isChapterOne(fileTitle);
 };

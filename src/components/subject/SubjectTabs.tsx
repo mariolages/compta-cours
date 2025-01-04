@@ -16,6 +16,8 @@ interface SubjectTabsProps {
   onCategoryChange: (value: string) => void;
   onDownload: (fileId: string, filePath: string, fileName: string) => void;
   isMobile?: boolean;
+  hasSubscription?: boolean;
+  classCode?: string;
 }
 
 const categories = [
@@ -28,7 +30,15 @@ const categories = [
   { id: "7", title: "Quiz", icon: BrainCircuit },
 ];
 
-export function SubjectTabs({ files, selectedCategory, onCategoryChange, onDownload, isMobile }: SubjectTabsProps) {
+export function SubjectTabs({ 
+  files, 
+  selectedCategory, 
+  onCategoryChange, 
+  onDownload, 
+  isMobile,
+  hasSubscription,
+  classCode
+}: SubjectTabsProps) {
   if (isMobile) {
     return (
       <div className="space-y-6">
@@ -55,7 +65,13 @@ export function SubjectTabs({ files, selectedCategory, onCategoryChange, onDownl
           {selectedCategory === "7" ? (
             <QuizList files={files} />
           ) : (
-            <FileList files={files} onDownload={onDownload} />
+            <FileList 
+              files={files} 
+              onDownload={onDownload} 
+              hasSubscription={hasSubscription}
+              classCode={classCode}
+              selectedCategory={selectedCategory}
+            />
           )}
         </div>
       </div>
@@ -88,7 +104,13 @@ export function SubjectTabs({ files, selectedCategory, onCategoryChange, onDownl
               {category.id === "7" ? (
                 <QuizList files={files} />
               ) : (
-                <FileList files={files} onDownload={onDownload} />
+                <FileList 
+                  files={files} 
+                  onDownload={onDownload}
+                  hasSubscription={hasSubscription}
+                  classCode={classCode}
+                  selectedCategory={category.id}
+                />
               )}
             </TabsContent>
           ))}

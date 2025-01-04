@@ -5,14 +5,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { FileCard } from "./FileCard";
 import { EmptyFileList } from "./EmptyFileList";
 import { FileListHeader } from "./FileListHeader";
+import { hasAccessToContent } from "@/utils/access";
 import type { File } from "@/types/files";
 
 interface FileListProps {
   files: File[];
   onDownload: (fileId: string, filePath: string, fileName: string) => void;
+  hasSubscription?: boolean;
+  classCode?: string;
+  selectedCategory: string;
 }
 
-export function FileList({ files, onDownload }: FileListProps) {
+export function FileList({ 
+  files, 
+  onDownload, 
+  hasSubscription = false,
+  classCode,
+  selectedCategory
+}: FileListProps) {
   const { toast } = useToast();
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [sortType, setSortType] = useState<'date' | 'alpha' | 'ue'>('date');
@@ -91,7 +101,12 @@ export function FileList({ files, onDownload }: FileListProps) {
     return <EmptyFileList />;
   }
 
-  const sortedFiles = [...files].sort((a, b) => {
+  // Filter files based on access rules
+  const accessibleFiles = files.filter(file => 
+    hasAccessToContent(hasSubscription, classCode, selectedCategory, file.title)
+  );
+
+  const sortedFiles = [...accessibleFiles].sort((a, b) => {
     if (sortType === 'date') {
       const dateA = new Date(a.created_at).getTime();
       const dateB = new Date(b.created_at).getTime();
