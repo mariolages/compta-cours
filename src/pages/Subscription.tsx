@@ -139,7 +139,7 @@ export default function Subscription() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 gap-6 max-w-4xl mx-auto">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -150,20 +150,6 @@ export default function Subscription() {
             <CardContent>
               <p className="text-muted-foreground">
                 Vos paiements sont sécurisés par Stripe, leader mondial du paiement en ligne
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Satisfait ou Remboursé
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Garantie de remboursement de 30 jours si vous n'êtes pas satisfait
               </p>
             </CardContent>
           </Card>
