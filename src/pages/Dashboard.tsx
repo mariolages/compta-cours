@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, CreditCard } from "lucide-react";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { SearchBar } from '@/components/dashboard/SearchBar';
 import { ProfileMenu } from '@/components/dashboard/ProfileMenu';
@@ -12,6 +12,7 @@ import { ClassesGrid } from '@/components/dashboard/ClassesGrid';
 import { SubjectsGrid } from '@/components/dashboard/SubjectsGrid';
 import { useQuery } from '@tanstack/react-query';
 import { useSessionContext } from '@supabase/auth-helpers-react';
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default function Dashboard() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -22,7 +23,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { session, isLoading: isLoadingSession } = useSessionContext();
 
-  // Fetch user profile with better error handling
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
@@ -78,7 +78,22 @@ export default function Dashboard() {
     enabled: !!session?.user?.id,
   });
 
-  // Redirect to login if no session
+  // Fetch subscription status
+  const { data: subscription } = useQuery({
+    queryKey: ['subscription', session?.user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', session?.user?.id)
+        .eq('status', 'active')
+        .maybeSingle();
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
   if (!isLoadingSession && !session) {
     navigate('/login', { replace: true });
     return null;
@@ -170,6 +185,21 @@ export default function Dashboard() {
 
       <div className="container mx-auto px-4 py-8 space-y-8">
         <WelcomeCard lastRefresh={lastRefresh} />
+
+        {/* Subscription Card */}
+        <Card className="bg-gradient-to-r from-primary/5 to-accent/5 hover:from-primary/10 hover:to-accent/10 transition-colors cursor-pointer" onClick={() => navigate('/subscription')}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-primary" />
+              {subscription ? 'Gérer mon abonnement' : 'S\'abonner'}
+            </CardTitle>
+            <CardDescription>
+              {subscription 
+                ? 'Accédez à vos informations d\'abonnement'
+                : 'Débloquez l\'accès à tous les contenus'}
+            </CardDescription>
+          </CardHeader>
+        </Card>
         
         {selectedClassId ? (
           <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
