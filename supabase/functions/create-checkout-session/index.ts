@@ -86,12 +86,22 @@ serve(async (req) => {
       console.log('Price type:', price.type);
       const isRecurring = price.type === 'recurring';
 
-      const origin = req.headers.get('origin') || 'http://localhost:5173';
-      const successUrl = `${origin}/dashboard?payment_status=success`;
-      const cancelUrl = `${origin}/subscription`;
+      // Get the origin from the request headers or use a default
+      const origin = req.headers.get('origin');
+      console.log('Request origin:', origin);
 
-      console.log('Success URL:', successUrl);
-      console.log('Cancel URL:', cancelUrl);
+      // Ensure we have a valid origin
+      if (!origin) {
+        throw new Error('Origin header is missing');
+      }
+
+      // Construct the success and cancel URLs
+      const successUrl = new URL('/dashboard', origin);
+      successUrl.searchParams.set('payment_status', 'success');
+      const cancelUrl = new URL('/subscription', origin);
+
+      console.log('Success URL:', successUrl.toString());
+      console.log('Cancel URL:', cancelUrl.toString());
 
       // Create checkout session with appropriate mode
       console.log('Creating checkout session...');
@@ -105,8 +115,8 @@ serve(async (req) => {
           },
         ],
         mode: isRecurring ? 'subscription' : 'payment',
-        success_url: successUrl,
-        cancel_url: cancelUrl,
+        success_url: successUrl.toString(),
+        cancel_url: cancelUrl.toString(),
         allow_promotion_codes: true,
         billing_address_collection: 'required',
         payment_method_types: ['card'],

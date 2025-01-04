@@ -11,6 +11,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { DashboardContent } from '@/components/dashboard/DashboardContent';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 
 export default function Dashboard() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -97,7 +99,7 @@ export default function Dashboard() {
     enabled: !!session?.user?.id,
   });
 
-  // Fetch subscription status
+  // Fetch subscription status with more frequent updates after payment
   const { data: subscription, isLoading: isLoadingSubscription } = useQuery({
     queryKey: ['subscription', session?.user?.id],
     queryFn: async () => {
@@ -119,93 +121,26 @@ export default function Dashboard() {
     refetchInterval: paymentStatus === 'success' ? 1000 : false, // Rafraîchir toutes les secondes si le paiement vient d'être effectué
   });
 
-  // Fetch classes
-  const { data: classes = [], isLoading: isLoadingClasses } = useQuery({
-    queryKey: ['classes'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('classes')
-        .select('*')
-        .order('code');
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!session,
-  });
-
-  // Fetch subjects for selected class
-  const { data: subjects = [], isLoading: isLoadingSubjects } = useQuery({
-    queryKey: ['subjects', selectedClassId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('subjects')
-        .select('*')
-        .eq('class_id', selectedClassId)
-        .order('code');
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!session && !!selectedClassId,
-  });
-
   if (!isLoadingSession && !session) {
     navigate('/login', { replace: true });
     return null;
   }
 
   if (isLoadingSession || isLoadingProfile || isLoadingSubscription) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <DashboardLoader />;
   }
 
-  const handleClassClick = (classId: number) => {
-    setSelectedClassId(classId);
-  };
-
-  const handleSubjectClick = (subjectId: number) => {
-    navigate(`/subjects/${subjectId}`);
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
-      <DashboardNav 
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        selectedClassId={selectedClassId}
-        onBackClick={() => setSelectedClassId(null)}
-        profile={profile}
-        user={session?.user}
-      />
-
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        <WelcomeCard lastRefresh={lastRefresh} />
-        
-        {selectedClassId ? (
-          <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
-        ) : (
-          <ClassesGrid classes={classes} onClassClick={handleClassClick} />
-        )}
-
-        <FileUploadDialog 
-          open={isUploadOpen} 
-          onOpenChange={setIsUploadOpen}
-          onSuccess={() => {
-            setIsUploadOpen(false);
-          }}
-        />
-
-        <Button
-          onClick={() => setIsUploadOpen(true)}
-          className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-primary hover:bg-primary-hover transition-all duration-300 animate-fade-in"
-        >
-          <Plus className="h-6 w-6" />
-        </Button>
-      </div>
-    </div>
+    <DashboardContent
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
+      selectedClassId={selectedClassId}
+      onClassSelect={setSelectedClassId}
+      isUploadOpen={isUploadOpen}
+      onUploadOpenChange={setIsUploadOpen}
+      profile={profile}
+      user={session?.user}
+      lastRefresh={lastRefresh}
+    />
   );
 }
