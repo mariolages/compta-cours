@@ -61,6 +61,7 @@ export default function Subscription() {
 
       if (data?.url) {
         console.log('Redirecting to:', data.url);
+        // Use window.location.href instead of navigate for external URLs
         window.location.href = data.url;
       } else {
         toast({
