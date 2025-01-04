@@ -27,7 +27,9 @@ export default function Dashboard() {
   // Effet pour gérer le statut du paiement
   useEffect(() => {
     if (paymentStatus === 'success') {
-      // Rafraîchir les données de l'abonnement
+      console.log('Payment successful, refreshing data...');
+      
+      // Rafraîchir les données de l'abonnement et du profil
       queryClient.invalidateQueries({ queryKey: ['subscription'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       
@@ -96,19 +98,25 @@ export default function Dashboard() {
   });
 
   // Fetch subscription status
-  const { data: subscription } = useQuery({
+  const { data: subscription, isLoading: isLoadingSubscription } = useQuery({
     queryKey: ['subscription', session?.user?.id],
     queryFn: async () => {
+      console.log('Fetching subscription status...');
       const { data, error } = await supabase
         .from('subscriptions')
         .select('*')
         .eq('user_id', session?.user?.id)
         .eq('status', 'active')
         .maybeSingle();
+      
+      console.log('Subscription data:', data);
+      console.log('Subscription error:', error);
+      
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
     enabled: !!session?.user?.id,
+    refetchInterval: paymentStatus === 'success' ? 1000 : false, // Rafraîchir toutes les secondes si le paiement vient d'être effectué
   });
 
   // Fetch classes
@@ -147,7 +155,7 @@ export default function Dashboard() {
     return null;
   }
 
-  if (isLoadingSession || isLoadingProfile) {
+  if (isLoadingSession || isLoadingProfile || isLoadingSubscription) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>

@@ -17,10 +17,8 @@ serve(async (req) => {
     console.log('Starting checkout session creation...');
     
     // Get the request body
-    const { price_id, success_url, cancel_url } = await req.json();
+    const { price_id } = await req.json();
     console.log('Price ID received:', price_id);
-    console.log('Success URL:', success_url);
-    console.log('Cancel URL:', cancel_url);
 
     if (!price_id) {
       throw new Error('Price ID is required');
@@ -88,6 +86,13 @@ serve(async (req) => {
       console.log('Price type:', price.type);
       const isRecurring = price.type === 'recurring';
 
+      const origin = req.headers.get('origin') || 'http://localhost:5173';
+      const successUrl = `${origin}/dashboard?payment_status=success`;
+      const cancelUrl = `${origin}/subscription`;
+
+      console.log('Success URL:', successUrl);
+      console.log('Cancel URL:', cancelUrl);
+
       // Create checkout session with appropriate mode
       console.log('Creating checkout session...');
       const session = await stripe.checkout.sessions.create({
@@ -100,8 +105,8 @@ serve(async (req) => {
           },
         ],
         mode: isRecurring ? 'subscription' : 'payment',
-        success_url: success_url || `${req.headers.get('origin')}/dashboard`,
-        cancel_url: cancel_url || `${req.headers.get('origin')}/subscription`,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
         allow_promotion_codes: true,
         billing_address_collection: 'required',
         payment_method_types: ['card'],
