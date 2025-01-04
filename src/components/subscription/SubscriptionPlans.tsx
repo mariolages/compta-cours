@@ -76,19 +76,23 @@ export const SubscriptionPlans = () => {
 
     try {
       setIsLoading(true);
+
+      // Vérifier que nous avons un token d'accès valide
+      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
       
-      if (!session.access_token) {
-        throw new Error("Token d'authentification manquant");
+      if (sessionError || !currentSession?.access_token) {
+        console.error('Session error:', sessionError);
+        throw new Error("Session invalide. Veuillez vous reconnecter.");
       }
 
-      console.log('Creating checkout session with token:', session.access_token);
+      console.log('Creating checkout session with token:', currentSession.access_token);
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           priceId: 'price_1OgkXuHVlJhYKxGPbvmhzjbP',
           returnUrl: `${window.location.origin}/dashboard`
         },
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${currentSession.access_token}`,
         },
       });
 
