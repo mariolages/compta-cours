@@ -10,20 +10,7 @@ interface FileTableRowProps {
 
 export const FileTableRow = ({ file, onDelete }: FileTableRowProps) => {
   const getFileUrl = () => {
-    const url = `https://sxpddyeasmcsnrbtvrgm.supabase.co/storage/v1/object/public/dcg_files/${file.file_path}`;
-    console.log('Opening file URL:', url);
-    return url;
-  };
-
-  const handleFileOpen = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const url = getFileUrl();
-    console.log('Attempting to open file:', {
-      title: file.title,
-      path: file.file_path,
-      url: url
-    });
-    window.open(url, '_blank', 'noopener,noreferrer');
+    return `https://sxpddyeasmcsnrbtvrgm.supabase.co/storage/v1/object/public/dcg_files/${file.file_path}`;
   };
 
   return (
@@ -31,8 +18,9 @@ export const FileTableRow = ({ file, onDelete }: FileTableRowProps) => {
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
         <a
           href={getFileUrl()}
-          onClick={handleFileOpen}
-          className="hover:text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded cursor-pointer"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
         >
           {file.title}
         </a>
@@ -53,7 +41,7 @@ export const FileTableRow = ({ file, onDelete }: FileTableRowProps) => {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={handleFileOpen}
+            onClick={() => window.open(getFileUrl(), '_blank')}
             className="text-primary hover:text-primary-hover hover:bg-primary-light"
           >
             <Download className="h-4 w-4 mr-2" />
