@@ -13,10 +13,10 @@ export const SubscriptionPlans = () => {
   const navigate = useNavigate();
   const { session } = useSessionContext();
 
-  const handleSubscribe = async (priceId: string) => {
+  const handleSubscribe = async (price_id: string) => {
     try {
       setIsLoading(true);
-      console.log('Starting checkout session creation with price ID:', priceId);
+      console.log('Starting checkout session creation with price ID:', price_id);
 
       if (!session) {
         toast({
@@ -32,7 +32,7 @@ export const SubscriptionPlans = () => {
 
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
-          price_id: priceId,
+          price_id,
           success_url: `${window.location.origin}/dashboard`,
           cancel_url: `${window.location.origin}/subscription`,
         }
