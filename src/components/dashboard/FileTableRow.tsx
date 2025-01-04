@@ -15,8 +15,8 @@ export const FileTableRow = ({ file, onDelete }: FileTableRowProps) => {
     // Log pour déboguer l'URL du fichier
     console.log('Opening file URL:', fileUrl);
     
-    // Ouvrir le fichier dans un nouvel onglet
-    window.location.href = fileUrl;
+    // Ouvrir le fichier dans un nouvel onglet avec window.open()
+    window.open(fileUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
