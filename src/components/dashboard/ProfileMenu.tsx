@@ -18,29 +18,23 @@ export const ProfileMenu = ({ user, profile }: { user: any; profile: any }) => {
 
   const handleSignOut = async () => {
     try {
-      // Log the logout attempt
-      await supabase
-        .from('auth_logs')
-        .insert([{ 
-          user_id: user?.id,
-          email: user?.email,
-          event_type: 'logout_attempt'
-        }]);
-
       // Déconnexion de l'utilisateur
       const { error } = await supabase.auth.signOut();
       
-      if (error) {
-        console.error('Erreur lors de la déconnexion:', error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Une erreur est survenue lors de la déconnexion",
-        });
-        return;
-      }
+      if (error) throw error;
 
-      // Log successful logout
+      // Nettoyage complet du stockage local
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // Suppression des cookies liés à l'authentification
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+
+      // Log de la déconnexion réussie
       await supabase
         .from('auth_logs')
         .insert([{ 
@@ -49,23 +43,29 @@ export const ProfileMenu = ({ user, profile }: { user: any; profile: any }) => {
           event_type: 'logout_success'
         }]);
 
-      // Clear any local storage or session storage if needed
-      localStorage.removeItem('supabase.auth.token');
-      sessionStorage.clear();
-
       toast({
         title: "Déconnexion réussie",
         description: "Vous avez été déconnecté avec succès",
       });
 
-      // Force la redirection vers la page de connexion
+      // Redirection forcée avec reload pour s'assurer que tout est réinitialisé
       window.location.href = '/login';
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
+      
+      // Log de l'erreur
+      await supabase
+        .from('auth_logs')
+        .insert([{ 
+          user_id: user?.id,
+          email: user?.email,
+          event_type: 'logout_error',
+        }]);
+
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la déconnexion",
+        title: "Erreur de déconnexion",
+        description: "Une erreur est survenue. Veuillez réessayer.",
       });
     }
   };
