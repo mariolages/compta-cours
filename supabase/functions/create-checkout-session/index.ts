@@ -8,7 +8,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -20,7 +19,6 @@ serve(async (req) => {
     console.log('Price ID received:', priceId);
     console.log('Return URL received:', returnUrl);
 
-    // Get the JWT from the Authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Missing Authorization header');
@@ -29,32 +27,25 @@ serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     console.log('Token received:', token);
 
-    // Create Supabase client with service role key
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    // Get user from the token
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getSession(token);
+    const { data: { session }, error: sessionError } = await supabaseAdmin.auth.getSession(token);
     
-    if (userError) {
-      console.error('Error fetching user:', userError);
-      throw userError;
+    if (sessionError || !session?.user) {
+      console.error('Error fetching session:', sessionError);
+      throw new Error('Invalid session');
     }
 
-    if (!user) {
-      throw new Error('User not found');
-    }
-
+    const user = session.user;
     console.log('User found:', user.id);
 
-    // Initialize Stripe
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
       apiVersion: '2023-10-16',
     });
 
-    // Check for existing customer
     console.log('Checking for existing Stripe customer...');
     const customers = await stripe.customers.list({
       email: user.email,
@@ -66,7 +57,6 @@ serve(async (req) => {
       customerId = customers.data[0].id;
       console.log('Existing customer found:', customerId);
       
-      // Check for active subscriptions
       const subscriptions = await stripe.subscriptions.list({
         customer: customerId,
         status: 'active',
@@ -79,7 +69,6 @@ serve(async (req) => {
       }
     }
 
-    // Create checkout session
     console.log('Creating checkout session...');
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
