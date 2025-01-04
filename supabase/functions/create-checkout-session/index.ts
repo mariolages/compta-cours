@@ -79,18 +79,6 @@ serve(async (req) => {
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
       console.log('Existing customer found:', customerId);
-      
-      // Check for active subscription
-      const subscriptions = await stripe.subscriptions.list({
-        customer: customerId,
-        status: 'active',
-        price: price_id,
-        limit: 1
-      });
-
-      if (subscriptions.data.length > 0) {
-        throw new Error('Vous avez déjà un abonnement actif');
-      }
     }
 
     // Create checkout session
