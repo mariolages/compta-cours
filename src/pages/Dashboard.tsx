@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -22,18 +22,58 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { session, isLoading: isLoadingSession } = useSessionContext();
 
-  // Fetch user profile
-  const { data: profile } = useQuery({
+  // Fetch user profile with better error handling
+  const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!session?.user?.id) return null;
+
+      // Try to get the profile
+      const { data: existingProfile, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', session?.user?.id)
-        .single();
+        .eq('id', session.user.id)
+        .maybeSingle();
       
-      if (error) throw error;
-      return data;
+      // If no profile exists, create one
+      if (!existingProfile && !error) {
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert([
+            { 
+              id: session.user.id,
+              full_name: session.user.email?.split('@')[0] || null,
+              is_admin: false,
+              is_validated: false
+            }
+          ])
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating profile:', createError);
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Impossible de créer votre profil",
+          });
+          throw createError;
+        }
+
+        return newProfile;
+      }
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching profile:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger votre profil",
+        });
+        throw error;
+      }
+
+      return existingProfile;
     },
     enabled: !!session?.user?.id,
   });
@@ -83,7 +123,7 @@ export default function Dashboard() {
     navigate(`/subjects/${subjectId}`);
   };
 
-  if (isLoadingSession || isLoadingClasses) {
+  if (isLoadingSession || isLoadingProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
