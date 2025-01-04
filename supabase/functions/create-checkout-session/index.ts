@@ -24,9 +24,15 @@ serve(async (req) => {
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
     );
 
-    // Extract the JWT token from the Authorization header
+    // Extract the JWT token and verify the user
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
@@ -41,6 +47,7 @@ serve(async (req) => {
       apiVersion: '2023-10-16',
     });
 
+    // Check for existing customer
     const customers = await stripe.customers.list({
       email: user.email,
       limit: 1
@@ -51,6 +58,7 @@ serve(async (req) => {
       customerId = customers.data[0].id;
       console.log('Found existing customer:', customerId);
 
+      // Check for active subscriptions
       const subscriptions = await stripe.subscriptions.list({
         customer: customerId,
         status: 'active',
