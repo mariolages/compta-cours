@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, CreditCard, Diamond, Sparkles } from "lucide-react";
+import { Check, CreditCard, Diamond } from "lucide-react";
 import { useState } from "react";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -43,6 +43,7 @@ export const SubscriptionPlans = () => {
     try {
       setIsLoading(true);
       console.log('Starting checkout session creation...');
+      console.log('Session token:', session.access_token);
       
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
@@ -59,12 +60,14 @@ export const SubscriptionPlans = () => {
         toast({
           variant: "destructive",
           title: "Erreur",
-          description: "Une erreur est survenue. Veuillez réessayer plus tard.",
+          description: "Une erreur est survenue lors de la création de la session de paiement. Veuillez réessayer.",
         });
         return;
       }
 
       if (data?.url) {
+        console.log('Redirecting to:', data.url);
+        console.log('Checkout session response:', data);
         window.location.href = data.url;
       } else {
         toast({
