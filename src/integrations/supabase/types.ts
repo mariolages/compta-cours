@@ -202,115 +202,26 @@ export type Database = {
         }
         Relationships: []
       }
-      quiz_answers: {
-        Row: {
-          attempt_id: string | null
-          created_at: string | null
-          id: string
-          is_correct: boolean
-          question_id: string | null
-          selected_answers: string[] | null
-        }
-        Insert: {
-          attempt_id?: string | null
-          created_at?: string | null
-          id?: string
-          is_correct: boolean
-          question_id?: string | null
-          selected_answers?: string[] | null
-        }
-        Update: {
-          attempt_id?: string | null
-          created_at?: string | null
-          id?: string
-          is_correct?: boolean
-          question_id?: string | null
-          selected_answers?: string[] | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_answers_attempt_id_fkey"
-            columns: ["attempt_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_attempts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "quiz_answers_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_questions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      quiz_attempts: {
-        Row: {
-          completed_at: string | null
-          created_at: string | null
-          id: string
-          quiz_id: string | null
-          score: number
-          time_taken: number | null
-          total_questions: number
-          user_id: string | null
-        }
-        Insert: {
-          completed_at?: string | null
-          created_at?: string | null
-          id?: string
-          quiz_id?: string | null
-          score: number
-          time_taken?: number | null
-          total_questions: number
-          user_id?: string | null
-        }
-        Update: {
-          completed_at?: string | null
-          created_at?: string | null
-          id?: string
-          quiz_id?: string | null
-          score?: number
-          time_taken?: number | null
-          total_questions?: number
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_attempts_quiz_id_fkey"
-            columns: ["quiz_id"]
-            isOneToOne: false
-            referencedRelation: "quizzes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       quiz_questions: {
         Row: {
-          correct_answer: string | null
-          correct_answers: string[] | null
+          correct_answer: string
           created_at: string
-          explanation: string | null
           id: string
           options: Json
           question: string
           quiz_id: string | null
         }
         Insert: {
-          correct_answer?: string | null
-          correct_answers?: string[] | null
+          correct_answer: string
           created_at?: string
-          explanation?: string | null
           id?: string
           options: Json
           question: string
           quiz_id?: string | null
         }
         Update: {
-          correct_answer?: string | null
-          correct_answers?: string[] | null
+          correct_answer?: string
           created_at?: string
-          explanation?: string | null
           id?: string
           options?: Json
           question?: string
@@ -332,9 +243,6 @@ export type Database = {
           description: string | null
           file_id: string | null
           id: string
-          shuffle_answers: boolean | null
-          shuffle_questions: boolean | null
-          time_limit: number | null
           title: string
           user_id: string | null
         }
@@ -343,9 +251,6 @@ export type Database = {
           description?: string | null
           file_id?: string | null
           id?: string
-          shuffle_answers?: boolean | null
-          shuffle_questions?: boolean | null
-          time_limit?: number | null
           title: string
           user_id?: string | null
         }
@@ -354,9 +259,6 @@ export type Database = {
           description?: string | null
           file_id?: string | null
           id?: string
-          shuffle_answers?: boolean | null
-          shuffle_questions?: boolean | null
-          time_limit?: number | null
           title?: string
           user_id?: string | null
         }

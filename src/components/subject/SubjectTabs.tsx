@@ -28,9 +28,7 @@ const categories = [
   { id: "7", title: "Quiz", icon: BrainCircuit },
 ];
 
-export function SubjectTabs({ files = [], selectedCategory, onCategoryChange, onDownload, isMobile }: SubjectTabsProps) {
-  const filteredFiles = files?.filter((file: any) => file.category_id === parseInt(selectedCategory)) || [];
-
+export function SubjectTabs({ files, selectedCategory, onCategoryChange, onDownload, isMobile }: SubjectTabsProps) {
   if (isMobile) {
     return (
       <div className="space-y-6">
@@ -55,9 +53,9 @@ export function SubjectTabs({ files = [], selectedCategory, onCategoryChange, on
         </Select>
         <div className="bg-white rounded-xl shadow-sm p-4">
           {selectedCategory === "7" ? (
-            <QuizList files={filteredFiles} />
+            <QuizList files={files} />
           ) : (
-            <FileList files={filteredFiles} onDownload={onDownload} />
+            <FileList files={files} onDownload={onDownload} />
           )}
         </div>
       </div>
@@ -88,9 +86,9 @@ export function SubjectTabs({ files = [], selectedCategory, onCategoryChange, on
               className="focus-visible:outline-none focus-visible:ring-0"
             >
               {category.id === "7" ? (
-                <QuizList files={filteredFiles} />
+                <QuizList files={files} />
               ) : (
-                <FileList files={filteredFiles} onDownload={onDownload} />
+                <FileList files={files} onDownload={onDownload} />
               )}
             </TabsContent>
           ))}

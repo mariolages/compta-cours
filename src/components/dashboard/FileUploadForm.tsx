@@ -9,7 +9,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FileUploadProgress } from "./FileUploadProgress";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface FileUploadFormProps {
   subjectId: string;
@@ -101,7 +100,6 @@ export function FileUploadForm({
           disabled={isLoading}
           accept={acceptedFileTypes}
           multiple
-          className="cursor-pointer"
         />
         {categoryId === "6" && (
           <p className="text-sm text-gray-500">

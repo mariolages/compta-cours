@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, BookOpen, ArrowRight } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { CreateQuizDialog } from "../CreateQuizDialog";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { BrainCircuit, Play, Plus } from "lucide-react";
 import { QuizInterface } from "./QuizInterface";
+import { CreateQuizDialog } from "./CreateQuizDialog";
 import type { File } from "@/types/files";
 
 interface QuizListProps {
@@ -14,123 +12,87 @@ interface QuizListProps {
 }
 
 export function QuizList({ files }: QuizListProps) {
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
-  const { toast } = useToast();
-  const currentFile = files?.[0];
+  const [isQuizOpen, setIsQuizOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  const { data: quizzes, isLoading } = useQuery({
-    queryKey: ["quizzes", currentFile?.id],
-    queryFn: async () => {
-      if (!currentFile?.id) {
-        return [];
-      }
+  const handleStartQuiz = (quizId: string) => {
+    setSelectedQuizId(quizId);
+    setIsQuizOpen(true);
+  };
 
-      const { data, error } = await supabase
-        .from("quizzes")
-        .select(`
-          *,
-          file:file_id(title)
-        `)
-        .eq("file_id", currentFile.id);
-
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger les quiz",
-        });
-        throw error;
-      }
-
-      return data;
-    },
-    enabled: !!currentFile?.id,
-  });
-
-  if (selectedQuizId) {
+  if (!files || files.length === 0) {
     return (
-      <QuizInterface
-        quizId={selectedQuizId}
-        onClose={() => setSelectedQuizId(null)}
-      />
+      <div className="mt-12">
+        <Card className="p-8 bg-gray-50/50 border-dashed border-2">
+          <div className="text-center space-y-3">
+            <div className="flex justify-center">
+              <BrainCircuit className="h-12 w-12 text-gray-400" />
+            </div>
+            <p className="text-lg font-medium text-gray-600">
+              Aucun fichier n'est disponible pour créer un quiz
+            </p>
+            <p className="text-gray-500">
+              Veuillez d'abord ajouter un fichier dans cette catégorie
+            </p>
+            <Button
+              onClick={() => setIsCreateOpen(true)}
+              className="mt-4 flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Créer un quiz
+            </Button>
+          </div>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-8 mt-12">
-      <div className="flex justify-between items-center max-w-4xl mx-auto">
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold text-gray-900">Quiz disponibles</h2>
-        <Button 
-          onClick={() => setIsCreateOpen(true)} 
-          className="flex items-center gap-2 bg-primary hover:bg-primary-hover transition-all duration-300"
+        <Button
+          onClick={() => setIsCreateOpen(true)}
+          className="flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
           Créer un quiz
         </Button>
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      ) : !files || files.length === 0 ? (
-        <Card className="p-8 bg-gray-50/50 border-dashed border-2 mx-auto max-w-2xl">
-          <div className="text-center space-y-3">
-            <p className="text-lg font-medium text-gray-600">
-              Aucun fichier n'est disponible pour créer un quiz.
-            </p>
-            <p className="text-gray-500">
-              Veuillez d'abord ajouter un fichier dans cette catégorie.
-            </p>
-          </div>
-        </Card>
-      ) : (
-        <div className="grid gap-6 max-w-4xl mx-auto">
-          {quizzes?.map((quiz) => (
-            <Card 
-              key={quiz.id} 
-              className="p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary animate-fade-in bg-white"
-            >
-              <div className="flex justify-between items-center">
-                <div className="space-y-2">
-                  <h3 className="text-xl font-semibold text-gray-900">{quiz.title}</h3>
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <BookOpen className="h-4 w-4" />
-                    <p className="text-sm">
-                      Basé sur : {quiz.file?.title}
-                    </p>
-                  </div>
-                  {quiz.description && (
-                    <p className="text-sm text-gray-600 mt-2">{quiz.description}</p>
-                  )}
-                </div>
-                <Button 
-                  variant="outline"
-                  onClick={() => setSelectedQuizId(quiz.id)}
-                  className="flex items-center gap-2 hover:bg-primary hover:text-white transition-all duration-300"
-                >
-                  <span>Commencer</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+      <div className="grid gap-4">
+        {files.map((file) => (
+          <Card key={file.id} className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium">{file.title}</h3>
+                <p className="text-sm text-gray-500">
+                  Quiz basé sur ce document
+                </p>
               </div>
-            </Card>
-          ))}
+              <Button
+                onClick={() => handleStartQuiz(file.id)}
+                className="flex items-center gap-2"
+              >
+                <Play className="h-4 w-4" />
+                Commencer
+              </Button>
+            </div>
+          </Card>
+        ))}
+      </div>
 
-          {!quizzes?.length && (
-            <Card className="p-8 bg-gray-50/50 border-dashed border-2">
-              <div className="text-center space-y-3">
-                <p className="text-lg font-medium text-gray-600">
-                  Aucun quiz n'a encore été créé pour ce cours.
-                </p>
-                <p className="text-gray-500">
-                  Cliquez sur "Créer un quiz" pour en ajouter un.
-                </p>
-              </div>
-            </Card>
+      <Dialog open={isQuizOpen} onOpenChange={setIsQuizOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          {selectedQuizId && (
+            <QuizInterface
+              quizId={selectedQuizId}
+              onClose={() => setIsQuizOpen(false)}
+            />
           )}
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       <CreateQuizDialog
         open={isCreateOpen}
