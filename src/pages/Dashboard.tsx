@@ -22,6 +22,22 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { session, isLoading: isLoadingSession } = useSessionContext();
 
+  // Fetch user profile
+  const { data: profile } = useQuery({
+    queryKey: ['profile', session?.user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session?.user?.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
   // Redirect to login if no session
   if (!isLoadingSession && !session) {
     navigate('/login', { replace: true });
@@ -106,7 +122,7 @@ export default function Dashboard() {
               >
                 <RefreshCw className="h-4 w-4" />
               </Button>
-              <ProfileMenu />
+              <ProfileMenu user={session?.user} profile={profile} />
             </div>
           </div>
         </div>
