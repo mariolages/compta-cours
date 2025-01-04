@@ -18,6 +18,12 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
   const filteredFiles = files.filter((file) => {
     if (!searchQuery.trim()) return true;
     
+    // Si la recherche est exactement "Cours", "QCM" ou "Exercices"
+    const exactMatches = ["Cours", "QCM", "Exercices"];
+    if (exactMatches.includes(searchQuery)) {
+      return file.category.name.toLowerCase() === searchQuery.toLowerCase();
+    }
+    
     // Convertit la recherche en minuscules et divise en mots
     const searchTerms = searchQuery.toLowerCase().trim().split(/\s+/);
     
@@ -79,7 +85,10 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
   return (
     <div className="space-y-4 animate-fade-in">
       <h2 className="text-2xl font-semibold text-gray-800 pl-2 border-l-4 border-primary">
-        Fichiers récents {searchQuery && `(${filteredFiles.length} résultats)`}
+        {searchQuery && exactMatches.includes(searchQuery) 
+          ? `${searchQuery} (${filteredFiles.length})`
+          : `Fichiers récents ${searchQuery ? `(${filteredFiles.length} résultats)` : ''}`
+        }
       </h2>
       <Card className="overflow-hidden bg-white/80 backdrop-blur-sm">
         <CardContent className="p-0">

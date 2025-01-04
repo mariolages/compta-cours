@@ -30,22 +30,24 @@ export const SearchBar = ({ value, onChange }: SearchBarProps) => {
     { type: 'subject', label: 'Comptabilité', description: 'Cours et exercices de comptabilité' },
     { type: 'subject', label: 'Droit Fiscal', description: 'Cours et exercices de droit fiscal' },
     { type: 'subject', label: 'Finance', description: 'Cours et exercices de finance' },
-    { type: 'recent', label: 'Chapitre 1', description: 'Recherches récentes' },
-    { type: 'recent', label: 'Chapitre 2', description: 'Recherches récentes' },
-    { type: 'recent', label: 'Chapitre 3', description: 'Recherches récentes' },
   ];
 
   const handleSelect = (selectedValue: string) => {
-    // Ajoute un espace après la sélection si ce n'est pas déjà le cas
-    const currentTerms = value.toLowerCase().split(' ').filter(Boolean);
-    const newTerm = selectedValue.toLowerCase();
-    
-    // Si le terme est déjà présent, ne pas l'ajouter en double
-    if (!currentTerms.includes(newTerm)) {
-      const newValue = currentTerms.length > 0 
-        ? `${value.trim()} ${selectedValue}`
-        : selectedValue;
-      onChange(newValue);
+    // Si on sélectionne un type de contenu (Cours, QCM, Exercices)
+    // on remplace complètement la recherche actuelle
+    if (suggestions.find(s => s.type === 'type' && s.label === selectedValue)) {
+      onChange(selectedValue);
+    } else {
+      // Pour les autres sélections, on ajoute à la recherche existante
+      const currentTerms = value.toLowerCase().split(' ').filter(Boolean);
+      const newTerm = selectedValue.toLowerCase();
+      
+      if (!currentTerms.includes(newTerm)) {
+        const newValue = currentTerms.length > 0 
+          ? `${value.trim()} ${selectedValue}`
+          : selectedValue;
+        onChange(newValue);
+      }
     }
     
     setOpen(false);
@@ -79,7 +81,7 @@ export const SearchBar = ({ value, onChange }: SearchBarProps) => {
                     <CommandItem
                       key={suggestion.label}
                       onSelect={() => handleSelect(suggestion.label)}
-                      className="flex justify-between items-center"
+                      className="flex justify-between items-center cursor-pointer"
                     >
                       <span>{suggestion.label}</span>
                       <span className="text-xs text-gray-500">{suggestion.description}</span>
@@ -93,21 +95,7 @@ export const SearchBar = ({ value, onChange }: SearchBarProps) => {
                     <CommandItem
                       key={suggestion.label}
                       onSelect={() => handleSelect(suggestion.label)}
-                      className="flex justify-between items-center"
-                    >
-                      <span>{suggestion.label}</span>
-                      <span className="text-xs text-gray-500">{suggestion.description}</span>
-                    </CommandItem>
-                  ))}
-              </CommandGroup>
-              <CommandGroup heading="Recherches récentes">
-                {suggestions
-                  .filter((s) => s.type === 'recent')
-                  .map((suggestion) => (
-                    <CommandItem
-                      key={suggestion.label}
-                      onSelect={() => handleSelect(suggestion.label)}
-                      className="flex justify-between items-center"
+                      className="flex justify-between items-center cursor-pointer"
                     >
                       <span>{suggestion.label}</span>
                       <span className="text-xs text-gray-500">{suggestion.description}</span>
