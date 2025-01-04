@@ -10,7 +10,7 @@ import { DashboardNav } from '@/components/dashboard/DashboardNav';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -62,7 +62,7 @@ export default function Dashboard() {
             }
           ])
           .select()
-          .single();
+          .maybeSingle();
 
         if (createError) {
           console.error('Error creating profile:', createError);
@@ -118,7 +118,7 @@ export default function Dashboard() {
         .order('code');
       
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!session,
   });
@@ -133,7 +133,7 @@ export default function Dashboard() {
         .order('code');
       
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!session && !!selectedClassId,
   });
