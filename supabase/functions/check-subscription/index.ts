@@ -8,7 +8,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -21,54 +20,59 @@ serve(async (req) => {
   try {
     console.log('🔍 Starting subscription check...');
     
-    // Get the session or user object
     const authHeader = req.headers.get('Authorization')!;
     console.log('📝 Auth header present:', !!authHeader);
     
     const token = authHeader.replace('Bearer ', '');
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
-    const email = user?.email;
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
 
-    console.log('👤 User ID:', user?.id);
-    console.log('📧 User email:', email);
+    if (userError || !user) {
+      console.error('❌ User error:', userError);
+      throw new Error('User not found');
+    }
 
-    if (!email) {
+    console.log('👤 User found:', user.id);
+    console.log('📧 User email:', user.email);
+
+    if (!user.email) {
       console.error('❌ No email found for user');
       throw new Error('No email found');
     }
-
-    console.log('🔎 Checking subscription for email:', email);
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
 
-    // Get customer by email
-    console.log('🔍 Searching for Stripe customer with email:', email);
-    const customers = await stripe.customers.list({
-      email: email,
-      limit: 1
-    });
+    // Recherche directe par customer ID dans la table subscriptions
+    console.log('🔍 Checking local subscription record...');
+    const { data: localSub } = await supabaseClient
+      .from('subscriptions')
+      .select('stripe_customer_id')
+      .eq('user_id', user.id)
+      .single();
 
-    console.log('👥 Found customers:', customers.data.length);
+    let customerId = localSub?.stripe_customer_id;
 
-    if (customers.data.length === 0) {
-      console.log('❌ No customer found for email:', email);
-      return new Response(
-        JSON.stringify({ subscribed: false }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        }
-      );
+    if (!customerId) {
+      console.log('🔍 No local customer ID, searching by email:', user.email);
+      const customers = await stripe.customers.list({
+        email: user.email,
+        limit: 1
+      });
+
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        console.log('✅ Found customer ID:', customerId);
+      } else {
+        console.log('❌ No customer found for email:', user.email);
+        return new Response(
+          JSON.stringify({ subscribed: false }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
-    const customerId = customers.data[0].id;
-    console.log('🆔 Customer ID:', customerId);
-
-    // Check for active subscriptions
-    console.log('🔍 Checking active subscriptions for customer:', customerId);
+    console.log('🔍 Checking Stripe subscriptions for customer:', customerId);
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: 'active',
@@ -76,15 +80,6 @@ serve(async (req) => {
     });
 
     console.log('📊 Found subscriptions:', subscriptions.data.length);
-    console.log('📝 Subscription details:', JSON.stringify(subscriptions.data.map(sub => ({
-      id: sub.id,
-      status: sub.status,
-      items: sub.items.data.map(item => ({
-        price_id: item.price.id,
-        product_id: item.price.product
-      }))
-    })), null, 2));
-
     const hasActiveSubscription = subscriptions.data.some(subscription => 
       subscription.status === 'active' && 
       subscription.items.data.some(item => 
@@ -95,42 +90,48 @@ serve(async (req) => {
 
     console.log('✅ Has active subscription:', hasActiveSubscription);
 
-    // Update subscriptions table in Supabase
     if (hasActiveSubscription) {
-      console.log('📝 Updating subscription in Supabase for user:', user.id);
+      console.log('📝 Updating subscription in Supabase');
       const { error: upsertError } = await supabaseClient
         .from('subscriptions')
         .upsert({
           user_id: user.id,
           status: 'active',
           stripe_customer_id: customerId,
+        }, {
+          onConflict: 'user_id'
         });
 
       if (upsertError) {
-        console.error('❌ Error updating subscription in database:', upsertError);
+        console.error('❌ Error updating subscription:', upsertError);
       } else {
-        console.log('✅ Successfully updated subscription in database');
+        console.log('✅ Successfully updated subscription record');
+      }
+    } else {
+      console.log('📝 Marking subscription as inactive');
+      const { error: updateError } = await supabaseClient
+        .from('subscriptions')
+        .update({ status: 'inactive' })
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        console.error('❌ Error updating subscription:', updateError);
       }
     }
 
     return new Response(
       JSON.stringify({ 
         subscribed: hasActiveSubscription,
+        customerId,
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('❌ Error checking subscription:', error);
+    console.error('❌ Error in check-subscription:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
