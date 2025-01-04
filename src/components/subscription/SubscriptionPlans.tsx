@@ -19,8 +19,16 @@ export const SubscriptionPlans = () => {
       console.log('Starting checkout session creation...');
 
       if (!session) {
-        throw new Error('Veuillez vous connecter pour souscrire à un abonnement.');
+        toast({
+          variant: "destructive",
+          title: "Session expirée",
+          description: "Veuillez vous connecter pour souscrire à un abonnement.",
+        });
+        navigate('/login');
+        return;
       }
+
+      console.log('Using access token:', session.access_token);
 
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
@@ -32,8 +40,11 @@ export const SubscriptionPlans = () => {
 
       if (error) {
         console.error('Error creating checkout session:', error);
-        if (error.message.includes('refresh_token_not_found')) {
-          // Session is completely expired, redirect to login
+        
+        // Handle specific error cases
+        if (error.message.includes('refresh_token_not_found') || 
+            error.message.includes('JWT expired') ||
+            error.message.includes('session_id claim in JWT does not exist')) {
           toast({
             variant: "destructive",
             title: "Session expirée",
@@ -42,20 +53,21 @@ export const SubscriptionPlans = () => {
           navigate('/login');
           return;
         }
+
         throw error;
       }
 
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
+      if (!data?.url) {
         throw new Error('URL de paiement non reçue');
       }
+
+      window.location.href = data.url;
     } catch (error: any) {
       console.error('Subscription error:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de la création de la session de paiement. Veuillez réessayer.",
+        description: "Une erreur est survenue lors de la création de la session de paiement. Nos équipes ont été notifiées. Veuillez réessayer dans quelques instants.",
       });
     } finally {
       setIsLoading(false);
