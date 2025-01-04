@@ -17,57 +17,16 @@ export const ProfileMenu = ({ user, profile }: { user: any; profile: any }) => {
   const { toast } = useToast();
 
   const handleSignOut = async () => {
-    try {
-      // Déconnexion de l'utilisateur
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) throw error;
-
-      // Nettoyage complet du stockage local
-      localStorage.clear();
-      sessionStorage.clear();
-
-      // Suppression des cookies liés à l'authentification
-      document.cookie.split(";").forEach((c) => {
-        document.cookie = c
-          .replace(/^ +/, "")
-          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-      });
-
-      // Log de la déconnexion réussie
-      await supabase
-        .from('auth_logs')
-        .insert([{ 
-          user_id: user?.id,
-          email: user?.email,
-          event_type: 'logout_success'
-        }]);
-
-      toast({
-        title: "Déconnexion réussie",
-        description: "Vous avez été déconnecté avec succès",
-      });
-
-      // Redirection forcée avec reload pour s'assurer que tout est réinitialisé
-      window.location.href = '/login';
-    } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
-      
-      // Log de l'erreur
-      await supabase
-        .from('auth_logs')
-        .insert([{ 
-          user_id: user?.id,
-          email: user?.email,
-          event_type: 'logout_error',
-        }]);
-
+    const { error } = await supabase.auth.signOut();
+    if (error) {
       toast({
         variant: "destructive",
-        title: "Erreur de déconnexion",
-        description: "Une erreur est survenue. Veuillez réessayer.",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la déconnexion",
       });
+      return;
     }
+    navigate("/login");
   };
 
   return (
