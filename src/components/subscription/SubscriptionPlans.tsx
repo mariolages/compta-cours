@@ -77,9 +77,10 @@ export const SubscriptionPlans = () => {
     try {
       setIsLoading(true);
       
+      console.log('Creating checkout session...');
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
-          priceId: 'price_1QdaT0II3n6IJC5vJGKapUGb',
+          priceId: 'price_1OgkXuHVlJhYKxGPbvmhzjbP',
           returnUrl: `${window.location.origin}/dashboard`
         },
         headers: {
@@ -97,6 +98,7 @@ export const SubscriptionPlans = () => {
         return;
       }
 
+      console.log('Checkout session created:', data);
       if (data?.url) {
         window.location.href = data.url;
       } else {
