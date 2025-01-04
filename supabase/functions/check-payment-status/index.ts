@@ -12,6 +12,7 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Starting payment status check...');
     const { session_id } = await req.json();
     console.log('Checking payment status for session:', session_id);
 
@@ -23,6 +24,7 @@ serve(async (req) => {
       apiVersion: '2023-10-16',
     });
 
+    console.log('Retrieving session from Stripe...');
     const session = await stripe.checkout.sessions.retrieve(session_id);
     console.log('Session status:', session.payment_status);
 
