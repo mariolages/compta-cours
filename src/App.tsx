@@ -78,11 +78,7 @@ const ProtectedRoute = ({ children, adminOnly = false, requireSubscription = tru
     return <Navigate to="/dashboard" replace />;
   }
 
-  if (requireSubscription && !subscription && !profile?.is_admin) {
-    return <Navigate to="/subscription" replace />;
-  }
-
-  return <>{children}</>;
+  return <>{React.cloneElement(children as React.ReactElement, { hasSubscription: !!subscription || profile?.is_admin })}</>;
 };
 
 const App = () => {
@@ -99,7 +95,7 @@ const App = () => {
             <Route 
               path="/dashboard" 
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requireSubscription={false}>
                   <Dashboard />
                 </ProtectedRoute>
               } 
@@ -107,7 +103,7 @@ const App = () => {
             <Route 
               path="/subjects/:subjectId" 
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requireSubscription={false}>
                   <SubjectPage />
                 </ProtectedRoute>
               } 

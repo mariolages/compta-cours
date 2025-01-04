@@ -8,8 +8,10 @@ import { SubjectHeader } from "@/components/subject/SubjectHeader";
 import { SubjectTabs } from "@/components/subject/SubjectTabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Subject } from "@/types/subject";
+import { Button } from "@/components/ui/button";
+import { Lock } from "lucide-react";
 
-export default function SubjectPage() {
+export default function SubjectPage({ hasSubscription = false }) {
   const { subjectId } = useParams();
   const navigate = useNavigate();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -22,7 +24,7 @@ export default function SubjectPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("subjects")
-        .select("*")
+        .select("*, class:class_id(*)")
         .eq("id", subjectId)
         .single();
 
@@ -34,7 +36,7 @@ export default function SubjectPage() {
         });
         throw error;
       }
-      return data as Subject;
+      return data as Subject & { class: { code: string } };
     },
   });
 
@@ -66,6 +68,31 @@ export default function SubjectPage() {
       return data;
     },
   });
+
+  // Vérifie si c'est le premier cours DCG (UE1)
+  const isFirstCourse = subject?.class?.code === 'DCG1';
+
+  // Si ce n'est pas le premier cours et que l'utilisateur n'est pas abonné
+  if (!isFirstCourse && !hasSubscription) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+        <div className="text-center space-y-6 max-w-lg">
+          <Lock className="w-16 h-16 mx-auto text-primary" />
+          <h1 className="text-2xl font-bold text-gray-900">Contenu Premium</h1>
+          <p className="text-gray-600">
+            Ce cours est réservé aux membres premium. Abonnez-vous pour accéder à tout le contenu.
+          </p>
+          <Button 
+            onClick={() => navigate('/subscription')}
+            size="lg"
+            className="w-full md:w-auto"
+          >
+            S'abonner maintenant
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const handleDownload = async (fileId: string, filePath: string, fileName: string) => {
     try {

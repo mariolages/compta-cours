@@ -55,7 +55,7 @@ export default function Subscription() {
           <CardHeader>
             <CardTitle className="text-2xl flex items-center justify-between">
               <span>Premium</span>
-              <span className="text-3xl font-bold">19.99€/mois</span>
+              <span className="text-3xl font-bold">9.99€/mois</span>
             </CardTitle>
             <CardDescription>
               Tout ce dont vous avez besoin pour réussir
