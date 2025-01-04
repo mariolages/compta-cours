@@ -30,51 +30,7 @@ export const SubscriptionCard = ({ subscription }: SubscriptionCardProps) => {
       return;
     }
 
-    try {
-      console.log('Starting checkout session creation...');
-      console.log('Session token:', session.access_token);
-      
-      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-        body: { 
-          priceId: 'price_1QdaT0II3n6IJC5vJGKapUGb',
-          returnUrl: `${window.location.origin}/dashboard`
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (error) {
-        console.error('Error creating checkout session:', error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Une erreur est survenue lors de la création de la session de paiement. Veuillez réessayer plus tard.",
-        });
-        return;
-      }
-
-      console.log('Checkout session response:', data);
-
-      if (data?.url) {
-        console.log('Redirecting to:', data.url);
-        // Redirection directe vers la page de paiement Stripe
-        window.location.href = data.url;
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "URL de paiement manquante dans la réponse",
-        });
-      }
-    } catch (error: any) {
-      console.error('Error:', error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de la création de la session de paiement",
-      });
-    }
+    navigate('/subscription');
   };
 
   return (

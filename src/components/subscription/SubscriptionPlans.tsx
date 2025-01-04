@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Check, CreditCard, Diamond } from "lucide-react";
 import { useState } from "react";
 import { useSessionContext } from "@supabase/auth-helpers-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
