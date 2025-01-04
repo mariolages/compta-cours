@@ -81,39 +81,54 @@ serve(async (req) => {
       console.log('Existing customer found:', customerId);
     }
 
-    // Get the price to determine if it's recurring
-    const price = await stripe.prices.retrieve(price_id);
-    const isRecurring = price.type === 'recurring';
-    console.log('Price type:', price.type);
+    try {
+      // Get the price to determine if it's recurring
+      console.log('Retrieving price details...');
+      const price = await stripe.prices.retrieve(price_id);
+      console.log('Price type:', price.type);
+      const isRecurring = price.type === 'recurring';
 
-    // Create checkout session with appropriate mode
-    console.log('Creating checkout session...');
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      customer_email: customerId ? undefined : email,
-      line_items: [
-        {
-          price: price_id,
-          quantity: 1,
-        },
-      ],
-      mode: isRecurring ? 'subscription' : 'payment',
-      success_url: success_url || `${req.headers.get('origin')}/dashboard`,
-      cancel_url: cancel_url || `${req.headers.get('origin')}/subscription`,
-      allow_promotion_codes: true,
-      billing_address_collection: 'required',
-      payment_method_types: ['card'],
-    });
+      // Create checkout session with appropriate mode
+      console.log('Creating checkout session...');
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        customer_email: customerId ? undefined : email,
+        line_items: [
+          {
+            price: price_id,
+            quantity: 1,
+          },
+        ],
+        mode: isRecurring ? 'subscription' : 'payment',
+        success_url: success_url || `${req.headers.get('origin')}/dashboard`,
+        cancel_url: cancel_url || `${req.headers.get('origin')}/subscription`,
+        allow_promotion_codes: true,
+        billing_address_collection: 'required',
+        payment_method_types: ['card'],
+      });
 
-    console.log('Checkout session created:', session.id);
-    return new Response(
-      JSON.stringify({ url: session.url }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
-  } catch (error) {
+      console.log('Checkout session created:', session.id);
+      return new Response(
+        JSON.stringify({ url: session.url }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    } catch (stripeError: any) {
+      console.error('Stripe error:', stripeError);
+      return new Response(
+        JSON.stringify({ 
+          error: stripeError.message,
+          details: `Stripe error: ${stripeError.toString()}`
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
+    }
+  } catch (error: any) {
     console.error('Error creating checkout session:', error);
     return new Response(
       JSON.stringify({ 
