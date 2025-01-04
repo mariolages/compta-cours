@@ -80,6 +80,40 @@ export default function SubjectPage({ hasSubscription = false }) {
   // - c'est un cours de première année ET c'est la catégorie "Cours"
   const hasAccess = hasSubscription || (isFirstCourse && isCourseCategory);
 
+  const handleDownload = async (fileId: string, filePath: string, fileName: string) => {
+    try {
+      const { data, error: downloadError } = await supabase.storage
+        .from("dcg_files")
+        .download(filePath);
+
+      if (downloadError) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de télécharger le fichier",
+        });
+        return;
+      }
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      const fileExt = filePath.split('.').pop();
+      a.download = `${fileName}.${fileExt}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download error:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors du téléchargement",
+      });
+    }
+  };
+
   if (!hasAccess) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
