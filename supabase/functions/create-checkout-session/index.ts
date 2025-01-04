@@ -26,21 +26,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    const { data: { session }, error: sessionError } = await supabaseAdmin.auth.getSession(authHeader);
+    // Extract the JWT token from the Authorization header
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
-    if (sessionError || !session?.user) {
-      console.error('Session error:', sessionError);
-      throw new Error('Invalid session');
+    if (userError || !user) {
+      console.error('Auth error:', userError);
+      throw new Error('Authentication failed');
     }
 
-    console.log('User authenticated:', session.user.id);
+    console.log('User authenticated:', user.id);
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
       apiVersion: '2023-10-16',
     });
 
     const customers = await stripe.customers.list({
-      email: session.user.email,
+      email: user.email,
       limit: 1
     });
 
@@ -64,7 +66,7 @@ serve(async (req) => {
     console.log('Creating checkout session...');
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : session.user.email,
+      customer_email: customerId ? undefined : user.email,
       line_items: [
         {
           price: priceId,
@@ -78,7 +80,7 @@ serve(async (req) => {
       billing_address_collection: 'required',
       payment_method_types: ['card'],
       metadata: {
-        user_id: session.user.id,
+        user_id: user.id,
       },
     });
 
