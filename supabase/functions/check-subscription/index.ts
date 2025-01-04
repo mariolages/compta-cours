@@ -50,16 +50,26 @@ serve(async (req) => {
       );
     }
 
-    const subscriptions = await stripe.subscriptions.list({
+    // Check for both monthly and annual subscriptions
+    const monthlySubscriptions = await stripe.subscriptions.list({
       customer: customers.data[0].id,
       status: 'active',
-      price: 'price_1QdZAvII3n6IJC5vWgH6Su0m',
+      price: 'price_1QdcI0II3n6IJC5voYqaw2hs', // Monthly price ID
       limit: 1
     });
 
+    const annualSubscriptions = await stripe.subscriptions.list({
+      customer: customers.data[0].id,
+      status: 'active',
+      price: 'price_1QdcIaII3n6IJC5vECDkmJXr', // Annual price ID
+      limit: 1
+    });
+
+    const hasActiveSubscription = monthlySubscriptions.data.length > 0 || annualSubscriptions.data.length > 0;
+
     return new Response(
       JSON.stringify({ 
-        subscribed: subscriptions.data.length > 0,
+        subscribed: hasActiveSubscription,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
