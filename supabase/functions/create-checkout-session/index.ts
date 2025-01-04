@@ -87,7 +87,7 @@ serve(async (req) => {
       const isRecurring = price.type === 'recurring';
 
       const origin = req.headers.get('origin') || 'http://localhost:5173';
-      const successUrl = `${origin}/dashboard?payment_status=success&session_id={CHECKOUT_SESSION_ID}`;
+      const successUrl = `${origin}/dashboard?payment_status=success`;
       const cancelUrl = `${origin}/subscription`;
 
       console.log('Success URL:', successUrl);
