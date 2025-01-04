@@ -98,7 +98,7 @@ export const SubscriptionPlans = () => {
           <CardFooter>
             <Button 
               className="w-full" 
-              onClick={() => handleSubscribe('price_1QdZAvII3n6IJC5vWgH6Su0m')}
+              onClick={() => handleSubscribe('price_1QdcI0II3n6IJC5voYqaw2hs')}
               disabled={isLoading}
             >
               {isLoading ? "Chargement..." : "Souscrire"}
@@ -128,7 +128,7 @@ export const SubscriptionPlans = () => {
           <CardFooter>
             <Button 
               className="w-full" 
-              onClick={() => handleSubscribe('price_1QdZBEII3n6IJC5vWgH6Su0m')}
+              onClick={() => handleSubscribe('price_1QdcIaII3n6IJC5vECDkmJXr')}
               disabled={isLoading}
             >
               {isLoading ? "Chargement..." : "Souscrire"}
