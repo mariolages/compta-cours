@@ -19,6 +19,13 @@ serve(async (req) => {
   );
 
   try {
+    // Get the request body
+    const { priceId } = await req.json();
+
+    if (!priceId) {
+      throw new Error('Price ID is required');
+    }
+
     // Get the session or user object
     const authHeader = req.headers.get('Authorization')!;
     const token = authHeader.replace('Bearer ', '');
@@ -46,7 +53,7 @@ serve(async (req) => {
       const subscriptions = await stripe.subscriptions.list({
         customer: customers.data[0].id,
         status: 'active',
-        price: 'price_1QdZAvII3n6IJC5vWgH6Su0m',
+        price: priceId,
         limit: 1
       });
 
@@ -61,7 +68,7 @@ serve(async (req) => {
       customer_email: customer_id ? undefined : email,
       line_items: [
         {
-          price: 'price_1QdZAvII3n6IJC5vWgH6Su0m',
+          price: priceId,
           quantity: 1,
         },
       ],

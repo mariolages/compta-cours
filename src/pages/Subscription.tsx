@@ -37,14 +37,16 @@ export default function Subscription() {
 
   const handleSubscribe = async () => {
     try {
-      const { data: { url }, error } = await supabase.functions.invoke('create-checkout-session', {
-        body: { },
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: { 
+          priceId: 'price_1QdZAvII3n6IJC5vWgH6Su0m'
+        },
       });
 
       if (error) throw error;
 
-      if (url) {
-        window.location.href = url;
+      if (data?.url) {
+        window.location.href = data.url;
       }
     } catch (error: any) {
       console.error('Error:', error);
