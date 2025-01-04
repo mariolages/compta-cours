@@ -19,48 +19,34 @@ serve(async (req) => {
     console.log('Price ID received:', priceId);
     console.log('Return URL received:', returnUrl);
 
-    // Get the authorization header
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
+
     const authHeader = req.headers.get('Authorization');
-    console.log('Auth header present:', !!authHeader);
-    
     if (!authHeader) {
       throw new Error('No authorization header');
     }
 
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: {
-            Authorization: authHeader,
-          },
-        },
-      }
-    );
-
-    // Get user data
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     
     if (userError) {
       console.error('Error fetching user:', userError);
       throw userError;
     }
 
-    if (!userData?.user) {
+    if (!user) {
       throw new Error('User not found');
     }
 
-    const user = userData.user;
     console.log('User found:', user.id);
 
-    // Initialize Stripe
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
       apiVersion: '2023-10-16',
     });
 
-    // Check for existing customer
     console.log('Checking for existing Stripe customer...');
     const customers = await stripe.customers.list({
       email: user.email,
@@ -72,7 +58,6 @@ serve(async (req) => {
       customerId = customers.data[0].id;
       console.log('Existing customer found:', customerId);
       
-      // Check for active subscription
       const subscriptions = await stripe.subscriptions.list({
         customer: customerId,
         status: 'active',
@@ -85,7 +70,6 @@ serve(async (req) => {
       }
     }
 
-    // Create checkout session
     console.log('Creating checkout session...');
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
