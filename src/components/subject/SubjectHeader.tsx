@@ -1,16 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload } from "lucide-react";
+import { Upload, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface SubjectHeaderProps {
   code: string;
   name: string;
   onUploadClick: () => void;
-  onDeleteClick: () => void;
 }
 
 export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps) {
+  const navigate = useNavigate();
+  
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
@@ -30,7 +32,15 @@ export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps)
 
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <div>
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour au tableau
+        </Button>
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
           {code} - {name}
         </h1>
