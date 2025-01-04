@@ -69,8 +69,8 @@ export default function SubjectPage({ hasSubscription = false }) {
     },
   });
 
-  // Vérifie si c'est le premier cours DCG (UE1)
-  const isFirstCourse = subject?.class?.code === 'DCG1';
+  // Vérifie si c'est le premier cours de n'importe quelle classe (DCG1 ou BTS1)
+  const isFirstCourse = subject?.class?.code?.endsWith('1');
 
   // Si ce n'est pas le premier cours et que l'utilisateur n'est pas abonné
   if (!isFirstCourse && !hasSubscription) {
