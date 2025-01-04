@@ -13,83 +13,88 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-  );
-
   try {
-    console.log('Début du traitement de la requête...');
+    console.log('Starting checkout session creation...');
     
     // Get the request body
     const { priceId } = await req.json();
-    console.log('Price ID reçu:', priceId);
+    console.log('Price ID received:', priceId);
 
     if (!priceId) {
-      throw new Error('Price ID est requis');
+      throw new Error('Price ID is required');
     }
 
-    // Get the session or user object
+    // Get the authorization header
     const authHeader = req.headers.get('Authorization');
-    console.log('Auth header présent:', !!authHeader);
+    console.log('Auth header present:', !!authHeader);
     
     if (!authHeader) {
-      throw new Error('Authorization header manquant');
+      throw new Error('Authorization header missing');
     }
 
+    // Initialize Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+    );
+
+    // Get user data
     const token = authHeader.replace('Bearer ', '');
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     
     if (userError) {
-      console.error('Erreur lors de la récupération de l\'utilisateur:', userError);
+      console.error('Error fetching user:', userError);
       throw userError;
     }
 
     if (!userData?.user) {
-      throw new Error('Utilisateur non trouvé');
+      throw new Error('User not found');
     }
 
     const user = userData.user;
     const email = user?.email;
 
     if (!email) {
-      throw new Error('Email non trouvé');
+      throw new Error('Email not found');
     }
 
-    console.log('Email de l\'utilisateur:', email);
+    console.log('User email:', email);
 
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+    // Initialize Stripe
+    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
       apiVersion: '2023-10-16',
     });
 
-    console.log('Recherche du client Stripe...');
+    // Check for existing customer
+    console.log('Checking for existing Stripe customer...');
     const customers = await stripe.customers.list({
       email: email,
       limit: 1
     });
 
-    let customer_id = undefined;
+    let customerId = undefined;
     if (customers.data.length > 0) {
-      customer_id = customers.data[0].id;
-      console.log('Client existant trouvé:', customer_id);
+      customerId = customers.data[0].id;
+      console.log('Existing customer found:', customerId);
       
-      // check if already subscribed to this price
+      // Check for active subscription
       const subscriptions = await stripe.subscriptions.list({
-        customer: customers.data[0].id,
+        customer: customerId,
         status: 'active',
         price: priceId,
         limit: 1
       });
 
       if (subscriptions.data.length > 0) {
-        throw new Error("Vous êtes déjà abonné à ce service");
+        throw new Error('You already have an active subscription');
       }
     }
 
-    console.log('Création de la session de paiement...');
+    // Create checkout session
+    console.log('Creating checkout session...');
     const session = await stripe.checkout.sessions.create({
-      customer: customer_id,
-      customer_email: customer_id ? undefined : email,
+      customer: customerId,
+      customer_email: customerId ? undefined : email,
       line_items: [
         {
           price: priceId,
@@ -97,11 +102,11 @@ serve(async (req) => {
         },
       ],
       mode: 'subscription',
-      success_url: `${req.headers.get('origin')}/dashboard`,
-      cancel_url: `${req.headers.get('origin')}/dashboard`,
+      success_url: `${req.headers.get('origin')}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.get('origin')}/subscription`,
     });
 
-    console.log('Session de paiement créée:', session.id);
+    console.log('Checkout session created:', session.id);
     return new Response(
       JSON.stringify({ url: session.url }),
       { 
@@ -110,7 +115,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Erreur lors de la création de la session de paiement:', error);
+    console.error('Error creating checkout session:', error);
     return new Response(
       JSON.stringify({ 
         error: error.message,

@@ -37,7 +37,7 @@ export default function Subscription() {
 
   const handleSubscribe = async () => {
     try {
-      console.log('Début de la création de la session de paiement...');
+      console.log('Starting checkout session creation...');
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           priceId: 'price_1QdaT0II3n6IJC5vJGKapUGb'
@@ -45,7 +45,7 @@ export default function Subscription() {
       });
 
       if (error) {
-        console.error('Erreur lors de la création de la session:', error);
+        console.error('Error creating checkout session:', error);
         toast({
           variant: "destructive",
           title: "Erreur",
@@ -54,10 +54,10 @@ export default function Subscription() {
         return;
       }
 
-      console.log('Réponse de la fonction:', data);
+      console.log('Checkout session response:', data);
 
       if (data?.url) {
-        console.log('Redirection vers:', data.url);
+        console.log('Redirecting to:', data.url);
         window.location.href = data.url;
       } else {
         toast({
@@ -67,7 +67,7 @@ export default function Subscription() {
         });
       }
     } catch (error: any) {
-      console.error('Erreur:', error);
+      console.error('Error:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -177,4 +177,4 @@ export default function Subscription() {
       </div>
     </div>
   );
-};
+}
