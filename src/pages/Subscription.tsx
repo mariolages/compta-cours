@@ -40,13 +40,19 @@ export default function Subscription() {
       console.log('Début de la création de la session de paiement...');
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
-          priceId: 'price_1OyQRiII3n6IJC5vxXBVZRXB' // Test price ID for monthly subscription
+          // Remplacez ce price_id par celui de votre produit Stripe
+          priceId: 'price_1OyQRiII3n6IJC5vxXBVZRXB'
         },
       });
 
       if (error) {
         console.error('Erreur lors de la création de la session:', error);
-        throw error;
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: error.message || "Une erreur est survenue lors de la création de la session de paiement",
+        });
+        return;
       }
 
       console.log('Réponse de la fonction:', data);
@@ -54,6 +60,12 @@ export default function Subscription() {
       if (data?.url) {
         console.log('Redirection vers:', data.url);
         window.location.href = data.url;
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "URL de paiement manquante dans la réponse",
+        });
       }
     } catch (error: any) {
       console.error('Erreur:', error);
@@ -166,4 +178,4 @@ export default function Subscription() {
       </div>
     </div>
   );
-}
+};
