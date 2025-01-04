@@ -15,6 +15,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
 import Subscription from "./pages/Subscription";
+import { useToast } from "./components/ui/use-toast";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +34,7 @@ const ProtectedRoute = ({ children, adminOnly = false, requireSubscription = tru
   requireSubscription?: boolean 
 }) => {
   const { session, isLoading } = useSessionContext();
+  const { toast } = useToast();
 
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['profile', session?.user?.id],
@@ -51,16 +53,66 @@ const ProtectedRoute = ({ children, adminOnly = false, requireSubscription = tru
   const { data: subscription, isLoading: isLoadingSubscription } = useQuery({
     queryKey: ['subscription', session?.user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', session?.user?.id)
-        .eq('status', 'active')
-        .maybeSingle();
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
+      try {
+        console.log('Checking subscription for user:', session?.user?.id);
+        
+        // First, check local subscription status
+        const { data: localSub, error: localError } = await supabase
+          .from('subscriptions')
+          .select('*')
+          .eq('user_id', session?.user?.id)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if (localError) {
+          console.error('Local subscription check error:', localError);
+          throw localError;
+        }
+
+        console.log('Local subscription status:', localSub);
+
+        // Then, verify with Stripe through our Edge Function
+        const { data: stripeCheck, error: stripeError } = await supabase.functions
+          .invoke('check-subscription', {
+            body: { user_id: session?.user?.id }
+          });
+
+        if (stripeError) {
+          console.error('Stripe check error:', stripeError);
+          throw stripeError;
+        }
+
+        console.log('Stripe subscription check result:', stripeCheck);
+
+        if (stripeCheck?.subscribed) {
+          return localSub || { status: 'active' };
+        }
+
+        // If Stripe says no subscription but we have a local one, we should invalidate it
+        if (localSub && !stripeCheck?.subscribed) {
+          const { error: updateError } = await supabase
+            .from('subscriptions')
+            .update({ status: 'inactive' })
+            .eq('user_id', session?.user?.id);
+
+          if (updateError) {
+            console.error('Error updating subscription status:', updateError);
+          }
+        }
+
+        return null;
+      } catch (error) {
+        console.error('Subscription check error:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de vérifier votre abonnement",
+        });
+        return null;
+      }
     },
     enabled: !!session?.user?.id && requireSubscription,
+    refetchInterval: 30000, // Check every 30 seconds
   });
 
   if (isLoading || isLoadingProfile || (requireSubscription && isLoadingSubscription)) {
