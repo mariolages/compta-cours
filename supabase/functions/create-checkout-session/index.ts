@@ -21,9 +21,10 @@ serve(async (req) => {
   try {
     // Get the request body
     const { priceId } = await req.json();
+    console.log('Price ID reçu:', priceId);
 
     if (!priceId) {
-      throw new Error('Price ID is required');
+      throw new Error('Price ID est requis');
     }
 
     // Get the session or user object
@@ -34,8 +35,10 @@ serve(async (req) => {
     const email = user?.email;
 
     if (!email) {
-      throw new Error('No email found');
+      throw new Error('Email non trouvé');
     }
+
+    console.log('Création de la session pour:', email);
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',

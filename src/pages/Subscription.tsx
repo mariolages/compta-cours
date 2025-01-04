@@ -37,19 +37,26 @@ export default function Subscription() {
 
   const handleSubscribe = async () => {
     try {
+      console.log('Début de la création de la session de paiement...');
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
-          priceId: 'price_1QdZAvII3n6IJC5vWgH6Su0m'
+          priceId: 'price_1OyQRiII3n6IJC5vxXBVZRXB' // Test price ID for monthly subscription
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur lors de la création de la session:', error);
+        throw error;
+      }
+
+      console.log('Réponse de la fonction:', data);
 
       if (data?.url) {
+        console.log('Redirection vers:', data.url);
         window.location.href = data.url;
       }
     } catch (error: any) {
-      console.error('Error:', error);
+      console.error('Erreur:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
