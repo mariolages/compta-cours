@@ -8,7 +8,8 @@ import {
   Pencil, 
   Trash2, 
   Check, 
-  X
+  X,
+  ExternalLink 
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -45,6 +46,10 @@ export function FileCard({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isEditing = editingFileId === file.id;
   const isPodcast = file.category?.id === 6;
+
+  const getFileUrl = () => {
+    return `https://sxpddyeasmcsnrbtvrgm.supabase.co/storage/v1/object/public/dcg_files/${file.file_path}`;
+  };
 
   return (
     <Card className="p-4 hover:shadow-md transition-shadow duration-300">
@@ -87,11 +92,21 @@ export function FileCard({
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
-            size="icon"
-            onClick={() => onDownload(file.id, file.file_path, file.title)}
-            className="h-8 w-8"
+            size="sm"
+            onClick={() => window.open(getFileUrl(), '_blank')}
+            className="text-primary hover:text-primary-hover hover:bg-primary-light"
           >
-            <Download className="h-4 w-4" />
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Ouvrir
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onDownload(file.id, file.file_path, file.title)}
+            className="text-primary hover:text-primary-hover hover:bg-primary-light"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Télécharger
           </Button>
 
           <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
