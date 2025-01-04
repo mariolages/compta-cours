@@ -81,7 +81,12 @@ serve(async (req) => {
       console.log('Existing customer found:', customerId);
     }
 
-    // Create checkout session
+    // Get the price to determine if it's recurring
+    const price = await stripe.prices.retrieve(price_id);
+    const isRecurring = price.type === 'recurring';
+    console.log('Price type:', price.type);
+
+    // Create checkout session with appropriate mode
     console.log('Creating checkout session...');
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -92,7 +97,7 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      mode: 'subscription',
+      mode: isRecurring ? 'subscription' : 'payment',
       success_url: success_url || `${req.headers.get('origin')}/dashboard`,
       cancel_url: cancel_url || `${req.headers.get('origin')}/subscription`,
       allow_promotion_codes: true,
