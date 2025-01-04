@@ -44,13 +44,23 @@ export const SubscriptionPlans = () => {
       setIsLoading(true);
       console.log('Starting checkout session creation...');
       
+      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        throw sessionError;
+      }
+
+      if (!currentSession) {
+        throw new Error('No active session found');
+      }
+
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           priceId: 'price_1QdaT0II3n6IJC5vJGKapUGb',
           returnUrl: `${window.location.origin}/dashboard`
         },
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${currentSession.access_token}`,
         },
       });
 
@@ -66,7 +76,6 @@ export const SubscriptionPlans = () => {
 
       if (data?.url) {
         console.log('Redirecting to:', data.url);
-        // Force the redirection in a new tab
         window.open(data.url, '_blank');
       } else {
         toast({

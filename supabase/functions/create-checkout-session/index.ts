@@ -33,33 +33,23 @@ serve(async (req) => {
       throw new Error('Authorization header missing');
     }
 
-    // Initialize Supabase client
-    const supabaseClient = createClient(
+    // Initialize Supabase client with service role key
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    // Get user data
-    const token = authHeader.replace('Bearer ', '');
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    
-    if (userError) {
-      console.error('Error fetching user:', userError);
-      throw userError;
+    // Verify the JWT token
+    const { data: { user }, error: verificationError } = await supabaseAdmin.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (verificationError || !user) {
+      console.error('Token verification failed:', verificationError);
+      throw new Error('Authentication failed');
     }
 
-    if (!userData?.user) {
-      throw new Error('User not found');
-    }
-
-    const user = userData.user;
-    const email = user?.email;
-
-    if (!email) {
-      throw new Error('Email not found');
-    }
-
-    console.log('User email:', email);
+    console.log('User authenticated:', user.id);
 
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
@@ -69,7 +59,7 @@ serve(async (req) => {
     // Check for existing customer
     console.log('Checking for existing Stripe customer...');
     const customers = await stripe.customers.list({
-      email: email,
+      email: user.email,
       limit: 1
     });
 
@@ -95,7 +85,7 @@ serve(async (req) => {
     console.log('Creating checkout session...');
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : email,
+      customer_email: customerId ? undefined : user.email,
       line_items: [
         {
           price: priceId,
@@ -122,8 +112,8 @@ serve(async (req) => {
     console.error('Error creating checkout session:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        details: error.toString()
+        error: 'Authentication failed',
+        details: error.message
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
