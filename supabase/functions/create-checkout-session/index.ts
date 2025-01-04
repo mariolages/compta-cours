@@ -26,13 +26,14 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(authHeader.replace('Bearer ', ''));
+    const { data: { session }, error: sessionError } = await supabaseAdmin.auth.getSession(authHeader);
     
-    if (userError || !user) {
-      console.error('Auth error:', userError);
-      throw new Error('Authentication failed');
+    if (sessionError || !session?.user) {
+      console.error('Session error:', sessionError);
+      throw new Error('Invalid session');
     }
 
+    const user = session.user;
     console.log('User authenticated:', user.id);
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
