@@ -89,24 +89,22 @@ export function FileCard({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={() => window.open(getFileUrl(), '_blank')}
-            className="text-primary hover:text-primary-hover hover:bg-primary-light"
+            className="h-8 w-8 text-gray-500 hover:text-primary hover:bg-primary-light"
           >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Ouvrir
+            <ExternalLink className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={() => onDownload(file.id, file.file_path, file.title)}
-            className="text-primary hover:text-primary-hover hover:bg-primary-light"
+            className="h-8 w-8 text-gray-500 hover:text-primary hover:bg-primary-light"
           >
-            <Download className="h-4 w-4 mr-2" />
-            Télécharger
+            <Download className="h-4 w-4" />
           </Button>
 
           <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
