@@ -49,7 +49,7 @@ export default function Subscription() {
         toast({
           variant: "destructive",
           title: "Erreur",
-          description: "Une erreur est survenue lors de la création de la session de paiement. Veuillez vérifier votre price_id Stripe.",
+          description: "Une erreur est survenue lors de la création de la session de paiement. Veuillez réessayer plus tard.",
         });
         return;
       }
