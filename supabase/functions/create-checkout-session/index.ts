@@ -19,6 +19,8 @@ serve(async (req) => {
   );
 
   try {
+    console.log('Début du traitement de la requête...');
+    
     // Get the request body
     const { priceId } = await req.json();
     console.log('Price ID reçu:', priceId);
@@ -29,9 +31,17 @@ serve(async (req) => {
 
     // Get the session or user object
     const authHeader = req.headers.get('Authorization')!;
+    console.log('Auth header présent:', !!authHeader);
+    
     const token = authHeader.replace('Bearer ', '');
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    
+    if (userError) {
+      console.error('Erreur lors de la récupération de l\'utilisateur:', userError);
+      throw userError;
+    }
+
+    const user = userData.user;
     const email = user?.email;
 
     if (!email) {
@@ -44,6 +54,7 @@ serve(async (req) => {
       apiVersion: '2023-10-16',
     });
 
+    console.log('Recherche du client Stripe...');
     const customers = await stripe.customers.list({
       email: email,
       limit: 1
@@ -52,6 +63,8 @@ serve(async (req) => {
     let customer_id = undefined;
     if (customers.data.length > 0) {
       customer_id = customers.data[0].id;
+      console.log('Client existant trouvé:', customer_id);
+      
       // check if already subscribed to this price
       const subscriptions = await stripe.subscriptions.list({
         customer: customers.data[0].id,
