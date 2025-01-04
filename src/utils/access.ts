@@ -18,8 +18,14 @@ export const hasAccessToContent = (
   categoryId: string,
   fileTitle?: string
 ): boolean => {
+  // Si l'utilisateur a un abonnement, il a accès à tout
   if (hasSubscription) return true;
   
-  // Non-subscribed users can only access Chapter 1 in the Course category
-  return isCourseCategory(categoryId) && isChapterOne(fileTitle);
+  // Les utilisateurs non abonnés peuvent uniquement accéder au Chapitre 1 dans la catégorie Cours
+  if (isCourseCategory(categoryId) && isChapterOne(fileTitle)) {
+    return true;
+  }
+
+  // Pour tout autre contenu, l'accès est refusé aux utilisateurs non abonnés
+  return false;
 };
