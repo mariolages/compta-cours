@@ -98,15 +98,10 @@ export function FileList({
   };
 
   if (!files || files.length === 0) {
-    return <EmptyFileList />;
+    return <EmptyFileList searchQuery="" />;
   }
 
-  // Filter files based on access rules
-  const accessibleFiles = files.filter(file => 
-    hasAccessToContent(hasSubscription, classCode, selectedCategory, file.title)
-  );
-
-  const sortedFiles = [...accessibleFiles].sort((a, b) => {
+  const sortedFiles = [...files].sort((a, b) => {
     if (sortType === 'date') {
       const dateA = new Date(a.created_at).getTime();
       const dateB = new Date(b.created_at).getTime();
@@ -155,6 +150,9 @@ export function FileList({
             onNewTitleChange={setNewTitle}
             onDelete={handleDelete}
             onDownload={onDownload}
+            hasSubscription={hasSubscription}
+            classCode={classCode}
+            selectedCategory={selectedCategory}
           />
         ))}
       </div>
