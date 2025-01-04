@@ -54,55 +54,69 @@ const ProtectedRoute = ({ children, adminOnly = false, requireSubscription = tru
     queryKey: ['subscription', session?.user?.id],
     queryFn: async () => {
       try {
-        console.log('Checking subscription for user:', session?.user?.id);
+        console.log('Vérification de l\'abonnement pour l\'utilisateur:', session?.user?.id);
         
-        // First, check local subscription status
+        // Vérification de l'abonnement local
         const { data: localSub, error: localError } = await supabase
           .from('subscriptions')
           .select('*')
           .eq('user_id', session?.user?.id)
-          .eq('status', 'active')
           .maybeSingle();
 
         if (localError) {
-          console.error('Local subscription check error:', localError);
+          console.error('Erreur de vérification locale:', localError);
           throw localError;
         }
 
-        console.log('Local subscription status:', localSub);
+        console.log('Statut d\'abonnement local:', localSub);
 
-        // Then, verify with Stripe through our Edge Function
+        // Vérification avec Stripe
         const { data: stripeCheck, error: stripeError } = await supabase.functions
           .invoke('check-subscription', {
             body: { user_id: session?.user?.id }
           });
 
         if (stripeError) {
-          console.error('Stripe check error:', stripeError);
+          console.error('Erreur de vérification Stripe:', stripeError);
           throw stripeError;
         }
 
-        console.log('Stripe subscription check result:', stripeCheck);
+        console.log('Résultat de la vérification Stripe:', stripeCheck);
 
+        // Si l'abonnement est actif dans Stripe
         if (stripeCheck?.subscribed) {
-          return localSub || { status: 'active' };
+          // Mettre à jour ou créer l'abonnement local si nécessaire
+          if (!localSub || localSub.status !== 'active') {
+            const { error: upsertError } = await supabase
+              .from('subscriptions')
+              .upsert({
+                user_id: session?.user?.id,
+                status: 'active',
+                stripe_customer_id: stripeCheck.customerId,
+              });
+
+            if (upsertError) {
+              console.error('Erreur de mise à jour de l\'abonnement:', upsertError);
+            }
+          }
+          return { status: 'active' };
         }
 
-        // If Stripe says no subscription but we have a local one, we should invalidate it
-        if (localSub && !stripeCheck?.subscribed) {
+        // Si pas d'abonnement actif dans Stripe mais un abonnement local actif
+        if (localSub?.status === 'active') {
           const { error: updateError } = await supabase
             .from('subscriptions')
             .update({ status: 'inactive' })
             .eq('user_id', session?.user?.id);
 
           if (updateError) {
-            console.error('Error updating subscription status:', updateError);
+            console.error('Erreur de mise à jour du statut:', updateError);
           }
         }
 
         return null;
       } catch (error) {
-        console.error('Subscription check error:', error);
+        console.error('Erreur de vérification d\'abonnement:', error);
         toast({
           variant: "destructive",
           title: "Erreur",
@@ -112,7 +126,7 @@ const ProtectedRoute = ({ children, adminOnly = false, requireSubscription = tru
       }
     },
     enabled: !!session?.user?.id && requireSubscription,
-    refetchInterval: 30000, // Check every 30 seconds
+    refetchInterval: 10000, // Vérifier toutes les 10 secondes
   });
 
   if (isLoading || isLoadingProfile || (requireSubscription && isLoadingSubscription)) {
@@ -131,7 +145,10 @@ const ProtectedRoute = ({ children, adminOnly = false, requireSubscription = tru
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <>{React.cloneElement(children as React.ReactElement, { hasSubscription: !!subscription || profile?.is_admin })}</>;
+  return <>{React.cloneElement(children as React.ReactElement, { 
+    hasSubscription: !!subscription || profile?.is_admin,
+    profile: profile
+  })}</>;
 };
 
 const App = () => {
