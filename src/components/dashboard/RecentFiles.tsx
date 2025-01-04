@@ -25,19 +25,40 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
     const fileSubject = `${file.subject.code} ${file.subject.name}`.toLowerCase();
     const fileCategory = file.category.name.toLowerCase();
     
-    console.log('Searching for:', searchLower);
-    console.log('File title:', fileTitle);
-    console.log('File subject:', fileSubject);
-    console.log('File category:', fileCategory);
+    // Debug logs
+    console.log('------- Search Debug -------');
+    console.log('Search query:', searchLower);
+    console.log('File:', {
+      title: fileTitle,
+      subject: fileSubject,
+      category: fileCategory,
+      originalCode: file.subject.code,
+      originalName: file.subject.name
+    });
     
-    // Si la recherche est exactement "Cours", "QCM" ou "Exercices"
+    // Recherche exacte de catégorie
     if (exactMatches.includes(searchQuery)) {
-      return fileCategory === searchQuery.toLowerCase();
+      const isMatch = fileCategory === searchQuery.toLowerCase();
+      console.log('Category match:', isMatch);
+      return isMatch;
     }
     
-    // Recherche de matière (UE, code ou nom)
-    if (searchLower.startsWith('ue') || /^[a-z]+\d+/i.test(searchLower)) {
-      return fileSubject.includes(searchLower);
+    // Recherche d'UE (plus flexible)
+    if (searchLower.includes('ue')) {
+      const ueNumber = searchLower.match(/\d+/)?.[0];
+      if (ueNumber) {
+        const isMatch = fileSubject.includes(`ue${ueNumber}`) || 
+                       file.subject.code.toLowerCase().includes(`ue${ueNumber}`);
+        console.log('UE match:', isMatch, 'UE number:', ueNumber);
+        return isMatch;
+      }
+    }
+    
+    // Recherche de code matière
+    if (/^[a-z]+\d+$/i.test(searchLower)) {
+      const isMatch = file.subject.code.toLowerCase().includes(searchLower);
+      console.log('Subject code match:', isMatch);
+      return isMatch;
     }
     
     // Recherche de chapitre
@@ -45,30 +66,33 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
       const numberMatch = searchLower.match(/\d+/);
       if (numberMatch) {
         const chapterNumber = numberMatch[0];
-        console.log('Chapter number found:', chapterNumber);
+        console.log('Looking for chapter:', chapterNumber);
         
-        // Patterns plus flexibles pour la recherche de chapitres
         const patterns = [
           new RegExp(`chapitre\\s*${chapterNumber}\\b`, 'i'),
           new RegExp(`chap\\.?\\s*${chapterNumber}\\b`, 'i'),
           new RegExp(`ch\\.?\\s*${chapterNumber}\\b`, 'i')
         ];
         
-        return patterns.some(pattern => {
-          const isMatch = pattern.test(fileTitle);
-          console.log('Testing pattern:', pattern, 'Result:', isMatch);
-          return isMatch;
+        const isMatch = patterns.some(pattern => {
+          const matches = pattern.test(fileTitle);
+          console.log('Testing pattern:', pattern, 'Result:', matches);
+          return matches;
         });
+        
+        return isMatch;
       }
     }
     
-    // Recherche générale dans tous les champs
+    // Recherche générale
     const searchTerms = searchLower.split(/\s+/);
-    return searchTerms.every(term => 
+    const isMatch = searchTerms.every(term => 
       fileTitle.includes(term) || 
       fileSubject.includes(term) || 
       fileCategory.includes(term)
     );
+    console.log('General search match:', isMatch);
+    return isMatch;
   });
 
   const handleDelete = async (fileId: string) => {
