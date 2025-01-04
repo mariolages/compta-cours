@@ -6,10 +6,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { SubjectHeader } from "@/components/subject/SubjectHeader";
 import { SubjectTabs } from "@/components/subject/SubjectTabs";
+import { AccessDenied } from "@/components/subject/AccessDenied";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { hasAccessToContent } from "@/utils/access";
 import type { Subject } from "@/types/subject";
-import { Button } from "@/components/ui/button";
-import { Lock } from "lucide-react";
 
 export default function SubjectPage({ hasSubscription = false }) {
   const { subjectId } = useParams();
@@ -69,17 +69,6 @@ export default function SubjectPage({ hasSubscription = false }) {
     },
   });
 
-  // Vérifie si c'est le premier cours de n'importe quelle classe (DCG1 ou BTS1)
-  const isFirstCourse = subject?.class?.code?.endsWith('1');
-
-  // Vérifie si la catégorie sélectionnée est "Cours" (id: 1)
-  const isCourseCategory = selectedCategory === "1";
-
-  // L'accès est autorisé si :
-  // - l'utilisateur a un abonnement, OU
-  // - c'est un cours de première année ET c'est la catégorie "Cours"
-  const hasAccess = hasSubscription || (isFirstCourse && isCourseCategory);
-
   const handleDownload = async (fileId: string, filePath: string, fileName: string) => {
     try {
       const { data, error: downloadError } = await supabase.storage
@@ -114,36 +103,18 @@ export default function SubjectPage({ hasSubscription = false }) {
     }
   };
 
-  if (!hasAccess) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-        <div className="text-center space-y-6 max-w-lg">
-          <Lock className="w-16 h-16 mx-auto text-primary" />
-          <h1 className="text-2xl font-bold text-gray-900">Contenu Premium</h1>
-          <p className="text-gray-600">
-            {isFirstCourse 
-              ? "Les corrections, exercices et sujets d'examen sont réservés aux membres premium."
-              : "Ce cours est réservé aux membres premium."} 
-            Abonnez-vous pour accéder à tout le contenu.
-          </p>
-          <Button 
-            onClick={() => navigate('/subscription')}
-            size="lg"
-            className="w-full md:w-auto"
-          >
-            S'abonner maintenant
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   if (isLoadingSubject) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  const hasAccess = hasAccessToContent(hasSubscription, subject?.class?.code, selectedCategory);
+
+  if (!hasAccess) {
+    return <AccessDenied isFirstYear={subject?.class?.code?.endsWith('1') || false} />;
   }
 
   return (
