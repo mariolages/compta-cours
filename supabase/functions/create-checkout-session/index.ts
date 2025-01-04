@@ -104,6 +104,9 @@ serve(async (req) => {
       mode: 'subscription',
       success_url: `${req.headers.get('origin')}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get('origin')}/subscription`,
+      allow_promotion_codes: true,
+      billing_address_collection: 'required',
+      payment_method_types: ['card'],
     });
 
     console.log('Checkout session created:', session.id);
