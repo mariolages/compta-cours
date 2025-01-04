@@ -33,9 +33,6 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
       /chapitre\s*(\d+)/i,
       /chap\s*(\d+)/i,
       /ch\s*(\d+)/i,
-      /chapitre(\d+)/i,
-      /chap(\d+)/i,
-      /ch(\d+)/i
     ];
     
     for (const format of chapterFormats) {
@@ -43,15 +40,15 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
       if (match) {
         const chapterNumber = match[1];
         const fileTitle = file.title.toLowerCase();
-        const searchPatterns = [
-          `chapitre ${chapterNumber}`,
-          `chapitre${chapterNumber}`,
-          `chap ${chapterNumber}`,
-          `chap${chapterNumber}`,
-          `ch ${chapterNumber}`,
-          `ch${chapterNumber}`
-        ];
-        return searchPatterns.some(pattern => fileTitle.includes(pattern));
+        // Recherche le numéro de chapitre dans le titre, peu importe ce qui suit
+        if (fileTitle.includes(`chapitre ${chapterNumber}`) || 
+            fileTitle.includes(`chapitre${chapterNumber}`) ||
+            fileTitle.includes(`chap ${chapterNumber}`) ||
+            fileTitle.includes(`chap${chapterNumber}`) ||
+            fileTitle.includes(`ch ${chapterNumber}`) ||
+            fileTitle.includes(`ch${chapterNumber}`)) {
+          return true;
+        }
       }
     }
     
