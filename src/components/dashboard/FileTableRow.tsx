@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, Trash2 } from 'lucide-react';
+import { Download, Trash2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { File } from '@/types/files';
 
@@ -44,8 +44,17 @@ export const FileTableRow = ({ file, onDelete }: FileTableRowProps) => {
             onClick={() => window.open(getFileUrl(), '_blank')}
             className="text-primary hover:text-primary-hover hover:bg-primary-light"
           >
-            <Download className="h-4 w-4 mr-2" />
+            <ExternalLink className="h-4 w-4 mr-2" />
             Ouvrir
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => window.open(getFileUrl(), '_blank')}
+            className="text-primary hover:text-primary-hover hover:bg-primary-light"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Télécharger
           </Button>
           <Button 
             variant="ghost" 
