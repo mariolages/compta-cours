@@ -88,9 +88,6 @@ export const SubscriptionPlans = () => {
           priceId: 'price_1QdaT0II3n6IJC5vJGKapUGb',
           returnUrl: `${window.location.origin}/dashboard`
         },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
       });
 
       if (error) {

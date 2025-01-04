@@ -21,16 +21,12 @@ serve(async (req) => {
     console.log('Price ID received:', priceId);
     console.log('Return URL received:', returnUrl);
 
-    if (!priceId) {
-      throw new Error('Price ID is required');
-    }
-
     // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     console.log('Auth header present:', !!authHeader);
     
     if (!authHeader) {
-      throw new Error('Authorization header missing');
+      throw new Error('No authorization header');
     }
 
     // Initialize Supabase client
@@ -53,13 +49,7 @@ serve(async (req) => {
     }
 
     const user = userData.user;
-    const email = user?.email;
-
-    if (!email) {
-      throw new Error('Email not found');
-    }
-
-    console.log('User email:', email);
+    console.log('User found:', user.id);
 
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
@@ -69,7 +59,7 @@ serve(async (req) => {
     // Check for existing customer
     console.log('Checking for existing Stripe customer...');
     const customers = await stripe.customers.list({
-      email: email,
+      email: user.email,
       limit: 1
     });
 
@@ -95,7 +85,7 @@ serve(async (req) => {
     console.log('Creating checkout session...');
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : email,
+      customer_email: customerId ? undefined : user.email,
       line_items: [
         {
           price: priceId,
@@ -108,6 +98,9 @@ serve(async (req) => {
       allow_promotion_codes: true,
       billing_address_collection: 'required',
       payment_method_types: ['card'],
+      metadata: {
+        user_id: user.id,
+      },
     });
 
     console.log('Checkout session created:', session.id);
