@@ -1,0 +1,7 @@
+project_id = "sxpddyeasmcsnrbtvrgm"
+
+[create-checkout-session]
+verify_jwt = true
+
+[check-subscription]
+verify_jwt = true
