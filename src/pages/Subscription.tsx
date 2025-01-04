@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Check, CreditCard, Lock, Shield, Star, ArrowLeft } from "lucide-react";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 const features = [
   {
@@ -34,9 +35,11 @@ export default function Subscription() {
   const { session } = useSessionContext();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubscribe = async () => {
     try {
+      setIsLoading(true);
       console.log('Starting checkout session creation...');
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
@@ -73,6 +76,8 @@ export default function Subscription() {
         title: "Erreur",
         description: error.message || "Une erreur est survenue lors de la création de la session de paiement",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -151,9 +156,10 @@ export default function Subscription() {
               <Button 
                 onClick={handleSubscribe}
                 className="w-full text-lg h-12"
+                disabled={isLoading}
               >
                 <CreditCard className="mr-2" />
-                S'abonner maintenant
+                {isLoading ? 'Chargement...' : "S'abonner maintenant"}
               </Button>
             </CardFooter>
           </Card>
