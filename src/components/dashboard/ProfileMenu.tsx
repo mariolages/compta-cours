@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,52 +7,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
-import { User, LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
+import { LogOut, Settings, Shield } from "lucide-react";
 
-export const ProfileMenu = () => {
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [fullName, setFullName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+export const ProfileMenu = ({ user, profile }: { user: any; profile: any }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
-
-  const fetchUserProfile = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/login');
-        return;
-      }
-
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user.id)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching profile:', error);
-        return;
-      }
-
-      if (profile) {
-        setFullName(profile.full_name || '');
-      }
-    } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
-    }
-  };
-
-  const handleLogout = async () => {
+  const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
       toast({
@@ -63,89 +26,52 @@ export const ProfileMenu = () => {
       });
       return;
     }
-    navigate('/login');
-  };
-
-  const updateProfile = async () => {
-    setIsLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Vous devez être connecté pour modifier votre profil",
-      });
-      return;
-    }
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({ full_name: fullName })
-      .eq('id', user.id);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de mettre à jour le profil",
-      });
-    } else {
-      toast({
-        title: "Succès",
-        description: "Votre profil a été mis à jour",
-      });
-      setIsProfileOpen(false);
-    }
-    setIsLoading(false);
+    navigate("/login");
   };
 
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="gap-2">
-            <User className="h-4 w-4" />
-            <span>{fullName || 'Profil'}</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>
-            Modifier le profil
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-            <LogOut className="h-4 w-4 mr-2" />
-            Déconnexion
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Modifier mon profil</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Input
-                placeholder="Nom complet"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-            <Button 
-              onClick={updateProfile}
-              disabled={isLoading}
-              className="w-full"
+    <DropdownMenu>
+      <DropdownMenuTrigger className="focus:outline-none">
+        <Avatar>
+          <AvatarFallback>
+            {profile?.full_name
+              ?.split(" ")
+              .map((n: string) => n[0])
+              .join("")
+              .toUpperCase() || "?"}
+          </AvatarFallback>
+        </Avatar>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {profile?.is_admin && (
+          <>
+            <DropdownMenuItem 
+              className="cursor-pointer flex items-center gap-2 text-blue-600"
+              onClick={() => navigate("/admin")}
             >
-              {isLoading ? "Mise à jour..." : "Mettre à jour"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+              <Shield className="h-4 w-4" />
+              Administration
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
+        <DropdownMenuItem 
+          className="cursor-pointer flex items-center gap-2"
+          onClick={() => navigate("/settings")}
+        >
+          <Settings className="h-4 w-4" />
+          Paramètres
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          className="cursor-pointer flex items-center gap-2 text-red-600"
+          onClick={handleSignOut}
+        >
+          <LogOut className="h-4 w-4" />
+          Se déconnecter
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
