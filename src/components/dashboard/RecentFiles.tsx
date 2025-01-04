@@ -1,9 +1,10 @@
 import React from 'react';
-import { Download, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from "@/components/ui/use-toast";
+import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from "@/integrations/supabase/client";
+import { FileTableHeader } from './FileTableHeader';
+import { FileTableRow } from './FileTableRow';
+import { EmptyFileList } from './EmptyFileList';
 import type { File } from '@/types/files';
 
 interface RecentFilesProps {
@@ -134,80 +135,17 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                    Nom du fichier
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                    Matière
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                    Catégorie
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
+              <FileTableHeader />
               <tbody className="divide-y divide-gray-200">
                 {filteredFiles.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500 bg-gray-50">
-                      <div className="flex flex-col items-center justify-center space-y-2">
-                        <p className="text-lg font-medium">
-                          {searchQuery 
-                            ? `Aucun fichier trouvé pour "${searchQuery}"`
-                            : "Aucun fichier disponible"}
-                        </p>
-                        <p className="text-sm text-gray-400">
-                          Essayez une recherche différente ou ajoutez de nouveaux fichiers
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
+                  <EmptyFileList searchQuery={searchQuery} />
                 ) : (
                   filteredFiles.map((file) => (
-                    <tr key={file.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {file.title}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {file.subject.code} - {file.subject.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span className="px-3 py-1 rounded-full bg-primary-light text-primary">
-                          {file.category.name}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(file.created_at).toLocaleDateString('fr-FR')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-primary hover:text-primary-hover hover:bg-primary-light"
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            Télécharger
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleDelete(file.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Supprimer
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
+                    <FileTableRow
+                      key={file.id}
+                      file={file}
+                      onDelete={handleDelete}
+                    />
                   ))
                 )}
               </tbody>
