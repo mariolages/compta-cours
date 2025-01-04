@@ -33,26 +33,25 @@ serve(async (req) => {
       throw new Error('Authorization header missing');
     }
 
-    // Initialize Supabase client
-    const supabaseClient = createClient(
+    // Initialize Supabase client with service role key for admin access
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    // Get user data
+    // Get user data using the service role client
     const token = authHeader.replace('Bearer ', '');
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
     if (userError) {
       console.error('Error fetching user:', userError);
       throw userError;
     }
 
-    if (!userData?.user) {
+    if (!user) {
       throw new Error('User not found');
     }
 
-    const user = userData.user;
     const email = user?.email;
 
     if (!email) {

@@ -24,7 +24,7 @@ const premiumPlan = {
 };
 
 export const SubscriptionPlans = () => {
-  const { session } = useSessionContext();
+  const { session, isLoading: isSessionLoading } = useSessionContext();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -44,48 +44,54 @@ export const SubscriptionPlans = () => {
       setIsLoading(true);
       console.log('Starting checkout session creation...');
       
+      // Get a fresh session to ensure the token is valid
+      const { data: { session: freshSession }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !freshSession) {
+        console.error('Error getting fresh session:', sessionError);
+        throw new Error('Erreur de session. Veuillez vous reconnecter.');
+      }
+
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           priceId: 'price_1QdaT0II3n6IJC5vJGKapUGb',
           returnUrl: `${window.location.origin}/dashboard`
         },
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${freshSession.access_token}`,
         },
       });
 
       if (error) {
         console.error('Error creating checkout session:', error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Une erreur est survenue lors de la création de la session de paiement. Veuillez réessayer.",
-        });
-        return;
+        throw error;
       }
 
       if (data?.url) {
         console.log('Redirecting to:', data.url);
-        // Force the redirection in a new tab
         window.open(data.url, '_blank');
       } else {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Une erreur est survenue. Veuillez réessayer plus tard.",
-        });
+        throw new Error('Une erreur est survenue. Veuillez réessayer plus tard.');
       }
     } catch (error: any) {
       console.error('Error:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: error.message || "Une erreur est survenue",
+        description: error.message || "Une erreur est survenue lors de la création de la session de paiement",
       });
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (isSessionLoading) {
+    return (
+      <div className="flex justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
