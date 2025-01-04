@@ -33,22 +33,16 @@ const ProtectedRoute = ({ children, adminOnly = false, requireSubscription = tru
   requireSubscription?: boolean 
 }) => {
   const { session, isLoading } = useSessionContext();
-  console.log("Session state:", { session, isLoading });
 
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
-      console.log("Fetching profile for user:", session?.user?.id);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session?.user?.id)
         .single();
-      if (error) {
-        console.error("Profile fetch error:", error);
-        throw error;
-      }
-      console.log("Profile data:", data);
+      if (error) throw error;
       return data;
     },
     enabled: !!session?.user?.id,
@@ -57,23 +51,16 @@ const ProtectedRoute = ({ children, adminOnly = false, requireSubscription = tru
   const { data: subscription, isLoading: isLoadingSubscription } = useQuery({
     queryKey: ['subscription', session?.user?.id],
     queryFn: async () => {
-      console.log("Fetching subscription for user:", session?.user?.id);
       const { data, error } = await supabase
         .from('subscriptions')
         .select('*')
         .eq('user_id', session?.user?.id)
         .eq('status', 'active')
         .maybeSingle();
-      if (error && error.code !== 'PGRST116') {
-        console.error("Subscription fetch error:", error);
-        throw error;
-      }
-      console.log("Subscription data:", data);
+      if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
     enabled: !!session?.user?.id && requireSubscription,
-    // Rafraîchir toutes les 5 secondes si on vient d'un paiement
-    refetchInterval: window.location.search.includes('payment_status=success') ? 5000 : false,
   });
 
   if (isLoading || isLoadingProfile || (requireSubscription && isLoadingSubscription)) {
@@ -85,25 +72,14 @@ const ProtectedRoute = ({ children, adminOnly = false, requireSubscription = tru
   }
 
   if (!session) {
-    console.log("No session, redirecting to login");
     return <Navigate to="/login" replace />;
   }
 
   if (adminOnly && !profile?.is_admin) {
-    console.log("Not admin, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Si l'utilisateur n'a pas de souscription active et que la route nécessite une souscription
-  if (requireSubscription && !subscription && !profile?.is_admin) {
-    console.log("No subscription, redirecting to subscription page");
-    return <Navigate to="/subscription" replace />;
-  }
-
-  return <>{React.cloneElement(children as React.ReactElement, { 
-    hasSubscription: !!subscription || profile?.is_admin,
-    profile: profile
-  })}</>;
+  return <>{React.cloneElement(children as React.ReactElement, { hasSubscription: !!subscription || profile?.is_admin })}</>;
 };
 
 const App = () => {
@@ -128,7 +104,7 @@ const App = () => {
             <Route 
               path="/subjects/:subjectId" 
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requireSubscription={false}>
                   <SubjectPage />
                 </ProtectedRoute>
               } 

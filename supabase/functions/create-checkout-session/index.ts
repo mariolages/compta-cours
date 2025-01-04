@@ -86,11 +86,7 @@ serve(async (req) => {
       console.log('Price type:', price.type);
       const isRecurring = price.type === 'recurring';
 
-      // Get the origin from the request headers or use a default
-      const origin = req.headers.get('origin') || 'https://compta-cours.fr';
-      console.log('Request origin:', origin);
-
-      // Construct the success and cancel URLs with absolute paths
+      const origin = req.headers.get('origin') || 'http://localhost:5173';
       const successUrl = `${origin}/dashboard?payment_status=success`;
       const cancelUrl = `${origin}/subscription`;
 
