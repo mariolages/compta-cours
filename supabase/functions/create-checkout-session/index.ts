@@ -41,6 +41,8 @@ serve(async (req) => {
 
     // Get user data using the service role client
     const token = authHeader.replace('Bearer ', '');
+    console.log('Token received:', token);
+    
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
     if (userError) {
@@ -86,7 +88,7 @@ serve(async (req) => {
       });
 
       if (subscriptions.data.length > 0) {
-        throw new Error('You already have an active subscription');
+        throw new Error('Vous avez déjà un abonnement actif');
       }
     }
 

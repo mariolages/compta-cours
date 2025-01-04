@@ -43,14 +43,16 @@ export const SubscriptionPlans = () => {
     try {
       setIsLoading(true);
       console.log('Starting checkout session creation...');
-      
-      // Get a fresh session to ensure the token is valid
-      const { data: { session: freshSession }, error: sessionError } = await supabase.auth.getSession();
+
+      // Ensure we have a valid session
+      const { data: { session: freshSession }, error: sessionError } = await supabase.auth.refreshSession();
       
       if (sessionError || !freshSession) {
-        console.error('Error getting fresh session:', sessionError);
-        throw new Error('Erreur de session. Veuillez vous reconnecter.');
+        console.error('Error refreshing session:', sessionError);
+        throw new Error('Votre session a expiré. Veuillez vous reconnecter.');
       }
+
+      console.log('Using access token:', freshSession.access_token);
 
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
