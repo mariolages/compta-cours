@@ -14,20 +14,22 @@ interface RecentFilesProps {
 
 export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) => {
   const { toast } = useToast();
+  
+  // Amélioration de la logique de filtrage
   const filteredFiles = files.filter((file) => {
-    if (!searchQuery) return true;
+    if (!searchQuery.trim()) return true;
     
-    const searchTerms = searchQuery.toLowerCase().split(' ');
+    const search = searchQuery.toLowerCase().trim();
     const fileData = {
       title: file.title.toLowerCase(),
       subject: `${file.subject.code} ${file.subject.name}`.toLowerCase(),
       category: file.category.name.toLowerCase()
     };
     
-    return searchTerms.every(term => 
-      fileData.title.includes(term) ||
-      fileData.subject.includes(term) ||
-      fileData.category.includes(term)
+    return (
+      fileData.title.includes(search) ||
+      fileData.subject.includes(search) ||
+      fileData.category.includes(search)
     );
   });
 
@@ -86,7 +88,9 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
                 {filteredFiles.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                      Aucun fichier trouvé pour "{searchQuery}"
+                      {searchQuery 
+                        ? `Aucun fichier trouvé pour "${searchQuery}"`
+                        : "Aucun fichier disponible"}
                     </td>
                   </tr>
                 ) : (
