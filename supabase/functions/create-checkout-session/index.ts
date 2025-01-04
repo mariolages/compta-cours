@@ -17,8 +17,9 @@ serve(async (req) => {
     console.log('Starting checkout session creation...');
     
     // Get the request body
-    const { priceId } = await req.json();
+    const { priceId, returnUrl } = await req.json();
     console.log('Price ID received:', priceId);
+    console.log('Return URL received:', returnUrl);
 
     if (!priceId) {
       throw new Error('Price ID is required');
@@ -102,7 +103,7 @@ serve(async (req) => {
         },
       ],
       mode: 'subscription',
-      success_url: `${req.headers.get('origin')}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: returnUrl || `${req.headers.get('origin')}/dashboard`,
       cancel_url: `${req.headers.get('origin')}/subscription`,
       allow_promotion_codes: true,
       billing_address_collection: 'required',
