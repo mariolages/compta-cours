@@ -43,18 +43,14 @@ export const SubscriptionPlans = () => {
       if (error) throw error;
 
       if (subscriptionData) {
-        const response = await fetch('/functions/get-subscription-details', {
-          method: 'GET',
+        const { data: stripeDetails, error: stripeError } = await supabase.functions.invoke('get-subscription-details', {
           headers: {
             Authorization: `Bearer ${session?.access_token}`,
           },
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch subscription details');
-        }
+        if (stripeError) throw stripeError;
 
-        const stripeDetails = await response.json();
         return {
           ...subscriptionData,
           ...stripeDetails,
@@ -123,19 +119,16 @@ export const SubscriptionPlans = () => {
 
     try {
       setIsLoading(true);
-      const response = await fetch('/functions/cancel-subscription', {
-        method: 'POST',
+      const { error } = await supabase.functions.invoke('cancel-subscription', {
+        body: {
+          subscriptionId: subscription.stripe_subscription_id,
+        },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({
-          subscriptionId: subscription.stripe_subscription_id,
-        }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to cancel subscription');
-      }
+      if (error) throw error;
 
       await refetchSubscription();
       
