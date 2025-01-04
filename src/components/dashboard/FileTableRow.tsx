@@ -12,11 +12,19 @@ export const FileTableRow = ({ file, onDelete }: FileTableRowProps) => {
   const handleFileClick = () => {
     const fileUrl = `https://sxpddyeasmcsnrbtvrgm.supabase.co/storage/v1/object/public/dcg_files/${file.file_path}`;
     
-    // Log pour déboguer l'URL du fichier
-    console.log('Opening file URL:', fileUrl);
+    // Logs détaillés pour déboguer
+    console.log('File details:', {
+      title: file.title,
+      path: file.file_path,
+      fullUrl: fileUrl
+    });
     
-    // Ouvrir le fichier dans un nouvel onglet avec window.open()
-    window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    try {
+      window.open(fileUrl, '_blank');
+      console.log('Window.open called successfully');
+    } catch (error) {
+      console.error('Error opening file:', error);
+    }
   };
 
   return (
