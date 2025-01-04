@@ -17,11 +17,12 @@ serve(async (req) => {
     console.log('Starting checkout session creation...');
     
     // Get the request body
-    const { priceId, returnUrl } = await req.json();
-    console.log('Price ID received:', priceId);
-    console.log('Return URL received:', returnUrl);
+    const { price_id, success_url, cancel_url } = await req.json();
+    console.log('Price ID received:', price_id);
+    console.log('Success URL:', success_url);
+    console.log('Cancel URL:', cancel_url);
 
-    if (!priceId) {
+    if (!price_id) {
       throw new Error('Price ID is required');
     }
 
@@ -83,7 +84,7 @@ serve(async (req) => {
       const subscriptions = await stripe.subscriptions.list({
         customer: customerId,
         status: 'active',
-        price: priceId,
+        price: price_id,
         limit: 1
       });
 
@@ -99,13 +100,13 @@ serve(async (req) => {
       customer_email: customerId ? undefined : email,
       line_items: [
         {
-          price: priceId,
+          price: price_id,
           quantity: 1,
         },
       ],
       mode: 'subscription',
-      success_url: returnUrl || `${req.headers.get('origin')}/dashboard`,
-      cancel_url: `${req.headers.get('origin')}/subscription`,
+      success_url: success_url || `${req.headers.get('origin')}/dashboard`,
+      cancel_url: cancel_url || `${req.headers.get('origin')}/subscription`,
       allow_promotion_codes: true,
       billing_address_collection: 'required',
       payment_method_types: ['card'],
