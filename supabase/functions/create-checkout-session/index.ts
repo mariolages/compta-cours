@@ -37,9 +37,14 @@ serve(async (req) => {
     console.log('Verifying token:', token);
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
-    if (userError || !user) {
+    if (userError) {
       console.error('Auth error:', userError);
       throw new Error('Authentication failed');
+    }
+
+    if (!user) {
+      console.error('No user found');
+      throw new Error('User not found');
     }
 
     console.log('User authenticated:', user.id);

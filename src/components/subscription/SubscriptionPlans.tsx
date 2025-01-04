@@ -77,6 +77,10 @@ export const SubscriptionPlans = () => {
     try {
       setIsLoading(true);
       
+      if (!session.access_token) {
+        throw new Error("Token d'authentification manquant");
+      }
+
       console.log('Creating checkout session with token:', session.access_token);
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
