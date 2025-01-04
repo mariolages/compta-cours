@@ -33,7 +33,7 @@ export const SubscriptionPlans = () => {
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           price_id,
-          success_url: `${window.location.origin}/dashboard`,
+          success_url: `${window.location.origin}/dashboard?payment_status=success`,
           cancel_url: `${window.location.origin}/subscription`,
         }
       });
@@ -41,7 +41,6 @@ export const SubscriptionPlans = () => {
       if (error) {
         console.error('Error creating checkout session:', error);
         
-        // Handle specific error cases
         if (error.message.includes('refresh_token_not_found') || 
             error.message.includes('JWT expired') ||
             error.message.includes('session_id claim in JWT does not exist')) {
