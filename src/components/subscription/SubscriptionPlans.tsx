@@ -124,6 +124,9 @@ export const SubscriptionPlans = () => {
         body: {
           subscriptionId: subscription.stripe_subscription_id,
         },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       if (error) throw error;
