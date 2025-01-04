@@ -25,7 +25,7 @@ const premiumPlan = {
 };
 
 export const SubscriptionPlans = () => {
-  const { session } = useSessionContext();
+  const { session, isLoading: isLoadingSession } = useSessionContext();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -77,7 +77,7 @@ export const SubscriptionPlans = () => {
     try {
       setIsLoading(true);
       
-      console.log('Creating checkout session...');
+      console.log('Creating checkout session with token:', session.access_token);
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           priceId: 'price_1OgkXuHVlJhYKxGPbvmhzjbP',
@@ -154,7 +154,7 @@ export const SubscriptionPlans = () => {
     }
   };
 
-  if (isLoadingSubscription) {
+  if (isLoadingSession || isLoadingSubscription) {
     return (
       <div className="flex justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
