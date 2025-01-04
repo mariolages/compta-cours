@@ -10,7 +10,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Settings, Shield } from "lucide-react";
+import { LogOut, Settings, Shield, CreditCard } from "lucide-react";
 
 export const ProfileMenu = ({ user, profile }: { user: any; profile: any }) => {
   const navigate = useNavigate();
@@ -57,6 +57,13 @@ export const ProfileMenu = ({ user, profile }: { user: any; profile: any }) => {
             <DropdownMenuSeparator />
           </>
         )}
+        <DropdownMenuItem 
+          className="cursor-pointer flex items-center gap-2"
+          onClick={() => navigate("/subscription")}
+        >
+          <CreditCard className="h-4 w-4" />
+          Abonnement
+        </DropdownMenuItem>
         <DropdownMenuItem 
           className="cursor-pointer flex items-center gap-2"
           onClick={() => navigate("/settings")}

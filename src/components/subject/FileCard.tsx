@@ -153,7 +153,7 @@ export function FileCard({
 
       {isPodcast && (
         <div className="mt-4">
-          <AudioPlayer filePath={file.file_path} />
+          <AudioPlayer filePath={file.file_path} isLocked={!hasAccess} />
         </div>
       )}
     </Card>

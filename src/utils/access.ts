@@ -20,8 +20,6 @@ export const hasAccessToContent = (
 ): boolean => {
   if (hasSubscription) return true;
   
-  // Non-subscribed users can only access:
-  // 1. Course category (categoryId === "1")
-  // 2. Files with titles that indicate they are chapter 1
+  // Non-subscribed users can only access Chapter 1 in the Course category
   return isCourseCategory(categoryId) && isChapterOne(fileTitle);
 };

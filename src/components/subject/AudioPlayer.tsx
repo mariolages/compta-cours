@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, Volume, VolumeX } from "lucide-react";
+import { Play, Pause, Volume, VolumeX, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,9 +7,10 @@ import { useToast } from "@/components/ui/use-toast";
 
 interface AudioPlayerProps {
   filePath: string;
+  isLocked?: boolean;
 }
 
-export function AudioPlayer({ filePath }: AudioPlayerProps) {
+export function AudioPlayer({ filePath, isLocked = false }: AudioPlayerProps) {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -20,6 +21,8 @@ export function AudioPlayer({ filePath }: AudioPlayerProps) {
   const audioRef = React.useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
+    if (isLocked) return;
+    
     const loadAudio = async () => {
       try {
         const { data: { publicUrl } } = supabase
@@ -39,9 +42,18 @@ export function AudioPlayer({ filePath }: AudioPlayerProps) {
     };
 
     loadAudio();
-  }, [filePath, toast]);
+  }, [filePath, toast, isLocked]);
 
   const handlePlayPause = () => {
+    if (isLocked) {
+      toast({
+        variant: "destructive",
+        title: "Contenu verrouillé",
+        description: "Abonnez-vous pour accéder à ce contenu",
+      });
+      return;
+    }
+
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
@@ -92,6 +104,8 @@ export function AudioPlayer({ filePath }: AudioPlayerProps) {
   };
 
   const handleSeek = (value: number[]) => {
+    if (isLocked) return;
+    
     const newTime = value[0];
     setCurrentTime(newTime);
     if (audioRef.current) {
@@ -99,15 +113,26 @@ export function AudioPlayer({ filePath }: AudioPlayerProps) {
     }
   };
 
-  if (!audioUrl) {
+  if (!audioUrl && !isLocked) {
     return <div className="animate-pulse bg-gray-200 h-12 rounded-md" />;
+  }
+
+  if (isLocked) {
+    return (
+      <div className="bg-white p-4 rounded-lg shadow-sm space-y-2">
+        <div className="flex items-center justify-center gap-2 text-gray-400">
+          <Lock className="h-5 w-5" />
+          <span>Contenu réservé aux abonnés</span>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm space-y-2">
       <audio
         ref={audioRef}
-        src={audioUrl}
+        src={audioUrl || undefined}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={() => setIsPlaying(false)}
@@ -119,6 +144,7 @@ export function AudioPlayer({ filePath }: AudioPlayerProps) {
           size="icon"
           onClick={handlePlayPause}
           className="h-10 w-10"
+          disabled={isLocked}
         >
           {isPlaying ? (
             <Pause className="h-6 w-6" />
@@ -135,6 +161,7 @@ export function AudioPlayer({ filePath }: AudioPlayerProps) {
             step={1}
             onValueChange={handleSeek}
             className="w-full"
+            disabled={isLocked}
           />
           <div className="flex justify-between text-sm text-gray-500 mt-1">
             <span>{formatTime(currentTime)}</span>
@@ -148,6 +175,7 @@ export function AudioPlayer({ filePath }: AudioPlayerProps) {
             size="icon"
             onClick={toggleMute}
             className="h-8 w-8"
+            disabled={isLocked}
           >
             {isMuted ? (
               <VolumeX className="h-4 w-4" />
@@ -162,6 +190,7 @@ export function AudioPlayer({ filePath }: AudioPlayerProps) {
             step={0.1}
             onValueChange={handleVolumeChange}
             className="w-24"
+            disabled={isLocked}
           />
         </div>
       </div>
