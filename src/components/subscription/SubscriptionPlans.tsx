@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, CreditCard, Diamond, ArrowLeft } from "lucide-react";
+import { Check, CreditCard, Diamond } from "lucide-react";
 import { useState } from "react";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
@@ -43,28 +43,14 @@ export const SubscriptionPlans = () => {
     try {
       setIsLoading(true);
       console.log('Starting checkout session creation...');
-
-      // Refresh the session to ensure we have a valid token
-      const { data: { session: currentSession }, error: refreshError } = await supabase.auth.refreshSession();
       
-      if (refreshError) {
-        console.error('Error refreshing session:', refreshError);
-        throw new Error('Impossible de rafraîchir votre session. Veuillez vous reconnecter.');
-      }
-
-      if (!currentSession) {
-        throw new Error('Session invalide. Veuillez vous reconnecter.');
-      }
-
-      console.log('Session refreshed successfully');
-
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           priceId: 'price_1QdaT0II3n6IJC5vJGKapUGb',
           returnUrl: `${window.location.origin}/dashboard`
         },
         headers: {
-          Authorization: `Bearer ${currentSession.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
 
@@ -80,6 +66,7 @@ export const SubscriptionPlans = () => {
 
       if (data?.url) {
         console.log('Redirecting to:', data.url);
+        // Force the redirection in a new tab
         window.open(data.url, '_blank');
       } else {
         toast({
@@ -102,15 +89,6 @@ export const SubscriptionPlans = () => {
 
   return (
     <div className="space-y-6">
-      <Button
-        variant="ghost"
-        onClick={() => navigate("/dashboard")}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Retour au tableau de bord
-      </Button>
-
       <div className="flex justify-center px-4">
         <Card className="relative overflow-hidden max-w-md w-full border-primary/10 shadow-xl bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
           <div className="absolute -right-20 -top-20 h-40 w-40 bg-primary/10 rounded-full blur-3xl" />
