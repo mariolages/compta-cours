@@ -39,7 +39,7 @@ export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps)
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="h-4 w-4" />
-          Retour au tableau
+          Retour
         </Button>
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
           {code} - {name}

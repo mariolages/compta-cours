@@ -117,28 +117,6 @@ export default function SubjectPage({ hasSubscription = false }) {
             code={subject?.code || ""}
             name={subject?.name || ""}
             onUploadClick={() => setIsUploadOpen(true)}
-            onDeleteClick={async () => {
-              try {
-                const { error } = await supabase
-                  .from("subjects")
-                  .delete()
-                  .eq("id", subjectId);
-
-                if (error) throw error;
-
-                toast({
-                  title: "Succès",
-                  description: "Le cours a été supprimé avec succès",
-                });
-                navigate("/dashboard");
-              } catch (error) {
-                toast({
-                  variant: "destructive",
-                  title: "Erreur",
-                  description: "Impossible de supprimer le cours",
-                });
-              }
-            }}
           />
 
           <SubjectTabs
