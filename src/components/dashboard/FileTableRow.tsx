@@ -10,10 +10,13 @@ interface FileTableRowProps {
 
 export const FileTableRow = ({ file, onDelete }: FileTableRowProps) => {
   const handleFileClick = () => {
-    // Utiliser Google PDF Viewer pour ouvrir le fichier
     const fileUrl = `https://sxpddyeasmcsnrbtvrgm.supabase.co/storage/v1/object/public/dcg_files/${file.file_path}`;
-    const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
-    window.open(googleViewerUrl, '_blank');
+    
+    // Log pour déboguer l'URL du fichier
+    console.log('Opening file URL:', fileUrl);
+    
+    // Ouvrir directement dans un nouvel onglet
+    window.open(fileUrl, '_blank');
   };
 
   return (
