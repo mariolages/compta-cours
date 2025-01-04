@@ -40,7 +40,6 @@ export default function Subscription() {
       console.log('Début de la création de la session de paiement...');
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
-          // Remplacez ce price_id par celui que vous venez de créer dans Stripe
           priceId: 'price_1OyQRiII3n6IJC5vxXBVZRXB'
         },
       });
