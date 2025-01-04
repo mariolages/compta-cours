@@ -13,50 +13,42 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting checkout session creation...');
-    
     const { priceId, returnUrl } = await req.json();
-    console.log('Price ID received:', priceId);
-    console.log('Return URL received:', returnUrl);
+    console.log('Starting checkout session with:', { priceId, returnUrl });
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Missing Authorization header');
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    console.log('Token received:', token);
-
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    const { data: { session }, error: sessionError } = await supabaseAdmin.auth.getSession(token);
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(authHeader.replace('Bearer ', ''));
     
-    if (sessionError || !session?.user) {
-      console.error('Error fetching session:', sessionError);
-      throw new Error('Invalid session');
+    if (userError || !user) {
+      console.error('Auth error:', userError);
+      throw new Error('Authentication failed');
     }
 
-    const user = session.user;
-    console.log('User found:', user.id);
+    console.log('User authenticated:', user.id);
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
       apiVersion: '2023-10-16',
     });
 
-    console.log('Checking for existing Stripe customer...');
     const customers = await stripe.customers.list({
       email: user.email,
       limit: 1
     });
 
-    let customerId = undefined;
+    let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
-      console.log('Existing customer found:', customerId);
-      
+      console.log('Found existing customer:', customerId);
+
       const subscriptions = await stripe.subscriptions.list({
         customer: customerId,
         status: 'active',
@@ -99,7 +91,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error creating checkout session:', error);
+    console.error('Error in checkout session:', error);
     return new Response(
       JSON.stringify({ 
         error: error.message,
