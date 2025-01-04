@@ -15,9 +15,8 @@ export const FileTableRow = ({ file, onDelete }: FileTableRowProps) => {
     // Log pour déboguer l'URL du fichier
     console.log('Opening file URL:', fileUrl);
     
-    // Utiliser Google PDF Viewer pour ouvrir le fichier
-    const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}`;
-    window.open(googleViewerUrl, '_blank');
+    // Ouvrir directement dans un nouvel onglet
+    window.open(fileUrl, '_blank');
   };
 
   return (
