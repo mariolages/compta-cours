@@ -71,7 +71,7 @@ const Admin = () => {
   const fetchUsers = async () => {
     const { data: profiles, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('*, auth_logs(email)')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -79,7 +79,13 @@ const Admin = () => {
       return;
     }
 
-    setUsers(profiles);
+    // Combine profile data with email from auth_logs
+    const usersWithEmail = profiles.map(profile => ({
+      ...profile,
+      email: profile.auth_logs?.[0]?.email || 'N/A'
+    }));
+
+    setUsers(usersWithEmail);
   };
 
   const fetchLogs = async () => {
@@ -97,47 +103,69 @@ const Admin = () => {
   };
 
   const handleUserValidation = async (userId: string, isValidated: boolean) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ is_validated: isValidated })
-      .eq('id', userId);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_validated: isValidated })
+        .eq('id', userId);
 
-    if (error) {
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de mettre à jour le statut de l'utilisateur",
+        });
+        return;
+      }
+
+      toast({
+        title: "Succès",
+        description: `L'utilisateur a été ${isValidated ? 'validé' : 'invalidé'}`,
+      });
+      
+      // Refresh the users list
+      fetchUsers();
+    } catch (error) {
+      console.error('Error validating user:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de mettre à jour le statut de l'utilisateur",
+        description: "Une erreur est survenue lors de la validation",
       });
-      return;
     }
-
-    toast({
-      title: "Succès",
-      description: `L'utilisateur a été ${isValidated ? 'validé' : 'invalidé'}`,
-    });
-    fetchUsers();
   };
 
   const handleUserBan = async (userId: string, isBanned: boolean) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ is_banned: isBanned })
-      .eq('id', userId);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_banned: isBanned })
+        .eq('id', userId);
 
-    if (error) {
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de mettre à jour le statut de l'utilisateur",
+        });
+        return;
+      }
+
+      toast({
+        title: "Succès",
+        description: `L'utilisateur a été ${isBanned ? 'banni' : 'débanni'}`,
+      });
+      
+      // Refresh the users list
+      fetchUsers();
+    } catch (error) {
+      console.error('Error banning user:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de mettre à jour le statut de l'utilisateur",
+        description: "Une erreur est survenue lors du bannissement",
       });
-      return;
     }
-
-    toast({
-      title: "Succès",
-      description: `L'utilisateur a été ${isBanned ? 'banni' : 'débanni'}`,
-    });
-    fetchUsers();
   };
 
   return (
