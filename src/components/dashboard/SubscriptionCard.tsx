@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useSessionContext } from "@supabase/auth-helpers-react";
 
 interface SubscriptionCardProps {
   subscription: any;
@@ -11,10 +12,21 @@ interface SubscriptionCardProps {
 export const SubscriptionCard = ({ subscription }: SubscriptionCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { session } = useSessionContext();
 
   const handleSubscriptionClick = async () => {
     if (subscription) {
       navigate('/subscription');
+      return;
+    }
+
+    if (!session) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Vous devez être connecté pour souscrire à un abonnement",
+      });
+      navigate('/login');
       return;
     }
 
@@ -23,6 +35,9 @@ export const SubscriptionCard = ({ subscription }: SubscriptionCardProps) => {
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           priceId: 'price_1QdaT0II3n6IJC5vJGKapUGb'
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
 
