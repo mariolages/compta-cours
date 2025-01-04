@@ -1,18 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Plus, RefreshCw, CreditCard } from "lucide-react";
+import { Plus } from "lucide-react";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
-import { SearchBar } from '@/components/dashboard/SearchBar';
-import { ProfileMenu } from '@/components/dashboard/ProfileMenu';
 import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { ClassesGrid } from '@/components/dashboard/ClassesGrid';
 import { SubjectsGrid } from '@/components/dashboard/SubjectsGrid';
+import { DashboardNav } from '@/components/dashboard/DashboardNav';
+import { SubscriptionCard } from '@/components/dashboard/SubscriptionCard';
 import { useQuery } from '@tanstack/react-query';
 import { useSessionContext } from '@supabase/auth-helpers-react';
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function Dashboard() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -28,14 +27,12 @@ export default function Dashboard() {
     queryFn: async () => {
       if (!session?.user?.id) return null;
 
-      // Try to get the profile
       const { data: existingProfile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
         .maybeSingle();
       
-      // If no profile exists, create one
       if (!existingProfile && !error) {
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
@@ -94,11 +91,6 @@ export default function Dashboard() {
     enabled: !!session?.user?.id,
   });
 
-  if (!isLoadingSession && !session) {
-    navigate('/login', { replace: true });
-    return null;
-  }
-
   // Fetch classes
   const { data: classes = [], isLoading: isLoadingClasses } = useQuery({
     queryKey: ['classes'],
@@ -130,13 +122,10 @@ export default function Dashboard() {
     enabled: !!session && !!selectedClassId,
   });
 
-  const handleClassClick = (classId: number) => {
-    setSelectedClassId(classId);
-  };
-
-  const handleSubjectClick = (subjectId: number) => {
-    navigate(`/subjects/${subjectId}`);
-  };
+  if (!isLoadingSession && !session) {
+    navigate('/login', { replace: true });
+    return null;
+  }
 
   if (isLoadingSession || isLoadingProfile) {
     return (
@@ -146,60 +135,29 @@ export default function Dashboard() {
     );
   }
 
+  const handleClassClick = (classId: number) => {
+    setSelectedClassId(classId);
+  };
+
+  const handleSubjectClick = (subjectId: number) => {
+    navigate(`/subjects/${subjectId}`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              {selectedClassId && (
-                <Button
-                  variant="ghost"
-                  onClick={() => setSelectedClassId(null)}
-                  className="text-gray-600 hover:text-gray-900"
-                >
-                  ← Retour
-                </Button>
-              )}
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                compta-cours.fr
-              </h1>
-            </div>
-            
-            <SearchBar value={searchQuery} onChange={setSearchQuery} />
-
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => window.location.reload()}
-                className="relative"
-              >
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-              <ProfileMenu user={session?.user} profile={profile} />
-            </div>
-          </div>
-        </div>
-      </nav>
+      <DashboardNav 
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        selectedClassId={selectedClassId}
+        onBackClick={() => setSelectedClassId(null)}
+        profile={profile}
+        user={session?.user}
+      />
 
       <div className="container mx-auto px-4 py-8 space-y-8">
         <WelcomeCard lastRefresh={lastRefresh} />
-
-        {/* Subscription Card */}
-        <Card className="bg-gradient-to-r from-primary/5 to-accent/5 hover:from-primary/10 hover:to-accent/10 transition-colors cursor-pointer" onClick={() => navigate('/subscription')}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-primary" />
-              {subscription ? 'Gérer mon abonnement' : 'S\'abonner'}
-            </CardTitle>
-            <CardDescription>
-              {subscription 
-                ? 'Accédez à vos informations d\'abonnement'
-                : 'Débloquez l\'accès à tous les contenus'}
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        
+        <SubscriptionCard subscription={subscription} />
         
         {selectedClassId ? (
           <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
