@@ -48,16 +48,16 @@ export const SearchBar = ({ value, onChange }: SearchBarProps) => {
               placeholder="Recherchez vos ressources : cours, QCM, sujets d'examen..."
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 h-12 text-lg"
+              className="w-full pl-10 pr-4 py-2 h-12 text-lg bg-white/80 backdrop-blur-sm border-2 border-gray-100 hover:border-primary/20 focus:border-primary/30 transition-all duration-300 shadow-sm hover:shadow-md rounded-xl"
               onClick={() => setOpen(true)}
             />
           </div>
         </PopoverTrigger>
-        <PopoverContent className="w-[500px] p-0" align="start">
+        <PopoverContent className="w-[500px] p-0 border-2 border-gray-100 shadow-xl rounded-xl bg-white/95 backdrop-blur-sm" align="start">
           <Command>
             <CommandInput 
               placeholder="Tapez 'Chapitre' suivi d'un numéro ou sélectionnez un type" 
-              className="h-12"
+              className="h-12 text-base"
             />
             <CommandList>
               <CommandEmpty>Aucun résultat trouvé.</CommandEmpty>
@@ -68,10 +68,14 @@ export const SearchBar = ({ value, onChange }: SearchBarProps) => {
                     <CommandItem
                       key={suggestion.label}
                       onSelect={() => handleSelect(suggestion.label)}
-                      className="flex justify-between items-center p-3 cursor-pointer hover:bg-primary hover:text-white rounded-lg transition-colors"
+                      className="flex justify-between items-center p-3 cursor-pointer hover:bg-primary/10 rounded-lg transition-colors group"
                     >
-                      <span className="text-lg font-medium">{suggestion.label}</span>
-                      <span className="text-sm text-gray-500">{suggestion.description}</span>
+                      <span className="text-lg font-medium group-hover:text-primary transition-colors">
+                        {suggestion.label}
+                      </span>
+                      <span className="text-sm text-gray-500 group-hover:text-primary/70 transition-colors">
+                        {suggestion.description}
+                      </span>
                     </CommandItem>
                   ))}
               </CommandGroup>
@@ -82,10 +86,14 @@ export const SearchBar = ({ value, onChange }: SearchBarProps) => {
                     <CommandItem
                       key={suggestion.label}
                       onSelect={() => handleSelect(suggestion.label)}
-                      className="flex justify-between items-center p-3 cursor-pointer hover:bg-primary hover:text-white rounded-lg transition-colors"
+                      className="flex justify-between items-center p-3 cursor-pointer hover:bg-primary/10 rounded-lg transition-colors group"
                     >
-                      <span className="text-lg font-medium">{suggestion.label}</span>
-                      <span className="text-sm text-gray-500">{suggestion.description}</span>
+                      <span className="text-lg font-medium group-hover:text-primary transition-colors">
+                        {suggestion.label}
+                      </span>
+                      <span className="text-sm text-gray-500 group-hover:text-primary/70 transition-colors">
+                        {suggestion.description}
+                      </span>
                     </CommandItem>
                   ))}
               </CommandGroup>
