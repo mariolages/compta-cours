@@ -30,15 +30,23 @@ serve(async (req) => {
     }
 
     // Get the session or user object
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
     console.log('Auth header présent:', !!authHeader);
     
+    if (!authHeader) {
+      throw new Error('Authorization header manquant');
+    }
+
     const token = authHeader.replace('Bearer ', '');
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     
     if (userError) {
       console.error('Erreur lors de la récupération de l\'utilisateur:', userError);
       throw userError;
+    }
+
+    if (!userData?.user) {
+      throw new Error('Utilisateur non trouvé');
     }
 
     const user = userData.user;
@@ -48,7 +56,7 @@ serve(async (req) => {
       throw new Error('Email non trouvé');
     }
 
-    console.log('Création de la session pour:', email);
+    console.log('Email de l\'utilisateur:', email);
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
@@ -104,10 +112,13 @@ serve(async (req) => {
   } catch (error) {
     console.error('Erreur lors de la création de la session de paiement:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.toString()
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: 400,
       }
     );
   }
