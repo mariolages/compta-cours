@@ -24,22 +24,17 @@ export default function Dashboard() {
   const [searchParams] = useSearchParams();
   const paymentStatus = searchParams.get('payment_status');
 
-  // Effet pour gérer le statut du paiement
   useEffect(() => {
     if (paymentStatus === 'success') {
       console.log('Payment successful, refreshing data...');
-      
-      // Rafraîchir les données de l'abonnement et du profil
       queryClient.invalidateQueries({ queryKey: ['subscription'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       
-      // Afficher le message de succès
       toast({
         title: "Paiement réussi",
         description: "Votre abonnement a été activé avec succès. Vous avez maintenant accès à tout le contenu.",
       });
 
-      // Nettoyer l'URL
       navigate('/dashboard', { replace: true });
     }
   }, [paymentStatus, toast, queryClient, navigate]);
@@ -97,11 +92,9 @@ export default function Dashboard() {
     enabled: !!session?.user?.id,
   });
 
-  // Fetch subscription status
   const { data: subscription, isLoading: isLoadingSubscription } = useQuery({
     queryKey: ['subscription', session?.user?.id],
     queryFn: async () => {
-      console.log('Fetching subscription status...');
       const { data, error } = await supabase
         .from('subscriptions')
         .select('*')
@@ -109,17 +102,13 @@ export default function Dashboard() {
         .eq('status', 'active')
         .maybeSingle();
       
-      console.log('Subscription data:', data);
-      console.log('Subscription error:', error);
-      
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
     enabled: !!session?.user?.id,
-    refetchInterval: paymentStatus === 'success' ? 1000 : false, // Rafraîchir toutes les secondes si le paiement vient d'être effectué
+    refetchInterval: paymentStatus === 'success' ? 1000 : false,
   });
 
-  // Fetch classes
   const { data: classes = [], isLoading: isLoadingClasses } = useQuery({
     queryKey: ['classes'],
     queryFn: async () => {
@@ -134,7 +123,6 @@ export default function Dashboard() {
     enabled: !!session,
   });
 
-  // Fetch subjects for selected class
   const { data: subjects = [], isLoading: isLoadingSubjects } = useQuery({
     queryKey: ['subjects', selectedClassId],
     queryFn: async () => {
