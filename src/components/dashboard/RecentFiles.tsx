@@ -29,22 +29,32 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
     const searchLower = searchQuery.toLowerCase().trim();
     const fileTitle = file.title.toLowerCase();
     
-    // Vérifie différents formats de numéros de chapitre
-    const chapterFormats = [
-      /chapitre\s*(\d+)/i,
-      /chap\s*(\d+)/i,
-      /ch\s*(\d+)/i,
-    ];
+    console.log('Searching for:', searchLower);
+    console.log('File title:', fileTitle);
     
-    for (const format of chapterFormats) {
-      const match = searchLower.match(format);
-      if (match) {
-        const chapterNumber = match[1];
-        // Recherche plus flexible du numéro de chapitre dans le titre
-        const chapterPattern = new RegExp(`(chapitre|chap|ch)\\s*${chapterNumber}\\b`, 'i');
-        if (chapterPattern.test(fileTitle)) {
-          return true;
-        }
+    // Vérifie si la recherche contient "chapitre" ou ses variantes
+    if (searchLower.includes('chapitre') || searchLower.includes('chap') || searchLower.includes('ch')) {
+      // Extrait le numéro du chapitre de la recherche
+      const numberMatch = searchLower.match(/\d+/);
+      if (numberMatch) {
+        const chapterNumber = numberMatch[0];
+        console.log('Chapter number found:', chapterNumber);
+        
+        // Crée un pattern plus flexible pour la recherche
+        const patterns = [
+          new RegExp(`chapitre\\s*${chapterNumber}`, 'i'),
+          new RegExp(`chap\\s*${chapterNumber}`, 'i'),
+          new RegExp(`ch\\s*${chapterNumber}`, 'i')
+        ];
+        
+        // Vérifie si le titre correspond à l'un des patterns
+        const matches = patterns.some(pattern => {
+          const isMatch = pattern.test(fileTitle);
+          console.log('Testing pattern:', pattern, 'Result:', isMatch);
+          return isMatch;
+        });
+        
+        if (matches) return true;
       }
     }
     
