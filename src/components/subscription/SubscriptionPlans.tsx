@@ -1,12 +1,11 @@
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Check, CreditCard, Diamond, ArrowLeft } from "lucide-react";
 import { useState } from "react";
-import { Diamond, Loader2 } from "lucide-react";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ActiveSubscription } from "./ActiveSubscription";
-import { PremiumPlanCard } from "./PremiumPlanCard";
+import { useNavigate } from "react-router-dom";
 
 const premiumPlan = {
   id: "premium",
@@ -25,43 +24,10 @@ const premiumPlan = {
 };
 
 export const SubscriptionPlans = () => {
-  const { session, isLoading: isLoadingSession } = useSessionContext();
+  const { session } = useSessionContext();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-
-  const { data: subscription, isLoading: isLoadingSubscription, refetch: refetchSubscription } = useQuery({
-    queryKey: ['subscription', session?.user?.id],
-    queryFn: async () => {
-      const { data: subscriptionData, error } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', session?.user?.id)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (subscriptionData) {
-        const { data: stripeDetails, error: stripeError } = await supabase.functions.invoke('get-subscription-details', {
-          body: { subscriptionId: subscriptionData.stripe_subscription_id },
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        });
-
-        if (stripeError) throw stripeError;
-
-        return {
-          ...subscriptionData,
-          ...stripeDetails,
-        };
-      }
-
-      return null;
-    },
-    enabled: !!session?.user?.id,
-  });
 
   const handleSubscribe = async () => {
     if (!session) {
@@ -76,23 +42,15 @@ export const SubscriptionPlans = () => {
 
     try {
       setIsLoading(true);
-
-      // Vérifier que nous avons un token d'accès valide
-      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+      console.log('Starting checkout session creation...');
       
-      if (sessionError || !currentSession?.access_token) {
-        console.error('Session error:', sessionError);
-        throw new Error("Session invalide. Veuillez vous reconnecter.");
-      }
-
-      console.log('Creating checkout session with token:', currentSession.access_token);
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
-          priceId: 'price_1OgkXuHVlJhYKxGPbvmhzjbP',
+          priceId: 'price_1QdaT0II3n6IJC5vJGKapUGb',
           returnUrl: `${window.location.origin}/dashboard`
         },
         headers: {
-          Authorization: `Bearer ${currentSession.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
 
@@ -106,9 +64,10 @@ export const SubscriptionPlans = () => {
         return;
       }
 
-      console.log('Checkout session created:', data);
       if (data?.url) {
-        window.location.href = data.url;
+        console.log('Redirecting to:', data.url);
+        // Force the redirection in a new tab
+        window.open(data.url, '_blank');
       } else {
         toast({
           variant: "destructive",
@@ -128,67 +87,60 @@ export const SubscriptionPlans = () => {
     }
   };
 
-  const handleCancelSubscription = async () => {
-    if (!session || !subscription?.stripe_subscription_id) return;
-
-    try {
-      setIsLoading(true);
-      const { error } = await supabase.functions.invoke('cancel-subscription', {
-        body: {
-          subscriptionId: subscription.stripe_subscription_id,
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (error) throw error;
-
-      await refetchSubscription();
-      
-      toast({
-        title: "Abonnement annulé",
-        description: "Votre abonnement sera actif jusqu'à la fin de la période en cours",
-      });
-    } catch (error) {
-      console.error('Error cancelling subscription:', error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de l'annulation de l'abonnement",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isLoadingSession || isLoadingSubscription) {
-    return (
-      <div className="flex justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (subscription?.status === 'active') {
-    return (
-      <ActiveSubscription 
-        subscription={subscription}
-        isLoading={isLoading}
-        onCancelSubscription={handleCancelSubscription}
-        premiumPlan={premiumPlan}
-      />
-    );
-  }
-
   return (
     <div className="space-y-6">
+      <Button
+        variant="ghost"
+        onClick={() => navigate("/dashboard")}
+        className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Retour au tableau de bord
+      </Button>
+
       <div className="flex justify-center px-4">
-        <PremiumPlanCard 
-          plan={premiumPlan}
-          onSubscribe={handleSubscribe}
-          isLoading={isLoading}
-        />
+        <Card className="relative overflow-hidden max-w-md w-full border-primary/10 shadow-xl bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
+          <div className="absolute -right-20 -top-20 h-40 w-40 bg-primary/10 rounded-full blur-3xl" />
+          <div className="absolute top-0 right-0 bg-primary text-white px-4 py-1 text-sm rounded-bl-lg font-medium">
+            Offre limitée
+          </div>
+          <CardHeader className="space-y-2">
+            <div className="flex items-center gap-2">
+              <premiumPlan.icon className="h-7 w-7 text-primary" />
+              <CardTitle className="text-2xl">{premiumPlan.name}</CardTitle>
+            </div>
+            <CardDescription className="text-base">{premiumPlan.description}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-1">
+              <div className="text-4xl font-bold text-primary flex items-start">
+                {premiumPlan.price}€
+                <span className="text-sm font-normal text-muted-foreground mt-2 ml-1">/mois</span>
+              </div>
+              <div className="text-sm text-muted-foreground">Sans engagement - Annulable à tout moment</div>
+            </div>
+            <ul className="space-y-3">
+              {premiumPlan.features.map((feature, index) => (
+                <li key={index} className="flex items-start gap-2">
+                  <div className="mt-1">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                  </div>
+                  <span className="text-sm">{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              onClick={handleSubscribe}
+              className="w-full text-lg h-12 bg-primary hover:bg-primary-hover gap-2"
+              disabled={isLoading}
+            >
+              <CreditCard className="h-5 w-5" />
+              {isLoading ? 'Chargement...' : "S'abonner maintenant"}
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );

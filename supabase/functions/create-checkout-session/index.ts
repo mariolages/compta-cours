@@ -8,66 +8,77 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('Starting checkout session creation...');
+    
+    // Get the request body
+    const { priceId, returnUrl } = await req.json();
+    console.log('Price ID received:', priceId);
+    console.log('Return URL received:', returnUrl);
+
+    if (!priceId) {
+      throw new Error('Price ID is required');
+    }
+
     // Get the authorization header
     const authHeader = req.headers.get('Authorization');
+    console.log('Auth header present:', !!authHeader);
+    
     if (!authHeader) {
-      console.error('Missing Authorization header');
-      throw new Error('Missing Authorization header');
+      throw new Error('Authorization header missing');
     }
 
-    // Create a Supabase client with the service role key
-    const supabaseAdmin = createClient(
+    // Initialize Supabase client
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
     );
 
-    // Verify the JWT token
+    // Get user data
     const token = authHeader.replace('Bearer ', '');
-    console.log('Verifying token:', token);
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     
     if (userError) {
-      console.error('Auth error:', userError);
-      throw new Error('Authentication failed');
+      console.error('Error fetching user:', userError);
+      throw userError;
     }
 
-    if (!user) {
-      console.error('No user found');
+    if (!userData?.user) {
       throw new Error('User not found');
     }
 
-    console.log('User authenticated:', user.id);
+    const user = userData.user;
+    const email = user?.email;
 
-    const { priceId, returnUrl } = await req.json();
-    console.log('Starting checkout session with:', { priceId, returnUrl });
+    if (!email) {
+      throw new Error('Email not found');
+    }
 
+    console.log('User email:', email);
+
+    // Initialize Stripe
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
       apiVersion: '2023-10-16',
     });
 
     // Check for existing customer
+    console.log('Checking for existing Stripe customer...');
     const customers = await stripe.customers.list({
-      email: user.email,
+      email: email,
       limit: 1
     });
 
-    let customerId;
+    let customerId = undefined;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
-      console.log('Found existing customer:', customerId);
-
-      // Check for active subscriptions
+      console.log('Existing customer found:', customerId);
+      
+      // Check for active subscription
       const subscriptions = await stripe.subscriptions.list({
         customer: customerId,
         status: 'active',
@@ -76,14 +87,15 @@ serve(async (req) => {
       });
 
       if (subscriptions.data.length > 0) {
-        throw new Error('Vous avez déjà un abonnement actif');
+        throw new Error('You already have an active subscription');
       }
     }
 
+    // Create checkout session
     console.log('Creating checkout session...');
-    const checkoutSession = await stripe.checkout.sessions.create({
+    const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+      customer_email: customerId ? undefined : email,
       line_items: [
         {
           price: priceId,
@@ -96,21 +108,18 @@ serve(async (req) => {
       allow_promotion_codes: true,
       billing_address_collection: 'required',
       payment_method_types: ['card'],
-      metadata: {
-        user_id: user.id,
-      },
     });
 
-    console.log('Checkout session created:', checkoutSession.id);
+    console.log('Checkout session created:', session.id);
     return new Response(
-      JSON.stringify({ url: checkoutSession.url }),
+      JSON.stringify({ url: session.url }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     );
   } catch (error) {
-    console.error('Error in checkout session:', error);
+    console.error('Error creating checkout session:', error);
     return new Response(
       JSON.stringify({ 
         error: error.message,

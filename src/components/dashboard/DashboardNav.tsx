@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { RefreshCw, CreditCard } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { SearchBar } from './SearchBar';
 import { ProfileMenu } from './ProfileMenu';
-import { useNavigate } from 'react-router-dom';
 
 interface DashboardNavProps {
   searchQuery: string;
@@ -21,8 +20,6 @@ export const DashboardNav = ({
   profile,
   user
 }: DashboardNavProps) => {
-  const navigate = useNavigate();
-
   return (
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
       <div className="container mx-auto px-4">
@@ -52,14 +49,6 @@ export const DashboardNav = ({
               className="relative"
             >
               <RefreshCw className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/subscription')}
-              className="flex items-center gap-2"
-            >
-              <CreditCard className="h-4 w-4" />
-              Abonnement
             </Button>
             <ProfileMenu user={user} profile={profile} />
           </div>
