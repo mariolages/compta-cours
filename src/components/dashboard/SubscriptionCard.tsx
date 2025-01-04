@@ -32,6 +32,8 @@ export const SubscriptionCard = ({ subscription }: SubscriptionCardProps) => {
 
     try {
       console.log('Starting checkout session creation...');
+      console.log('Session token:', session.access_token);
+      
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           priceId: 'price_1QdaT0II3n6IJC5vJGKapUGb'

@@ -38,12 +38,27 @@ export default function Subscription() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubscribe = async () => {
+    if (!session) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Vous devez être connecté pour souscrire à un abonnement",
+      });
+      navigate('/login');
+      return;
+    }
+
     try {
       setIsLoading(true);
       console.log('Starting checkout session creation...');
+      console.log('Session token:', session.access_token);
+      
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           priceId: 'price_1QdaT0II3n6IJC5vJGKapUGb'
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
 
@@ -61,7 +76,6 @@ export default function Subscription() {
 
       if (data?.url) {
         console.log('Redirecting to:', data.url);
-        // Use window.location.href instead of navigate for external URLs
         window.location.href = data.url;
       } else {
         toast({
