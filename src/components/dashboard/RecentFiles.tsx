@@ -25,21 +25,21 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
     const fileSubject = `${file.subject.code} ${file.subject.name}`.toLowerCase();
     const fileCategory = file.category.name.toLowerCase();
     
-    // Debug logs
+    // Debug logs améliorés
     console.log('------- Search Debug -------');
     console.log('Search query:', searchLower);
-    console.log('File:', {
+    console.log('File details:', {
       title: fileTitle,
       subject: fileSubject,
       category: fileCategory,
-      originalCode: file.subject.code,
-      originalName: file.subject.name
+      subjectCode: file.subject.code.toLowerCase(),
+      subjectName: file.subject.name.toLowerCase()
     });
     
     // Recherche exacte de catégorie
     if (exactMatches.includes(searchQuery)) {
       const isMatch = fileCategory === searchQuery.toLowerCase();
-      console.log('Category match:', isMatch);
+      console.log('Category exact match:', isMatch);
       return isMatch;
     }
     
@@ -48,20 +48,22 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
       const ueNumber = searchLower.match(/\d+/)?.[0];
       if (ueNumber) {
         const isMatch = fileSubject.includes(`ue${ueNumber}`) || 
-                       file.subject.code.toLowerCase().includes(`ue${ueNumber}`);
+                       file.subject.code.toLowerCase().includes(`ue${ueNumber}`) ||
+                       file.subject.name.toLowerCase().includes(`ue${ueNumber}`);
         console.log('UE match:', isMatch, 'UE number:', ueNumber);
         return isMatch;
       }
     }
     
-    // Recherche de code matière
+    // Recherche de code matière (plus flexible)
     if (/^[a-z]+\d+$/i.test(searchLower)) {
-      const isMatch = file.subject.code.toLowerCase().includes(searchLower);
+      const isMatch = file.subject.code.toLowerCase().includes(searchLower) ||
+                     fileSubject.includes(searchLower);
       console.log('Subject code match:', isMatch);
       return isMatch;
     }
     
-    // Recherche de chapitre
+    // Recherche de chapitre (plus flexible)
     if (searchLower.includes('chapitre') || searchLower.includes('chap') || searchLower.includes('ch')) {
       const numberMatch = searchLower.match(/\d+/);
       if (numberMatch) {
@@ -84,12 +86,14 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
       }
     }
     
-    // Recherche générale
+    // Recherche générale (plus flexible)
     const searchTerms = searchLower.split(/\s+/);
-    const isMatch = searchTerms.every(term => 
+    const isMatch = searchTerms.some(term => 
       fileTitle.includes(term) || 
       fileSubject.includes(term) || 
-      fileCategory.includes(term)
+      fileCategory.includes(term) ||
+      file.subject.code.toLowerCase().includes(term) ||
+      file.subject.name.toLowerCase().includes(term)
     );
     console.log('General search match:', isMatch);
     return isMatch;
