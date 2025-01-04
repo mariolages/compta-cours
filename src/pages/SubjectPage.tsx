@@ -72,15 +72,25 @@ export default function SubjectPage({ hasSubscription = false }) {
   // Vérifie si c'est le premier cours de n'importe quelle classe (DCG1 ou BTS1)
   const isFirstCourse = subject?.class?.code?.endsWith('1');
 
-  // Si ce n'est pas le premier cours et que l'utilisateur n'est pas abonné
-  if (!isFirstCourse && !hasSubscription) {
+  // Vérifie si la catégorie sélectionnée est "Cours" (id: 1)
+  const isCourseCategory = selectedCategory === "1";
+
+  // L'accès est autorisé si :
+  // - l'utilisateur a un abonnement, OU
+  // - c'est un cours de première année ET c'est la catégorie "Cours"
+  const hasAccess = hasSubscription || (isFirstCourse && isCourseCategory);
+
+  if (!hasAccess) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
         <div className="text-center space-y-6 max-w-lg">
           <Lock className="w-16 h-16 mx-auto text-primary" />
           <h1 className="text-2xl font-bold text-gray-900">Contenu Premium</h1>
           <p className="text-gray-600">
-            Ce cours est réservé aux membres premium. Abonnez-vous pour accéder à tout le contenu.
+            {isFirstCourse 
+              ? "Les corrections, exercices et sujets d'examen sont réservés aux membres premium."
+              : "Ce cours est réservé aux membres premium."} 
+            Abonnez-vous pour accéder à tout le contenu.
           </p>
           <Button 
             onClick={() => navigate('/subscription')}
@@ -93,40 +103,6 @@ export default function SubjectPage({ hasSubscription = false }) {
       </div>
     );
   }
-
-  const handleDownload = async (fileId: string, filePath: string, fileName: string) => {
-    try {
-      const { data, error: downloadError } = await supabase.storage
-        .from("dcg_files")
-        .download(filePath);
-
-      if (downloadError) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de télécharger le fichier",
-        });
-        return;
-      }
-
-      const url = URL.createObjectURL(data);
-      const a = document.createElement("a");
-      a.href = url;
-      const fileExt = filePath.split('.').pop();
-      a.download = `${fileName}.${fileExt}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Download error:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors du téléchargement",
-      });
-    }
-  };
 
   if (isLoadingSubject) {
     return (
