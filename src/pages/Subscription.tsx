@@ -40,7 +40,7 @@ export default function Subscription() {
       console.log('Début de la création de la session de paiement...');
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
-          // Remplacez ce price_id par celui de votre produit Stripe
+          // Remplacez ce price_id par celui que vous venez de créer dans Stripe
           priceId: 'price_1OyQRiII3n6IJC5vxXBVZRXB'
         },
       });
@@ -50,7 +50,7 @@ export default function Subscription() {
         toast({
           variant: "destructive",
           title: "Erreur",
-          description: error.message || "Une erreur est survenue lors de la création de la session de paiement",
+          description: "Une erreur est survenue lors de la création de la session de paiement. Veuillez vérifier votre price_id Stripe.",
         });
         return;
       }
