@@ -7,7 +7,6 @@ import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { ClassesGrid } from '@/components/dashboard/ClassesGrid';
 import { SubjectsGrid } from '@/components/dashboard/SubjectsGrid';
 import { DashboardNav } from '@/components/dashboard/DashboardNav';
-import { SubscriptionCard } from '@/components/dashboard/SubscriptionCard';
 import { useQuery } from '@tanstack/react-query';
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
@@ -156,8 +155,6 @@ export default function Dashboard() {
 
       <div className="container mx-auto px-4 py-8 space-y-8">
         <WelcomeCard lastRefresh={lastRefresh} />
-        
-        <SubscriptionCard subscription={subscription} />
         
         {selectedClassId ? (
           <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
