@@ -30,6 +30,8 @@ serve(async (req) => {
       throw new Error('No email found');
     }
 
+    console.log('Checking subscription for email:', email);
+
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
@@ -39,6 +41,8 @@ serve(async (req) => {
       email: email,
       limit: 1
     });
+
+    console.log('Found customers:', customers.data.length);
 
     if (customers.data.length === 0) {
       return new Response(
@@ -50,22 +54,47 @@ serve(async (req) => {
       );
     }
 
+    const customerId = customers.data[0].id;
+    console.log('Customer ID:', customerId);
+
     // Check for both monthly and annual subscriptions
-    const monthlySubscriptions = await stripe.subscriptions.list({
-      customer: customers.data[0].id,
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customerId,
       status: 'active',
-      price: 'price_1QdcI0II3n6IJC5voYqaw2hs', // Monthly price ID
-      limit: 1
+      limit: 100
     });
 
-    const annualSubscriptions = await stripe.subscriptions.list({
-      customer: customers.data[0].id,
-      status: 'active',
-      price: 'price_1QdcIaII3n6IJC5vECDkmJXr', // Annual price ID
-      limit: 1
-    });
+    console.log('Found subscriptions:', subscriptions.data.length);
+    console.log('Subscription details:', subscriptions.data.map(sub => ({
+      id: sub.id,
+      status: sub.status,
+      items: sub.items.data.map(item => item.price.id)
+    })));
 
-    const hasActiveSubscription = monthlySubscriptions.data.length > 0 || annualSubscriptions.data.length > 0;
+    const hasActiveSubscription = subscriptions.data.some(subscription => 
+      subscription.status === 'active' && 
+      subscription.items.data.some(item => 
+        item.price.id === 'price_1QdcI0II3n6IJC5voYqaw2hs' || // Monthly price ID
+        item.price.id === 'price_1QdcIaII3n6IJC5vECDkmJXr'    // Annual price ID
+      )
+    );
+
+    console.log('Has active subscription:', hasActiveSubscription);
+
+    // Update subscriptions table in Supabase
+    if (hasActiveSubscription) {
+      const { error: upsertError } = await supabaseClient
+        .from('subscriptions')
+        .upsert({
+          user_id: user.id,
+          status: 'active',
+          stripe_customer_id: customerId,
+        });
+
+      if (upsertError) {
+        console.error('Error updating subscription in database:', upsertError);
+      }
+    }
 
     return new Response(
       JSON.stringify({ 
