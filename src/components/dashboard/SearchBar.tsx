@@ -24,19 +24,30 @@ export const SearchBar = ({ value, onChange }: SearchBarProps) => {
   const [open, setOpen] = useState(false);
 
   const suggestions = [
-    { type: 'type', label: 'Cours' },
-    { type: 'type', label: 'QCM' },
-    { type: 'type', label: 'Exercices' },
-    { type: 'subject', label: 'Comptabilité' },
-    { type: 'subject', label: 'Droit Fiscal' },
-    { type: 'subject', label: 'Finance' },
-    { type: 'recent', label: 'Chapitre 1' },
-    { type: 'recent', label: 'Chapitre 2' },
-    { type: 'recent', label: 'Chapitre 3' },
+    { type: 'type', label: 'Cours', description: 'Tous les cours disponibles' },
+    { type: 'type', label: 'QCM', description: 'Tous les QCM interactifs' },
+    { type: 'type', label: 'Exercices', description: 'Tous les exercices corrigés' },
+    { type: 'subject', label: 'Comptabilité', description: 'Cours et exercices de comptabilité' },
+    { type: 'subject', label: 'Droit Fiscal', description: 'Cours et exercices de droit fiscal' },
+    { type: 'subject', label: 'Finance', description: 'Cours et exercices de finance' },
+    { type: 'recent', label: 'Chapitre 1', description: 'Recherches récentes' },
+    { type: 'recent', label: 'Chapitre 2', description: 'Recherches récentes' },
+    { type: 'recent', label: 'Chapitre 3', description: 'Recherches récentes' },
   ];
 
   const handleSelect = (selectedValue: string) => {
-    onChange(selectedValue);
+    // Ajoute un espace après la sélection si ce n'est pas déjà le cas
+    const currentTerms = value.toLowerCase().split(' ').filter(Boolean);
+    const newTerm = selectedValue.toLowerCase();
+    
+    // Si le terme est déjà présent, ne pas l'ajouter en double
+    if (!currentTerms.includes(newTerm)) {
+      const newValue = currentTerms.length > 0 
+        ? `${value.trim()} ${selectedValue}`
+        : selectedValue;
+      onChange(newValue);
+    }
+    
     setOpen(false);
   };
 
@@ -68,8 +79,10 @@ export const SearchBar = ({ value, onChange }: SearchBarProps) => {
                     <CommandItem
                       key={suggestion.label}
                       onSelect={() => handleSelect(suggestion.label)}
+                      className="flex justify-between items-center"
                     >
-                      {suggestion.label}
+                      <span>{suggestion.label}</span>
+                      <span className="text-xs text-gray-500">{suggestion.description}</span>
                     </CommandItem>
                   ))}
               </CommandGroup>
@@ -80,8 +93,10 @@ export const SearchBar = ({ value, onChange }: SearchBarProps) => {
                     <CommandItem
                       key={suggestion.label}
                       onSelect={() => handleSelect(suggestion.label)}
+                      className="flex justify-between items-center"
                     >
-                      {suggestion.label}
+                      <span>{suggestion.label}</span>
+                      <span className="text-xs text-gray-500">{suggestion.description}</span>
                     </CommandItem>
                   ))}
               </CommandGroup>
@@ -92,8 +107,10 @@ export const SearchBar = ({ value, onChange }: SearchBarProps) => {
                     <CommandItem
                       key={suggestion.label}
                       onSelect={() => handleSelect(suggestion.label)}
+                      className="flex justify-between items-center"
                     >
-                      {suggestion.label}
+                      <span>{suggestion.label}</span>
+                      <span className="text-xs text-gray-500">{suggestion.description}</span>
                     </CommandItem>
                   ))}
               </CommandGroup>

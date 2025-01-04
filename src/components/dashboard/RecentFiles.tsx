@@ -26,16 +26,26 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
       title: file.title.toLowerCase(),
       subject: `${file.subject.code} ${file.subject.name}`.toLowerCase(),
       category: file.category.name.toLowerCase(),
-      // Ajoute une recherche spécifique pour "chapitre X"
-      chapterMatch: file.title.toLowerCase().replace(/chapitre\s+(\d+)/g, 'chapitre$1')
     };
     
     // Vérifie si tous les termes de recherche sont présents
     return searchTerms.every(term => {
       // Gère spécifiquement la recherche de chapitres
-      if (term.match(/^chapitre\d+$/)) {
-        return fileData.chapterMatch.includes(term);
+      if (term.match(/^chapitre$/i)) {
+        // Si le terme est "chapitre", cherche le prochain numéro
+        const nextTerm = searchTerms[searchTerms.indexOf(term) + 1];
+        if (nextTerm && /^\d+$/.test(nextTerm)) {
+          return fileData.title.includes(`chapitre ${nextTerm}`) || 
+                 fileData.title.includes(`chapitre${nextTerm}`);
+        }
+        return fileData.title.includes(term);
       }
+      
+      // Pour les termes comme "cours", "qcm", etc.
+      if (["cours", "qcm", "exercices"].includes(term)) {
+        return fileData.category.includes(term);
+      }
+      
       // Recherche normale dans tous les champs
       return Object.values(fileData).some(value => 
         value.includes(term.toLowerCase())
