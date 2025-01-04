@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, Trash2 } from "lucide-react";
+import { Upload } from "lucide-react";
 
 interface SubjectHeaderProps {
   code: string;
@@ -10,7 +10,7 @@ interface SubjectHeaderProps {
   onDeleteClick: () => void;
 }
 
-export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: SubjectHeaderProps) {
+export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps) {
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
@@ -42,14 +42,6 @@ export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: Subj
             Déposer des fichiers
           </Button>
         )}
-        <Button
-          variant="outline"
-          onClick={onDeleteClick}
-          className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-        >
-          <Trash2 className="h-4 w-4" />
-          Supprimer
-        </Button>
       </div>
     </div>
   );
