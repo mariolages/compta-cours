@@ -1,17 +1,39 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { DashboardNav } from "@/components/dashboard/DashboardNav";
 import { WelcomeCard } from "@/components/dashboard/WelcomeCard";
 import { ClassesGrid } from "@/components/dashboard/ClassesGrid";
+import type { Class } from "@/types/class";
 
 export default function Dashboard() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [lastRefresh] = useState(new Date());
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: classes, isLoading: isLoadingClasses } = useQuery({
+    queryKey: ['classes'],
+    queryFn: async () => {
+      console.log('Fetching classes...');
+      const { data, error } = await supabase
+        .from('classes')
+        .select('*')
+        .order('code');
+      
+      if (error) throw error;
+      console.log('Classes fetched:', data);
+      return data as Class[];
+    }
+  });
+
+  const handleClassClick = (classId: number) => {
+    navigate(`/subjects/${classId}`);
+  };
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -28,8 +50,7 @@ export default function Dashboard() {
           if (error) throw error;
 
           if (data.success) {
-            // Rafraîchir les données de l'utilisateur
-            await queryClient.invalidateQueries({ queryKey: ['user'] });
+            await queryClient.invalidateQueries({ queryKey: ['subscription'] });
             
             toast({
               title: "Paiement réussi",
@@ -46,7 +67,6 @@ export default function Dashboard() {
         }
       }
 
-      // Nettoyer l'URL
       if (paymentStatus || sessionId) {
         navigate('/dashboard', { replace: true });
       }
@@ -55,13 +75,29 @@ export default function Dashboard() {
     checkPaymentStatus();
   }, [location.search]);
 
+  if (isLoadingClasses) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardNav />
+      <DashboardNav 
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        selectedClassId={null}
+        onBackClick={() => {}}
+      />
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-8">
-          <WelcomeCard />
-          <ClassesGrid />
+          <WelcomeCard lastRefresh={lastRefresh} />
+          <ClassesGrid 
+            classes={classes || []} 
+            onClassClick={handleClassClick}
+          />
         </div>
       </main>
     </div>
