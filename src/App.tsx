@@ -11,19 +11,20 @@ import Dashboard from "./pages/Dashboard";
 import SubjectPage from "./pages/SubjectPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      refetchOnWindowFocus: false, // Prevent excessive refetching
-      refetchOnMount: false, // Prevent refetching on component mount
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
     },
   },
 });
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) => {
   const { session, isLoading } = useSessionContext();
 
   if (isLoading) {
@@ -65,6 +66,14 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <SubjectPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute adminOnly>
+                  <Admin />
                 </ProtectedRoute>
               } 
             />
