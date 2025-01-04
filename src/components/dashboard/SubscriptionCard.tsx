@@ -36,7 +36,8 @@ export const SubscriptionCard = ({ subscription }: SubscriptionCardProps) => {
       
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
-          priceId: 'price_1QdaT0II3n6IJC5vJGKapUGb'
+          priceId: 'price_1QdaT0II3n6IJC5vJGKapUGb',
+          returnUrl: `${window.location.origin}/dashboard`
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -57,7 +58,8 @@ export const SubscriptionCard = ({ subscription }: SubscriptionCardProps) => {
 
       if (data?.url) {
         console.log('Redirecting to:', data.url);
-        window.location.href = data.url;
+        // Force la redirection dans une nouvelle fenêtre
+        window.open(data.url, '_blank');
       } else {
         toast({
           variant: "destructive",
