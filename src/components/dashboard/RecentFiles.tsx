@@ -27,6 +27,7 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
     
     // Recherche améliorée pour les chapitres
     const searchLower = searchQuery.toLowerCase().trim();
+    const fileTitle = file.title.toLowerCase();
     
     // Vérifie différents formats de numéros de chapitre
     const chapterFormats = [
@@ -39,14 +40,9 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
       const match = searchLower.match(format);
       if (match) {
         const chapterNumber = match[1];
-        const fileTitle = file.title.toLowerCase();
-        // Recherche le numéro de chapitre dans le titre, peu importe ce qui suit
-        if (fileTitle.includes(`chapitre ${chapterNumber}`) || 
-            fileTitle.includes(`chapitre${chapterNumber}`) ||
-            fileTitle.includes(`chap ${chapterNumber}`) ||
-            fileTitle.includes(`chap${chapterNumber}`) ||
-            fileTitle.includes(`ch ${chapterNumber}`) ||
-            fileTitle.includes(`ch${chapterNumber}`)) {
+        // Recherche plus flexible du numéro de chapitre dans le titre
+        const chapterPattern = new RegExp(`(chapitre|chap|ch)\\s*${chapterNumber}\\b`, 'i');
+        if (chapterPattern.test(fileTitle)) {
           return true;
         }
       }
@@ -55,7 +51,7 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
     // Si ce n'est pas une recherche de chapitre, recherche normale dans tous les champs
     const searchTerms = searchLower.split(/\s+/);
     const fileData = {
-      title: file.title.toLowerCase(),
+      title: fileTitle,
       subject: `${file.subject.code} ${file.subject.name}`.toLowerCase(),
       category: file.category.name.toLowerCase(),
     };
