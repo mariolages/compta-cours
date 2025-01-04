@@ -35,18 +35,18 @@ export const SubscriptionCard = ({ subscription }: SubscriptionCardProps) => {
 
   return (
     <Card 
-      className="bg-gradient-to-r from-primary/5 to-accent/5 hover:from-primary/10 hover:to-accent/10 transition-colors cursor-pointer" 
+      className="bg-white/50 hover:bg-white/80 transition-colors cursor-pointer border border-gray-100 shadow-sm hover:shadow-md" 
       onClick={handleSubscriptionClick}
     >
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5 text-primary" />
-          {subscription ? 'Gérer mon abonnement' : 'S\'abonner'}
+        <CardTitle className="flex items-center gap-2 text-gray-700">
+          <CreditCard className="h-5 w-5 text-gray-500" />
+          {subscription ? 'Gérer mon abonnement' : 'Accéder à plus de contenu'}
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-gray-500">
           {subscription 
-            ? 'Accédez à vos informations d\'abonnement'
-            : 'Débloquez l\'accès à tous les contenus'}
+            ? 'Consultez les détails de votre abonnement'
+            : 'Découvrez nos offres premium'}
         </CardDescription>
       </CardHeader>
     </Card>
