@@ -12,6 +12,7 @@ import SubjectPage from "./pages/SubjectPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
+import Subscription from "./pages/Subscription";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -74,6 +75,14 @@ const App = () => {
               element={
                 <ProtectedRoute adminOnly>
                   <Admin />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/subscription" 
+              element={
+                <ProtectedRoute>
+                  <Subscription />
                 </ProtectedRoute>
               } 
             />
