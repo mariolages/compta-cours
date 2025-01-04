@@ -9,33 +9,21 @@ interface FileTableRowProps {
 }
 
 export const FileTableRow = ({ file, onDelete }: FileTableRowProps) => {
-  const handleFileClick = () => {
-    const fileUrl = `https://sxpddyeasmcsnrbtvrgm.supabase.co/storage/v1/object/public/dcg_files/${file.file_path}`;
-    
-    // Logs détaillés pour déboguer
-    console.log('File details:', {
-      title: file.title,
-      path: file.file_path,
-      fullUrl: fileUrl
-    });
-    
-    try {
-      window.open(fileUrl, '_blank');
-      console.log('Window.open called successfully');
-    } catch (error) {
-      console.error('Error opening file:', error);
-    }
+  const getFileUrl = () => {
+    return `https://sxpddyeasmcsnrbtvrgm.supabase.co/storage/v1/object/public/dcg_files/${file.file_path}`;
   };
 
   return (
     <tr className="hover:bg-gray-50 transition-colors">
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-        <button
-          onClick={handleFileClick}
+        <a
+          href={getFileUrl()}
+          target="_blank"
+          rel="noopener noreferrer"
           className="hover:text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
         >
           {file.title}
-        </button>
+        </a>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
         {file.subject.code} - {file.subject.name}
@@ -53,7 +41,7 @@ export const FileTableRow = ({ file, onDelete }: FileTableRowProps) => {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={handleFileClick}
+            onClick={() => window.open(getFileUrl(), '_blank')}
             className="text-primary hover:text-primary-hover hover:bg-primary-light"
           >
             <Download className="h-4 w-4 mr-2" />
