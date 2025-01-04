@@ -2,17 +2,32 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, CreditCard, Lock, Shield } from "lucide-react";
+import { Check, CreditCard, Lock, Shield, Star } from "lucide-react";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const features = [
-  "Accès à tous les contenus premium",
-  "Téléchargement illimité",
-  "Mises à jour régulières",
-  "Support prioritaire",
-  "Accès aux quiz avancés",
-  "Contenus exclusifs"
+  {
+    title: "Accès à tous les cours",
+    description: "Débloquez l'accès à tous les cours DCG et BTS",
+    icon: Lock
+  },
+  {
+    title: "Téléchargement illimité",
+    description: "Téléchargez tous les supports de cours",
+    icon: Star
+  },
+  {
+    title: "Mises à jour régulières",
+    description: "Accédez aux nouveaux contenus dès leur publication",
+    icon: Shield
+  }
+];
+
+const freeFeatures = [
+  "Accès aux premiers cours (DCG1 et BTS1)",
+  "Consultation des supports de cours",
+  "Accès au tableau de bord"
 ];
 
 export default function Subscription() {
@@ -43,44 +58,75 @@ export default function Subscription() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-secondary to-background py-12 px-4">
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-12">
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold">Abonnement Premium DCGHub</h1>
+          <h1 className="text-4xl font-bold">Choisissez votre formule</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Accédez à l'intégralité du contenu et des fonctionnalités pour réussir votre DCG
+            Accédez à l'intégralité du contenu et des fonctionnalités pour réussir votre DCG ou BTS
           </p>
         </div>
 
-        <Card className="w-full max-w-lg mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl flex items-center justify-between">
-              <span>Premium</span>
-              <span className="text-3xl font-bold">9.99€/mois</span>
-            </CardTitle>
-            <CardDescription>
-              Tout ce dont vous avez besoin pour réussir
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-4">
-              {features.map((feature, index) => (
-                <li key={index} className="flex items-center gap-3">
-                  <Check className="h-5 w-5 text-primary" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-          <CardFooter>
-            <Button 
-              onClick={handleSubscribe}
-              className="w-full text-lg h-12"
-            >
-              <CreditCard className="mr-2" />
-              S'abonner maintenant
-            </Button>
-          </CardFooter>
-        </Card>
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Plan Gratuit */}
+          <Card className="relative overflow-hidden">
+            <CardHeader>
+              <CardTitle className="text-2xl">Gratuit</CardTitle>
+              <CardDescription>
+                Pour découvrir la plateforme
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-2xl font-bold">0€</div>
+              <ul className="space-y-2">
+                {freeFeatures.map((feature, index) => (
+                  <li key={index} className="flex items-center gap-2">
+                    <Check className="h-5 w-5 text-primary" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          {/* Plan Premium */}
+          <Card className="relative overflow-hidden border-primary">
+            <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1 text-sm">
+              Recommandé
+            </div>
+            <CardHeader>
+              <CardTitle className="text-2xl">Premium</CardTitle>
+              <CardDescription>
+                Accès complet à tous les contenus
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <div className="text-3xl font-bold">9.99€</div>
+                <div className="text-sm text-muted-foreground">par mois</div>
+              </div>
+              <div className="space-y-4">
+                {features.map((feature, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <feature.icon className="h-5 w-5 text-primary mt-1" />
+                    <div>
+                      <div className="font-medium">{feature.title}</div>
+                      <div className="text-sm text-muted-foreground">{feature.description}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                onClick={handleSubscribe}
+                className="w-full text-lg h-12"
+              >
+                <CreditCard className="mr-2" />
+                S'abonner maintenant
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           <Card>
