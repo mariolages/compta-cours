@@ -24,16 +24,23 @@ export default function Dashboard() {
   const [searchParams] = useSearchParams();
   const paymentStatus = searchParams.get('payment_status');
 
+  // Effet pour gérer le statut du paiement
   useEffect(() => {
     if (paymentStatus === 'success') {
-      toast({
-        title: "Paiement réussi",
-        description: "Votre abonnement a été activé avec succès",
-      });
       // Rafraîchir les données de l'abonnement
       queryClient.invalidateQueries({ queryKey: ['subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      
+      // Afficher le message de succès
+      toast({
+        title: "Paiement réussi",
+        description: "Votre abonnement a été activé avec succès. Vous avez maintenant accès à tout le contenu.",
+      });
+
+      // Nettoyer l'URL
+      navigate('/dashboard', { replace: true });
     }
-  }, [paymentStatus, toast, queryClient]);
+  }, [paymentStatus, toast, queryClient, navigate]);
 
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['profile', session?.user?.id],

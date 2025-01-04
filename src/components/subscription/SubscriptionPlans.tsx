@@ -60,6 +60,7 @@ export const SubscriptionPlans = () => {
         throw new Error('URL de paiement non reçue');
       }
 
+      // Redirection vers Stripe
       window.location.href = data.url;
     } catch (error: any) {
       console.error('Subscription error:', error);
