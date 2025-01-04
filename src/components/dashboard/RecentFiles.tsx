@@ -15,21 +15,20 @@ interface RecentFilesProps {
 export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) => {
   const { toast } = useToast();
   
-  // Amélioration de la logique de filtrage
+  // Amélioration de la logique de filtrage pour une recherche plus flexible
   const filteredFiles = files.filter((file) => {
     if (!searchQuery.trim()) return true;
     
-    const search = searchQuery.toLowerCase().trim();
+    const searchTerms = searchQuery.toLowerCase().trim().split(/\s+/);
     const fileData = {
       title: file.title.toLowerCase(),
       subject: `${file.subject.code} ${file.subject.name}`.toLowerCase(),
       category: file.category.name.toLowerCase()
     };
     
-    return (
-      fileData.title.includes(search) ||
-      fileData.subject.includes(search) ||
-      fileData.category.includes(search)
+    // Vérifie si tous les termes de recherche sont présents dans au moins un des champs
+    return searchTerms.every(term => 
+      Object.values(fileData).some(value => value.includes(term))
     );
   });
 
