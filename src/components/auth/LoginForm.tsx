@@ -31,25 +31,19 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
     }
 
     try {
-      console.log('Tentative de connexion avec:', email);
-      
-      // Log the login attempt
+      // Log the login attempt first
       await supabase
         .from('auth_logs')
-        .insert([
-          { 
-            email: email,
-            event_type: 'login_attempt'
-          }
-        ]);
+        .insert([{ 
+          email: email,
+          event_type: 'login_attempt'
+        }]);
 
+      let result;
       if (onSubmit) {
-        const result = await onSubmit(email.trim(), password.trim());
-        if (result.error) {
-          throw result.error;
-        }
+        result = await onSubmit(email.trim(), password.trim());
       } else {
-        const { error: signInError, data } = await supabase.auth.signInWithPassword({
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password: password.trim(),
         });
@@ -57,73 +51,74 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
         if (signInError) {
           console.error('Erreur de connexion:', signInError);
           if (signInError.message.includes('Invalid login credentials')) {
-            setValidationError('Email ou mot de passe incorrect. Veuillez vérifier vos identifiants.');
-          } else {
-            setValidationError(`Erreur de connexion: ${signInError.message}`);
+            throw new Error('Email ou mot de passe incorrect');
           }
-          setIsLoading(false);
-          return;
+          throw signInError;
         }
 
-        const user = data?.user;
-        if (!user) {
-          console.error('Aucun utilisateur retourné après connexion');
-          setValidationError('Erreur lors de la connexion. Veuillez réessayer.');
-          setIsLoading(false);
-          return;
-        }
-
-        // Check if profile exists, if not create it
-        const { data: existingProfile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        if (!existingProfile) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert([
-              {
-                id: user.id,
-                full_name: email.split('@')[0],
-                is_admin: false,
-                is_validated: false
-              }
-            ]);
-
-          if (profileError) {
-            console.error('Error creating profile:', profileError);
-            toast({
-              variant: "destructive",
-              title: "Attention",
-              description: "Votre profil n'a pas pu être créé. Certaines fonctionnalités pourraient être limitées.",
-            });
-          }
-        }
-
-        // Log successful login
-        await supabase
-          .from('auth_logs')
-          .insert([
-            { 
-              user_id: user.id,
-              email: email,
-              event_type: 'login_success'
-            }
-          ]);
-
-        console.log('Utilisateur connecté avec succès:', user.id);
+        result = data;
       }
+
+      const user = result?.user;
+      if (!user) {
+        throw new Error('Erreur lors de la connexion');
+      }
+
+      // Check if profile exists, if not create it
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (!existingProfile) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([{
+            id: user.id,
+            full_name: email.split('@')[0],
+            is_admin: false,
+            is_validated: false
+          }]);
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+          toast({
+            variant: "destructive",
+            title: "Attention",
+            description: "Votre profil n'a pas pu être créé. Certaines fonctionnalités pourraient être limitées.",
+          });
+        }
+      }
+
+      // Log successful login
+      await supabase
+        .from('auth_logs')
+        .insert([{ 
+          user_id: user.id,
+          email: email,
+          event_type: 'login_success'
+        }]);
 
       toast({
         title: "Connexion réussie",
         description: "Vous êtes maintenant connecté",
       });
+      
       navigate('/dashboard');
-    } catch (error) {
-      console.error('Erreur générale de connexion:', error);
-      setValidationError('Une erreur inattendue est survenue. Veuillez réessayer.');
+    } catch (error: any) {
+      console.error('Erreur de connexion:', error);
+      setValidationError(error.message || 'Une erreur est survenue lors de la connexion');
+      
+      // Log failed login attempt if we have more details
+      if (error.message) {
+        await supabase
+          .from('auth_logs')
+          .insert([{ 
+            email: email,
+            event_type: 'login_failed',
+          }]);
+      }
     } finally {
       setIsLoading(false);
     }
