@@ -13,14 +13,6 @@ serve(async (req) => {
   }
 
   try {
-    const { priceId, returnUrl } = await req.json();
-    console.log('Starting checkout session with:', { priceId, returnUrl });
-
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing Authorization header');
-    }
-
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -32,7 +24,13 @@ serve(async (req) => {
       }
     );
 
-    // Extract the JWT token and verify the user
+    // Get the authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Missing Authorization header');
+    }
+
+    // Verify the JWT token
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
@@ -42,6 +40,9 @@ serve(async (req) => {
     }
 
     console.log('User authenticated:', user.id);
+
+    const { priceId, returnUrl } = await req.json();
+    console.log('Starting checkout session with:', { priceId, returnUrl });
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
       apiVersion: '2023-10-16',
@@ -67,7 +68,7 @@ serve(async (req) => {
       });
 
       if (subscriptions.data.length > 0) {
-        throw new Error('You already have an active subscription');
+        throw new Error('Vous avez déjà un abonnement actif');
       }
     }
 
