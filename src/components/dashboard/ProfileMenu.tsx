@@ -31,9 +31,12 @@ export const ProfileMenu = ({ user, profile }: { user: any; profile: any }) => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="focus:outline-none">
-        <Avatar>
-          <AvatarFallback>
+      <DropdownMenuTrigger className="focus:outline-none flex items-center gap-2 text-gray-400 hover:text-gray-600 transition-colors">
+        <span className="text-sm font-normal">
+          {profile?.full_name || user?.email}
+        </span>
+        <Avatar className="h-8 w-8">
+          <AvatarFallback className="bg-secondary text-gray-500 text-xs">
             {profile?.full_name
               ?.split(" ")
               .map((n: string) => n[0])
