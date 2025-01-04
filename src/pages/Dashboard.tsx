@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
@@ -7,7 +7,7 @@ import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { ClassesGrid } from '@/components/dashboard/ClassesGrid';
 import { SubjectsGrid } from '@/components/dashboard/SubjectsGrid';
 import { DashboardNav } from '@/components/dashboard/DashboardNav';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -20,6 +20,20 @@ export default function Dashboard() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { session, isLoading: isLoadingSession } = useSessionContext();
+  const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const paymentStatus = searchParams.get('payment_status');
+
+  useEffect(() => {
+    if (paymentStatus === 'success') {
+      toast({
+        title: "Paiement réussi",
+        description: "Votre abonnement a été activé avec succès",
+      });
+      // Rafraîchir les données de l'abonnement
+      queryClient.invalidateQueries({ queryKey: ['subscription'] });
+    }
+  }, [paymentStatus, toast, queryClient]);
 
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['profile', session?.user?.id],
