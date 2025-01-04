@@ -35,29 +35,18 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
       category: file.category.name.toLowerCase(),
     };
     
-    // Vérifie si tous les termes de recherche sont présents
-    return searchTerms.every(term => {
-      // Gère spécifiquement la recherche de chapitres
-      if (term.match(/^chapitre$/i)) {
-        // Si le terme est "chapitre", cherche le prochain numéro
-        const nextTerm = searchTerms[searchTerms.indexOf(term) + 1];
-        if (nextTerm && /^\d+$/.test(nextTerm)) {
-          return fileData.title.includes(`chapitre ${nextTerm}`) || 
-                 fileData.title.includes(`chapitre${nextTerm}`);
-        }
-        return fileData.title.includes(term);
-      }
-      
-      // Pour les termes comme "cours", "qcm", etc.
-      if (["cours", "qcm", "exercices"].includes(term)) {
-        return fileData.category.includes(term);
-      }
-      
-      // Recherche normale dans tous les champs
-      return Object.values(fileData).some(value => 
-        value.includes(term.toLowerCase())
-      );
-    });
+    // Recherche spécifique pour "Chapitre X"
+    const chapterSearch = searchTerms.join(' ').match(/chapitre\s*(\d+)/i);
+    if (chapterSearch) {
+      const chapterNumber = chapterSearch[1];
+      return fileData.title.includes(`chapitre ${chapterNumber}`) || 
+             fileData.title.includes(`chapitre${chapterNumber}`);
+    }
+    
+    // Recherche normale dans tous les champs
+    return searchTerms.every(term => 
+      Object.values(fileData).some(value => value.includes(term))
+    );
   });
 
   const handleDelete = async (fileId: string) => {
@@ -91,25 +80,25 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
           : `Fichiers récents ${searchQuery ? `(${filteredFiles.length} résultats)` : ''}`
         }
       </h2>
-      <Card className="overflow-hidden bg-white/80 backdrop-blur-sm">
+      <Card className="overflow-hidden bg-white/80 backdrop-blur-sm shadow-lg">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
                     Nom du fichier
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
                     Matière
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
                     Catégorie
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -117,10 +106,17 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
               <tbody className="divide-y divide-gray-200">
                 {filteredFiles.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                      {searchQuery 
-                        ? `Aucun fichier trouvé pour "${searchQuery}"`
-                        : "Aucun fichier disponible"}
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500 bg-gray-50">
+                      <div className="flex flex-col items-center justify-center space-y-2">
+                        <p className="text-lg font-medium">
+                          {searchQuery 
+                            ? `Aucun fichier trouvé pour "${searchQuery}"`
+                            : "Aucun fichier disponible"}
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          Essayez une recherche différente ou ajoutez de nouveaux fichiers
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -133,14 +129,20 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
                         {file.subject.code} - {file.subject.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {file.category.name}
+                        <span className="px-3 py-1 rounded-full bg-primary-light text-primary">
+                          {file.category.name}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(file.created_at).toLocaleDateString('fr-FR')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm" className="text-primary hover:text-primary-hover">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-primary hover:text-primary-hover hover:bg-primary-light"
+                          >
                             <Download className="h-4 w-4 mr-2" />
                             Télécharger
                           </Button>
