@@ -37,17 +37,19 @@ export const SearchBar = ({ value, onChange }: SearchBarProps) => {
     // on remplace complètement la recherche actuelle
     if (suggestions.find(s => s.type === 'type' && s.label === selectedValue)) {
       onChange(selectedValue);
-    } else {
-      // Pour les autres sélections, on ajoute à la recherche existante
-      const currentTerms = value.toLowerCase().split(' ').filter(Boolean);
-      const newTerm = selectedValue.toLowerCase();
-      
-      if (!currentTerms.includes(newTerm)) {
-        const newValue = currentTerms.length > 0 
-          ? `${value.trim()} ${selectedValue}`
-          : selectedValue;
-        onChange(newValue);
-      }
+      setOpen(false);
+      return;
+    }
+    
+    // Pour les autres sélections, on ajoute à la recherche existante
+    const currentTerms = value.toLowerCase().split(' ').filter(Boolean);
+    const newTerm = selectedValue.toLowerCase();
+    
+    if (!currentTerms.includes(newTerm)) {
+      const newValue = currentTerms.length > 0 
+        ? `${value.trim()} ${selectedValue}`
+        : selectedValue;
+      onChange(newValue);
     }
     
     setOpen(false);

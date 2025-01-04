@@ -12,6 +12,8 @@ interface RecentFilesProps {
   onDelete: (fileId: string) => void;
 }
 
+const exactMatches = ["Cours", "QCM", "Exercices"];
+
 export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) => {
   const { toast } = useToast();
   
@@ -19,7 +21,6 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
     if (!searchQuery.trim()) return true;
     
     // Si la recherche est exactement "Cours", "QCM" ou "Exercices"
-    const exactMatches = ["Cours", "QCM", "Exercices"];
     if (exactMatches.includes(searchQuery)) {
       return file.category.name.toLowerCase() === searchQuery.toLowerCase();
     }
