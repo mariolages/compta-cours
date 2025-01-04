@@ -40,7 +40,7 @@ export default function Subscription() {
       console.log('Début de la création de la session de paiement...');
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
-          priceId: 'price_1OyQRiII3n6IJC5vxXBVZRXB'
+          priceId: 'price_1QdaT0II3n6IJC5vJGKapUGb'
         },
       });
 
