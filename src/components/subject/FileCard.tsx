@@ -9,7 +9,8 @@ import {
   Trash2, 
   Check, 
   X,
-  ExternalLink 
+  ExternalLink,
+  Lock
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -18,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AudioPlayer } from "./AudioPlayer";
+import { hasAccessToContent } from "@/utils/access";
 import type { File } from "@/types/files";
 
 interface FileCardProps {
@@ -30,6 +32,9 @@ interface FileCardProps {
   onNewTitleChange: (value: string) => void;
   onDelete: (fileId: string) => void;
   onDownload: (fileId: string, filePath: string, fileName: string) => void;
+  hasSubscription?: boolean;
+  classCode?: string;
+  selectedCategory: string;
 }
 
 export function FileCard({
@@ -42,10 +47,14 @@ export function FileCard({
   onNewTitleChange,
   onDelete,
   onDownload,
+  hasSubscription = false,
+  classCode,
+  selectedCategory,
 }: FileCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isEditing = editingFileId === file.id;
   const isPodcast = file.category?.id === 6;
+  const hasAccess = hasAccessToContent(hasSubscription, classCode, selectedCategory, file.title);
 
   const getFileUrl = () => {
     return `https://sxpddyeasmcsnrbtvrgm.supabase.co/storage/v1/object/public/dcg_files/${file.file_path}`;
@@ -82,7 +91,8 @@ export function FileCard({
             </div>
           ) : (
             <div className="flex items-center gap-4">
-              <h3 className="text-lg font-medium text-gray-900 truncate">
+              <h3 className="text-lg font-medium text-gray-900 truncate flex items-center gap-2">
+                {!hasAccess && <Lock className="h-4 w-4 text-gray-400" />}
                 {file.title}
               </h3>
             </div>
@@ -94,7 +104,8 @@ export function FileCard({
             variant="ghost"
             size="icon"
             onClick={() => window.open(getFileUrl(), '_blank')}
-            className="h-8 w-8 text-gray-500 hover:text-primary hover:bg-primary-light"
+            className={`h-8 w-8 ${hasAccess ? 'text-gray-500 hover:text-primary hover:bg-primary-light' : 'text-gray-300 cursor-not-allowed'}`}
+            disabled={!hasAccess}
           >
             <ExternalLink className="h-4 w-4" />
           </Button>
@@ -102,7 +113,8 @@ export function FileCard({
             variant="ghost"
             size="icon"
             onClick={() => onDownload(file.id, file.file_path, file.title)}
-            className="h-8 w-8 text-gray-500 hover:text-primary hover:bg-primary-light"
+            className={`h-8 w-8 ${hasAccess ? 'text-gray-500 hover:text-primary hover:bg-primary-light' : 'text-gray-300 cursor-not-allowed'}`}
+            disabled={!hasAccess}
           >
             <Download className="h-4 w-4" />
           </Button>

@@ -6,9 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { SubjectHeader } from "@/components/subject/SubjectHeader";
 import { SubjectTabs } from "@/components/subject/SubjectTabs";
-import { AccessDenied } from "@/components/subject/AccessDenied";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { hasAccessToContent } from "@/utils/access";
 import type { Subject } from "@/types/subject";
 
 export default function SubjectPage({ hasSubscription = false }) {
@@ -111,12 +109,6 @@ export default function SubjectPage({ hasSubscription = false }) {
     );
   }
 
-  const hasAccess = hasAccessToContent(hasSubscription, subject?.class?.code, selectedCategory);
-
-  if (!hasAccess) {
-    return <AccessDenied isFirstYear={subject?.class?.code?.endsWith('1') || false} />;
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 md:px-8 py-6 md:py-12 max-w-7xl">
@@ -155,6 +147,8 @@ export default function SubjectPage({ hasSubscription = false }) {
             onCategoryChange={setSelectedCategory}
             onDownload={handleDownload}
             isMobile={isMobile}
+            hasSubscription={hasSubscription}
+            classCode={subject?.class?.code}
           />
         </div>
 
