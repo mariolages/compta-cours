@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, CreditCard, Lock, Shield, Star } from "lucide-react";
+import { Check, CreditCard, Lock, Shield, Star, Home } from "lucide-react";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -59,6 +59,17 @@ export default function Subscription() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-secondary to-background py-12 px-4">
       <div className="max-w-6xl mx-auto space-y-12">
+        <div className="flex justify-between items-center">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 text-primary hover:text-primary-dark"
+          >
+            <Home className="h-5 w-5" />
+            Retour à l'accueil
+          </Button>
+        </div>
+
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold">Choisissez votre formule</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
