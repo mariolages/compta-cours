@@ -25,25 +25,25 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
       return file.category.name.toLowerCase() === searchQuery.toLowerCase();
     }
     
-    // Convertit la recherche en minuscules et divise en mots
-    const searchTerms = searchQuery.toLowerCase().trim().split(/\s+/);
+    // Recherche spécifique pour "Chapitre X" ou "ChapitreX"
+    const chapterMatch = searchQuery.toLowerCase().match(/chapitre\s*(\d+)/i);
+    if (chapterMatch) {
+      const chapterNumber = chapterMatch[1];
+      const fileTitle = file.title.toLowerCase();
+      return fileTitle.includes(`chapitre ${chapterNumber}`) || 
+             fileTitle.includes(`chapitre${chapterNumber}`) ||
+             fileTitle.includes(`chap ${chapterNumber}`) ||
+             fileTitle.includes(`chap${chapterNumber}`);
+    }
     
-    // Prépare les données du fichier pour la recherche
+    // Recherche normale dans tous les champs
+    const searchTerms = searchQuery.toLowerCase().trim().split(/\s+/);
     const fileData = {
       title: file.title.toLowerCase(),
       subject: `${file.subject.code} ${file.subject.name}`.toLowerCase(),
       category: file.category.name.toLowerCase(),
     };
     
-    // Recherche spécifique pour "Chapitre X"
-    const chapterSearch = searchTerms.join(' ').match(/chapitre\s*(\d+)/i);
-    if (chapterSearch) {
-      const chapterNumber = chapterSearch[1];
-      return fileData.title.includes(`chapitre ${chapterNumber}`) || 
-             fileData.title.includes(`chapitre${chapterNumber}`);
-    }
-    
-    // Recherche normale dans tous les champs
     return searchTerms.every(term => 
       Object.values(fileData).some(value => value.includes(term))
     );
