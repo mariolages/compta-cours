@@ -45,6 +45,9 @@ export const SubscriptionPlans = () => {
       if (subscriptionData) {
         const { data: stripeDetails, error: stripeError } = await supabase.functions.invoke('get-subscription-details', {
           body: { subscriptionId: subscriptionData.stripe_subscription_id },
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+          },
         });
 
         if (stripeError) throw stripeError;
