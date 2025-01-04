@@ -20,54 +20,54 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
   const filteredFiles = files.filter((file) => {
     if (!searchQuery.trim()) return true;
     
-    // Si la recherche est exactement "Cours", "QCM" ou "Exercices"
-    if (exactMatches.includes(searchQuery)) {
-      return file.category.name.toLowerCase() === searchQuery.toLowerCase();
-    }
-    
-    // Recherche améliorée pour les chapitres
     const searchLower = searchQuery.toLowerCase().trim();
     const fileTitle = file.title.toLowerCase();
+    const fileSubject = `${file.subject.code} ${file.subject.name}`.toLowerCase();
+    const fileCategory = file.category.name.toLowerCase();
     
     console.log('Searching for:', searchLower);
     console.log('File title:', fileTitle);
+    console.log('File subject:', fileSubject);
+    console.log('File category:', fileCategory);
     
-    // Vérifie si la recherche contient "chapitre" ou ses variantes
+    // Si la recherche est exactement "Cours", "QCM" ou "Exercices"
+    if (exactMatches.includes(searchQuery)) {
+      return fileCategory === searchQuery.toLowerCase();
+    }
+    
+    // Recherche de matière (UE, code ou nom)
+    if (searchLower.startsWith('ue') || /^[a-z]+\d+/i.test(searchLower)) {
+      return fileSubject.includes(searchLower);
+    }
+    
+    // Recherche de chapitre
     if (searchLower.includes('chapitre') || searchLower.includes('chap') || searchLower.includes('ch')) {
-      // Extrait le numéro du chapitre de la recherche
       const numberMatch = searchLower.match(/\d+/);
       if (numberMatch) {
         const chapterNumber = numberMatch[0];
         console.log('Chapter number found:', chapterNumber);
         
-        // Crée un pattern plus flexible pour la recherche
+        // Patterns plus flexibles pour la recherche de chapitres
         const patterns = [
-          new RegExp(`chapitre\\s*${chapterNumber}`, 'i'),
-          new RegExp(`chap\\s*${chapterNumber}`, 'i'),
-          new RegExp(`ch\\s*${chapterNumber}`, 'i')
+          new RegExp(`chapitre\\s*${chapterNumber}\\b`, 'i'),
+          new RegExp(`chap\\.?\\s*${chapterNumber}\\b`, 'i'),
+          new RegExp(`ch\\.?\\s*${chapterNumber}\\b`, 'i')
         ];
         
-        // Vérifie si le titre correspond à l'un des patterns
-        const matches = patterns.some(pattern => {
+        return patterns.some(pattern => {
           const isMatch = pattern.test(fileTitle);
           console.log('Testing pattern:', pattern, 'Result:', isMatch);
           return isMatch;
         });
-        
-        if (matches) return true;
       }
     }
     
-    // Si ce n'est pas une recherche de chapitre, recherche normale dans tous les champs
+    // Recherche générale dans tous les champs
     const searchTerms = searchLower.split(/\s+/);
-    const fileData = {
-      title: fileTitle,
-      subject: `${file.subject.code} ${file.subject.name}`.toLowerCase(),
-      category: file.category.name.toLowerCase(),
-    };
-    
     return searchTerms.every(term => 
-      Object.values(fileData).some(value => value.includes(term))
+      fileTitle.includes(term) || 
+      fileSubject.includes(term) || 
+      fileCategory.includes(term)
     );
   });
 
