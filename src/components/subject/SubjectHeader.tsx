@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 interface SubjectHeaderProps {
   code: string;
@@ -11,8 +10,6 @@ interface SubjectHeaderProps {
 }
 
 export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps) {
-  const navigate = useNavigate();
-  
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
@@ -35,7 +32,7 @@ export function SubjectHeader({ code, name, onUploadClick }: SubjectHeaderProps)
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
-          onClick={() => navigate('/dashboard')}
+          onClick={() => window.history.back()}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="h-4 w-4" />
