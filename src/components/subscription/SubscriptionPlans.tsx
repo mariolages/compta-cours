@@ -66,7 +66,8 @@ export const SubscriptionPlans = () => {
 
       if (data?.url) {
         console.log('Redirecting to:', data.url);
-        window.location.href = data.url;
+        // Force the redirection in a new tab
+        window.open(data.url, '_blank');
       } else {
         toast({
           variant: "destructive",
