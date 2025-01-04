@@ -15,21 +15,32 @@ interface RecentFilesProps {
 export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) => {
   const { toast } = useToast();
   
-  // Amélioration de la logique de filtrage pour une recherche plus flexible
   const filteredFiles = files.filter((file) => {
     if (!searchQuery.trim()) return true;
     
+    // Convertit la recherche en minuscules et divise en mots
     const searchTerms = searchQuery.toLowerCase().trim().split(/\s+/);
+    
+    // Prépare les données du fichier pour la recherche
     const fileData = {
       title: file.title.toLowerCase(),
       subject: `${file.subject.code} ${file.subject.name}`.toLowerCase(),
-      category: file.category.name.toLowerCase()
+      category: file.category.name.toLowerCase(),
+      // Ajoute une recherche spécifique pour "chapitre X"
+      chapterMatch: file.title.toLowerCase().replace(/chapitre\s+(\d+)/g, 'chapitre$1')
     };
     
-    // Vérifie si tous les termes de recherche sont présents dans au moins un des champs
-    return searchTerms.every(term => 
-      Object.values(fileData).some(value => value.includes(term))
-    );
+    // Vérifie si tous les termes de recherche sont présents
+    return searchTerms.every(term => {
+      // Gère spécifiquement la recherche de chapitres
+      if (term.match(/^chapitre\d+$/)) {
+        return fileData.chapterMatch.includes(term);
+      }
+      // Recherche normale dans tous les champs
+      return Object.values(fileData).some(value => 
+        value.includes(term.toLowerCase())
+      );
+    });
   });
 
   const handleDelete = async (fileId: string) => {
