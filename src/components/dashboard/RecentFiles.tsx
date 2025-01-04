@@ -15,12 +15,19 @@ interface RecentFilesProps {
 export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) => {
   const { toast } = useToast();
   const filteredFiles = files.filter((file) => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      file.title.toLowerCase().includes(searchLower) ||
-      file.subject.code.toLowerCase().includes(searchLower) ||
-      file.subject.name.toLowerCase().includes(searchLower) ||
-      file.category.name.toLowerCase().includes(searchLower)
+    if (!searchQuery) return true;
+    
+    const searchTerms = searchQuery.toLowerCase().split(' ');
+    const fileData = {
+      title: file.title.toLowerCase(),
+      subject: `${file.subject.code} ${file.subject.name}`.toLowerCase(),
+      category: file.category.name.toLowerCase()
+    };
+    
+    return searchTerms.every(term => 
+      fileData.title.includes(term) ||
+      fileData.subject.includes(term) ||
+      fileData.category.includes(term)
     );
   });
 
@@ -50,7 +57,7 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
   return (
     <div className="space-y-4 animate-fade-in">
       <h2 className="text-2xl font-semibold text-gray-800 pl-2 border-l-4 border-primary">
-        Fichiers récents
+        Fichiers récents {searchQuery && `(${filteredFiles.length} résultats)`}
       </h2>
       <Card className="overflow-hidden bg-white/80 backdrop-blur-sm">
         <CardContent className="p-0">
@@ -76,39 +83,47 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredFiles.map((file) => (
-                  <tr key={file.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {file.title}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {file.subject.code} - {file.subject.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {file.category.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(file.created_at).toLocaleDateString('fr-FR')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" className="text-primary hover:text-primary-hover">
-                          <Download className="h-4 w-4 mr-2" />
-                          Télécharger
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleDelete(file.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Supprimer
-                        </Button>
-                      </div>
+                {filteredFiles.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                      Aucun fichier trouvé pour "{searchQuery}"
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredFiles.map((file) => (
+                    <tr key={file.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {file.title}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {file.subject.code} - {file.subject.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {file.category.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(file.created_at).toLocaleDateString('fr-FR')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="sm" className="text-primary hover:text-primary-hover">
+                            <Download className="h-4 w-4 mr-2" />
+                            Télécharger
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleDelete(file.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Supprimer
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
