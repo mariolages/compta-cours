@@ -100,7 +100,7 @@ export const SubscriptionPlans = () => {
           <CardFooter>
             <Button 
               className="w-full" 
-              onClick={() => handleSubscribe('price_1OWvKqJr8t7ICdHYbMkqE8Gu')}
+              onClick={() => handleSubscribe('price_1QdcI0II3n6IJC5voYqaw2hs')}
               disabled={isLoading}
             >
               {isLoading ? "Chargement..." : "Souscrire"}
