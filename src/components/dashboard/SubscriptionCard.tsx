@@ -1,8 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 
 interface SubscriptionCardProps {
@@ -35,19 +34,14 @@ export const SubscriptionCard = ({ subscription }: SubscriptionCardProps) => {
 
   return (
     <Card 
-      className="bg-[#F1F0FB]/50 hover:bg-[#F1F0FB]/70 transition-colors cursor-pointer border-none shadow-none" 
+      className="bg-[#F1F0FB]/30 hover:bg-[#F1F0FB]/50 transition-colors cursor-pointer border-none shadow-none" 
       onClick={handleSubscriptionClick}
     >
-      <CardHeader className="py-4">
-        <CardTitle className="flex items-center gap-2 text-gray-600 text-lg font-medium">
+      <CardHeader className="py-2">
+        <CardTitle className="flex items-center gap-2 text-gray-500 text-base font-normal">
           <CreditCard className="h-4 w-4 text-gray-400" />
-          {subscription ? 'Gérer mon abonnement' : 'Contenu premium'}
+          {subscription ? 'Abonnement' : 'Premium'}
         </CardTitle>
-        <CardDescription className="text-gray-400 text-sm">
-          {subscription 
-            ? 'Voir mes options'
-            : 'Explorer les fonctionnalités avancées'}
-        </CardDescription>
       </CardHeader>
     </Card>
   );
