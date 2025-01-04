@@ -87,21 +87,15 @@ serve(async (req) => {
       const isRecurring = price.type === 'recurring';
 
       // Get the origin from the request headers or use a default
-      const origin = req.headers.get('origin');
+      const origin = req.headers.get('origin') || 'https://compta-cours.fr';
       console.log('Request origin:', origin);
 
-      // Ensure we have a valid origin
-      if (!origin) {
-        throw new Error('Origin header is missing');
-      }
+      // Construct the success and cancel URLs with absolute paths
+      const successUrl = `${origin}/dashboard?payment_status=success`;
+      const cancelUrl = `${origin}/subscription`;
 
-      // Construct the success and cancel URLs
-      const successUrl = new URL('/dashboard', origin);
-      successUrl.searchParams.set('payment_status', 'success');
-      const cancelUrl = new URL('/subscription', origin);
-
-      console.log('Success URL:', successUrl.toString());
-      console.log('Cancel URL:', cancelUrl.toString());
+      console.log('Success URL:', successUrl);
+      console.log('Cancel URL:', cancelUrl);
 
       // Create checkout session with appropriate mode
       console.log('Creating checkout session...');
@@ -115,8 +109,8 @@ serve(async (req) => {
           },
         ],
         mode: isRecurring ? 'subscription' : 'payment',
-        success_url: successUrl.toString(),
-        cancel_url: cancelUrl.toString(),
+        success_url: successUrl,
+        cancel_url: cancelUrl,
         allow_promotion_codes: true,
         billing_address_collection: 'required',
         payment_method_types: ['card'],
