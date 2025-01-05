@@ -33,6 +33,8 @@ export const SubscriptionPlans = () => {
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           price_id,
+          success_url: `${window.location.origin}/dashboard?payment_status=success`,
+          cancel_url: `${window.location.origin}/subscription`,
         }
       });
 

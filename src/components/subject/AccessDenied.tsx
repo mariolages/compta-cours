@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useSessionContext } from "@supabase/auth-helpers-react";
 
 interface AccessDeniedProps {
   isFirstYear: boolean;
@@ -8,6 +11,28 @@ interface AccessDeniedProps {
 
 export const AccessDenied = ({ isFirstYear }: AccessDeniedProps) => {
   const navigate = useNavigate();
+  const { session } = useSessionContext();
+
+  const { data: subscription } = useQuery({
+    queryKey: ["subscription", session?.user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("user_id", session?.user?.id)
+        .eq("status", "active")
+        .single();
+
+      if (error && error.code !== "PGRST116") throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  // Si l'utilisateur a un abonnement actif, on ne montre pas le composant
+  if (subscription?.status === "active") {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">

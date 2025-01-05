@@ -8,23 +8,20 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Starting checkout session creation...');
-    
-    // Get the request body
-    const { price_id } = await req.json();
+    const { price_id, success_url, cancel_url } = await req.json();
     console.log('Price ID received:', price_id);
+    console.log('Success URL:', success_url);
+    console.log('Cancel URL:', cancel_url);
 
     if (!price_id) {
       throw new Error('Price ID is required');
     }
 
-    // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     console.log('Auth header present:', !!authHeader);
     
@@ -32,13 +29,11 @@ serve(async (req) => {
       throw new Error('Authorization header missing');
     }
 
-    // Initialize Supabase client with service role key for admin access
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    // Get user data using the service role client
     const token = authHeader.replace('Bearer ', '');
     console.log('Token received:', token);
     
@@ -61,12 +56,10 @@ serve(async (req) => {
 
     console.log('User email:', email);
 
-    // Initialize Stripe
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
       apiVersion: '2023-10-16',
     });
 
-    // Check for existing customer
     console.log('Checking for existing Stripe customer...');
     const customers = await stripe.customers.list({
       email: email,
@@ -80,20 +73,11 @@ serve(async (req) => {
     }
 
     try {
-      // Get the price to determine if it's recurring
       console.log('Retrieving price details...');
       const price = await stripe.prices.retrieve(price_id);
       console.log('Price type:', price.type);
       const isRecurring = price.type === 'recurring';
 
-      const origin = req.headers.get('origin') || 'http://localhost:5173';
-      const successUrl = `${origin}/dashboard?payment_status=success`;
-      const cancelUrl = `${origin}/subscription`;
-
-      console.log('Success URL:', successUrl);
-      console.log('Cancel URL:', cancelUrl);
-
-      // Create checkout session with appropriate mode
       console.log('Creating checkout session...');
       const session = await stripe.checkout.sessions.create({
         customer: customerId,
@@ -105,12 +89,25 @@ serve(async (req) => {
           },
         ],
         mode: isRecurring ? 'subscription' : 'payment',
-        success_url: successUrl,
-        cancel_url: cancelUrl,
+        success_url: success_url,
+        cancel_url: cancel_url,
         allow_promotion_codes: true,
         billing_address_collection: 'required',
         payment_method_types: ['card'],
       });
+
+      // Créer ou mettre à jour l'enregistrement de l'abonnement
+      const { error: subscriptionError } = await supabaseAdmin
+        .from('subscriptions')
+        .upsert({
+          user_id: user.id,
+          stripe_customer_id: customerId || 'pending',
+          status: 'pending',
+        });
+
+      if (subscriptionError) {
+        console.error('Error updating subscription:', subscriptionError);
+      }
 
       console.log('Checkout session created:', session.id);
       return new Response(
