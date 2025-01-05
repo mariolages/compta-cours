@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -28,6 +30,32 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Écouter les changements de session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        // Vider le cache de React Query lors de la déconnexion
+        queryClient.clear();
+        toast({
+          title: "Déconnexion",
+          description: "Vous avez été déconnecté avec succès",
+        });
+      } else if (event === 'SIGNED_IN') {
+        toast({
+          title: "Connexion réussie",
+          description: "Bienvenue !",
+        });
+      }
+    });
+
+    // Nettoyer l'abonnement
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [toast]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
