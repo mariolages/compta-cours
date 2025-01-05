@@ -72,15 +72,12 @@ export const ProtectedRoute = ({
             if (upsertError) {
               console.error('Erreur de mise à jour de l\'abonnement:', upsertError);
             } else {
-              // Afficher une notification de succès
               toast({
                 title: "Abonnement activé",
                 description: "Votre abonnement a été activé avec succès !",
               });
 
-              // Nettoyer l'URL
               window.history.replaceState({}, '', window.location.pathname);
-
               return { status: 'active' };
             }
           }
@@ -113,9 +110,9 @@ export const ProtectedRoute = ({
       }
     },
     enabled: !!session?.user?.id && requireSubscription,
-    refetchInterval: paymentStatus === 'success' ? 0 : 10000, // Désactiver le refetch automatique après un paiement réussi
-    staleTime: 0, // Forcer un refetch à chaque fois
-    cacheTime: 0, // Ne pas mettre en cache les résultats
+    refetchInterval: paymentStatus === 'success' ? 0 : 10000,
+    gcTime: 0,
+    staleTime: 0,
   });
 
   if (isLoading || isLoadingProfile || (requireSubscription && isLoadingSubscription)) {
