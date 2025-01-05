@@ -1,57 +1,53 @@
+import { Link } from "react-router-dom";
+import { SearchBar } from "./SearchBar";
+import { ProfileMenu } from "./ProfileMenu";
+import { ArrowLeft, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
-import { SearchBar } from './SearchBar';
-import { ProfileMenu } from './ProfileMenu';
+import type { Profile } from "@/types/admin";
+import type { User } from "@supabase/supabase-js";
 
 interface DashboardNavProps {
   searchQuery: string;
-  onSearchChange: (value: string) => void;
+  onSearchChange: (query: string) => void;
   selectedClassId: number | null;
   onBackClick: () => void;
-  profile: any;
-  user: any;
+  profile?: Profile | null;
+  user?: User | null;
 }
 
-export const DashboardNav = ({ 
-  searchQuery, 
-  onSearchChange, 
-  selectedClassId, 
+export const DashboardNav = ({
+  searchQuery,
+  onSearchChange,
+  selectedClassId,
   onBackClick,
   profile,
-  user
+  user,
 }: DashboardNavProps) => {
   return (
-    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-4">
-            {selectedClassId && (
-              <Button
-                variant="ghost"
-                onClick={onBackClick}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                ← Retour
-              </Button>
-            )}
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-              compta-cours.fr
-            </h1>
-          </div>
-          
-          <SearchBar value={searchQuery} onChange={onSearchChange} />
-
-          <div className="flex items-center gap-4">
+    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <div className="flex items-center gap-2 flex-1">
+          {selectedClassId ? (
             <Button
+              onClick={onBackClick}
               variant="ghost"
-              size="icon"
-              onClick={() => window.location.reload()}
-              className="relative"
+              className="flex items-center gap-2"
             >
-              <RefreshCw className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" />
+              Retour
             </Button>
-            <ProfileMenu user={user} profile={profile} />
-          </div>
+          ) : (
+            <SearchBar value={searchQuery} onChange={onSearchChange} />
+          )}
+        </div>
+
+        <div className="flex items-center gap-4">
+          <Link to="/messages">
+            <Button variant="ghost" size="icon">
+              <MessageSquare className="h-5 w-5" />
+            </Button>
+          </Link>
+          <ProfileMenu profile={profile} user={user} />
         </div>
       </div>
     </nav>
