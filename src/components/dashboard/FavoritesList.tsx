@@ -7,9 +7,10 @@ import { EmptyFileList } from "@/components/subject/EmptyFileList";
 export function FavoritesList() {
   const { session } = useSessionContext();
 
-  const { data: favorites = [] } = useQuery({
+  const { data: favorites = [], isLoading } = useQuery({
     queryKey: ['favorites', session?.user?.id],
     queryFn: async () => {
+      console.log("Fetching favorites for user:", session?.user?.id);
       const { data, error } = await supabase
         .from('favorites')
         .select(`
@@ -19,6 +20,7 @@ export function FavoritesList() {
             title,
             file_path,
             created_at,
+            user_id,
             category:category_id (
               id,
               name
@@ -32,7 +34,12 @@ export function FavoritesList() {
         `)
         .eq('user_id', session?.user?.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching favorites:", error);
+        throw error;
+      }
+      
+      console.log("Fetched favorites:", data);
       return data?.map(f => f.files) || [];
     },
     enabled: !!session?.user?.id,
@@ -43,7 +50,15 @@ export function FavoritesList() {
     window.open(fileUrl, '_blank');
   };
 
-  if (favorites.length === 0) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!favorites || favorites.length === 0) {
     return <EmptyFileList searchQuery="" />;
   }
 
