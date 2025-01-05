@@ -41,6 +41,7 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
       return data;
     },
     enabled: !!session?.user?.id && (!!selectedChat.id || !!selectedChat.participants?.[0]),
+    refetchOnWindowFocus: false,
   });
 
   const sendMessage = useMutation({
@@ -51,16 +52,27 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
         receiver_id: selectedChat.isGroup ? selectedChat.id : selectedChat.participants?.[0],
       };
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("chat_messages")
-        .insert([newMessage]);
+        .insert([newMessage])
+        .select()
+        .single();
 
       if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: ["chat-messages", selectedChat.id, selectedChat.participants?.[0]]
-      });
+      
+      // Mettre à jour le cache immédiatement
+      const currentMessages = queryClient.getQueryData<ChatMessage[]>([
+        "chat-messages",
+        selectedChat.id,
+        selectedChat.participants?.[0],
+      ]) || [];
+      
+      queryClient.setQueryData(
+        ["chat-messages", selectedChat.id, selectedChat.participants?.[0]],
+        [...currentMessages, data]
+      );
+
+      return data;
     },
     onError: () => {
       toast({
@@ -71,10 +83,10 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
     },
   });
 
-  // Écoute des changements en temps réel
+  // Écoute des changements en temps réel avec gestion optimisée
   useEffect(() => {
     const channel = supabase
-      .channel("chat-changes")
+      .channel(`chat-${selectedChat.id || selectedChat.participants?.[0]}`)
       .on(
         "postgres_changes",
         {
@@ -85,10 +97,25 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
             ? `receiver_id=eq.${selectedChat.id}`
             : `or(and(sender_id=eq.${session?.user?.id},receiver_id=eq.${selectedChat.participants?.[0]}),and(sender_id=eq.${selectedChat.participants?.[0]},receiver_id=eq.${session?.user?.id}))`
         },
-        () => {
-          queryClient.invalidateQueries({ 
-            queryKey: ["chat-messages", selectedChat.id, selectedChat.participants?.[0]]
-          });
+        (payload) => {
+          const newMessage = payload.new as ChatMessage;
+          
+          // Ne pas ajouter le message si c'est nous qui l'avons envoyé
+          if (newMessage.sender_id === session?.user?.id) return;
+          
+          // Mettre à jour le cache avec le nouveau message
+          const currentMessages = queryClient.getQueryData<ChatMessage[]>([
+            "chat-messages",
+            selectedChat.id,
+            selectedChat.participants?.[0],
+          ]) || [];
+          
+          if (!currentMessages.some(msg => msg.id === newMessage.id)) {
+            queryClient.setQueryData(
+              ["chat-messages", selectedChat.id, selectedChat.participants?.[0]],
+              [...currentMessages, newMessage]
+            );
+          }
         }
       )
       .subscribe();
