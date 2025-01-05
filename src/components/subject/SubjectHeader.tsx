@@ -14,9 +14,16 @@ interface SubjectHeaderProps {
   name: string;
   onUploadClick: () => void;
   onDeleteClick: () => Promise<void>;
+  isAdmin?: boolean;
 }
 
-export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: SubjectHeaderProps) {
+export function SubjectHeader({ 
+  code, 
+  name, 
+  onUploadClick, 
+  onDeleteClick,
+  isAdmin = false
+}: SubjectHeaderProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [newName, setNewName] = useState(name);
   const { toast } = useToast();
@@ -70,16 +77,18 @@ export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: Subj
         </div>
 
         <div className="flex items-center gap-2 mt-4 md:mt-0">
-          <Button 
-            onClick={onUploadClick} 
-            className="w-full md:w-auto bg-primary hover:bg-primary-hover text-white shadow-sm"
-          >
-            {isMobile ? (
-              <Upload className="h-5 w-5" />
-            ) : (
-              "Ajouter un fichier"
-            )}
-          </Button>
+          {isAdmin && (
+            <Button 
+              onClick={onUploadClick} 
+              className="w-full md:w-auto bg-primary hover:bg-primary-hover text-white shadow-sm"
+            >
+              {isMobile ? (
+                <Upload className="h-5 w-5" />
+              ) : (
+                "Ajouter un fichier"
+              )}
+            </Button>
+          )}
 
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
             <DialogTrigger asChild>

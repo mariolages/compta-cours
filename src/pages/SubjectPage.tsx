@@ -157,6 +157,7 @@ export default function SubjectPage({ hasSubscription = false }) {
                 });
               }
             }}
+            isAdmin={profile?.is_admin}
           />
 
           <SubjectTabs
