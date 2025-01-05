@@ -8,3 +8,7 @@ export interface Profile {
   updated_at: string;
   email?: string;
 }
+
+export interface UserProfile extends Profile {
+  email: string;
+}
