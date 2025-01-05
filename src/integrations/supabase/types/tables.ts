@@ -88,19 +88,17 @@ export type Tables = {
       receiver_id: string | null;
       created_at: string;
     };
-    Insert: Omit<{
-      id: string;
+    Insert: {
       content: string;
       sender_id: string;
-      receiver_id: string | null;
-      created_at: string;
-    }, 'id' | 'created_at'>;
-    Update: Partial<{
-      id: string;
-      content: string;
-      sender_id: string;
-      receiver_id: string | null;
-      created_at: string;
-    }>;
-  };
+      receiver_id?: string | null;
+    };
+    Update: {
+      content?: string;
+      sender_id?: string;
+      receiver_id?: string | null;
+    };
+  }
 }
+
+export type ChatMessage = Tables['chat_messages']['Row']
