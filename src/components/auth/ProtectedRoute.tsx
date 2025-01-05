@@ -71,18 +71,18 @@ export const ProtectedRoute = ({
 
             if (upsertError) {
               console.error('Erreur de mise à jour de l\'abonnement:', upsertError);
+            } else {
+              // Afficher une notification de succès
+              toast({
+                title: "Abonnement activé",
+                description: "Votre abonnement a été activé avec succès !",
+              });
+
+              // Nettoyer l'URL
+              window.history.replaceState({}, '', window.location.pathname);
+
+              return { status: 'active' };
             }
-
-            // Afficher une notification de succès
-            toast({
-              title: "Abonnement activé",
-              description: "Votre abonnement a été activé avec succès !",
-            });
-
-            // Nettoyer l'URL
-            window.history.replaceState({}, '', window.location.pathname);
-
-            return { status: 'active' };
           }
         }
 
@@ -91,6 +91,7 @@ export const ProtectedRoute = ({
           .from('subscriptions')
           .select('*')
           .eq('user_id', session?.user?.id)
+          .eq('status', 'active')
           .maybeSingle();
 
         if (localError) {
@@ -113,6 +114,8 @@ export const ProtectedRoute = ({
     },
     enabled: !!session?.user?.id && requireSubscription,
     refetchInterval: paymentStatus === 'success' ? 0 : 10000, // Désactiver le refetch automatique après un paiement réussi
+    staleTime: 0, // Forcer un refetch à chaque fois
+    cacheTime: 0, // Ne pas mettre en cache les résultats
   });
 
   if (isLoading || isLoadingProfile || (requireSubscription && isLoadingSubscription)) {
@@ -131,8 +134,12 @@ export const ProtectedRoute = ({
     return <Navigate to="/dashboard" replace />;
   }
 
+  // Vérifier si l'utilisateur a un abonnement actif
+  const hasActiveSubscription = subscription?.status === 'active';
+  console.log('Statut de l\'abonnement actif:', hasActiveSubscription);
+
   return <>{React.cloneElement(children as React.ReactElement, { 
-    hasSubscription: !!subscription || profile?.is_admin,
+    hasSubscription: hasActiveSubscription || profile?.is_admin,
     profile: profile
   })}</>;
 };
