@@ -41,7 +41,7 @@ export default function Messages() {
                     variant="ghost"
                     size="icon"
                     onClick={handleBackToDashboard}
-                    className="mr-2 text-gray-300 hover:text-white hover:bg-[#2D4263]"
+                    className="text-white hover:bg-[#2D4263]"
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
@@ -70,10 +70,10 @@ export default function Messages() {
                 {isMobile && (
                   <Button
                     variant="ghost"
-                    className="absolute top-2 left-2 z-10 text-white hover:bg-[#2D4263]"
+                    className="absolute top-4 left-4 z-10 text-white hover:bg-[#2D4263]"
                     onClick={handleBackToList}
                   >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    <ArrowLeft className="h-5 w-5 mr-2" />
                     Retour
                   </Button>
                 )}
