@@ -41,11 +41,11 @@ export default function Messages() {
                     variant="ghost"
                     size="icon"
                     onClick={handleBackToDashboard}
-                    className="mr-2 text-gray-400 hover:text-white hover:bg-gray-700"
+                    className="mr-2 text-gray-300 hover:text-white hover:bg-[#2D4263]"
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <Users className="h-5 w-5 text-gray-400" />
+                  <Users className="h-5 w-5 text-gray-300" />
                   <h2 className="text-lg font-semibold text-white">Messages</h2>
                 </div>
                 <CreateGroupDialog 
@@ -70,7 +70,7 @@ export default function Messages() {
                 {isMobile && (
                   <Button
                     variant="ghost"
-                    className="absolute top-2 left-2 z-10 text-white hover:bg-gray-700"
+                    className="absolute top-2 left-2 z-10 text-white hover:bg-[#2D4263]"
                     onClick={handleBackToList}
                   >
                     <ArrowLeft className="h-4 w-4 mr-2" />
@@ -80,7 +80,7 @@ export default function Messages() {
                 <ChatWindow selectedChat={selectedChat} />
               </>
             ) : (
-              <div className="h-full flex items-center justify-center bg-[#1C1C1E] text-gray-400">
+              <div className="h-full flex items-center justify-center bg-[#1A1F2C] text-gray-300">
                 <p>Sélectionnez une conversation pour commencer</p>
               </div>
             )}
