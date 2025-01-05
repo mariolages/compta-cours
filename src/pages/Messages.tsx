@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Users } from "lucide-react";
 import { ChatList, SelectedChat } from "@/components/chat/ChatList";
@@ -10,7 +9,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
 export default function Messages() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedChat, setSelectedChat] = useState<SelectedChat | null>(null);
   const isMobile = useIsMobile();
