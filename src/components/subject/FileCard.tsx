@@ -40,13 +40,18 @@ export function FileCard({
   const isEditing = editingFileId === file.id;
   const isPodcast = file.category?.id === 6;
   const hasAccess = hasAccessToContent(hasSubscription, classCode, selectedCategory, file.title);
+  const isTestFile = file.title.toLowerCase().includes("test");
 
   const getFileUrl = () => {
     return `https://sxpddyeasmcsnrbtvrgm.supabase.co/storage/v1/object/public/dcg_files/${file.file_path}`;
   };
 
   return (
-    <Card className="p-4 hover:shadow-md transition-shadow duration-300">
+    <Card 
+      className={`p-4 hover:shadow-md transition-shadow duration-300 ${
+        isTestFile ? 'bg-gradient-to-r from-white via-gray-50 to-white bg-[length:20px_20px]' : ''
+      }`}
+    >
       <div className="flex items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
           <FileCardTitle
