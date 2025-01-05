@@ -14,12 +14,12 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
   const { messages, sendMessage } = useChat(selectedChat);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-[#1C1C1E]">
       <ChatHeader name={selectedChat.name} />
-      <div className="flex-1 overflow-hidden flex flex-col">
+      <div className="flex-1 overflow-hidden">
         <ChatMessages messages={messages} currentUser={session?.user} />
-        <ChatInput onSendMessage={(content) => sendMessage.mutate(content)} />
       </div>
+      <ChatInput onSendMessage={(content) => sendMessage.mutate(content)} />
     </div>
   );
 };
