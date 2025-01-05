@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Search, MessageCircle } from "lucide-react";
 import { ProfileMenu } from "./ProfileMenu";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from '@supabase/auth-helpers-react';
 import type { Profile } from '@/types/admin';
@@ -28,6 +28,7 @@ export function DashboardNav({
   user
 }: DashboardNavProps) {
   const [unreadCount, setUnreadCount] = useState(0);
+  const queryClient = useQueryClient();
 
   // Requête pour obtenir les messages non lus
   const { data: unreadMessages } = useQuery({
@@ -43,7 +44,6 @@ export function DashboardNav({
       return data;
     },
     enabled: !!user?.id,
-    refetchInterval: 5000, // Rafraîchir toutes les 5 secondes
   });
 
   useEffect(() => {
@@ -51,6 +51,32 @@ export function DashboardNav({
       setUnreadCount(unreadMessages.length);
     }
   }, [unreadMessages]);
+
+  // Écouter les nouveaux messages en temps réel
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('unread-messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `receiver_id=eq.${user.id}`,
+        },
+        () => {
+          // Invalider le cache pour forcer une nouvelle requête
+          queryClient.invalidateQueries({ queryKey: ['unread-messages'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, queryClient]);
 
   return (
     <div className="border-b sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
