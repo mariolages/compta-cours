@@ -1,55 +1,100 @@
+import React, { useEffect, useState } from 'react';
 import { Link } from "react-router-dom";
-import { SearchBar } from "./SearchBar";
-import { ProfileMenu } from "./ProfileMenu";
-import { ArrowLeft, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Profile } from "@/types/admin";
-import type { User } from "@supabase/supabase-js";
+import { Input } from "@/components/ui/input";
+import { Search, MessageCircle } from "lucide-react";
+import { ProfileMenu } from "./ProfileMenu";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type { User } from '@supabase/auth-helpers-react';
+import type { Profile } from '@/types/admin';
 
 interface DashboardNavProps {
   searchQuery: string;
-  onSearchChange: (query: string) => void;
+  onSearchChange: (value: string) => void;
   selectedClassId: number | null;
   onBackClick: () => void;
   profile?: Profile | null;
   user?: User | null;
 }
 
-export const DashboardNav = ({
+export function DashboardNav({
   searchQuery,
   onSearchChange,
   selectedClassId,
   onBackClick,
   profile,
-  user,
-}: DashboardNavProps) => {
-  return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <div className="flex items-center gap-2 flex-1">
-          {selectedClassId ? (
-            <Button
-              onClick={onBackClick}
-              variant="ghost"
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Retour
-            </Button>
-          ) : (
-            <SearchBar value={searchQuery} onChange={onSearchChange} />
-          )}
-        </div>
+  user
+}: DashboardNavProps) {
+  const [unreadCount, setUnreadCount] = useState(0);
 
-        <div className="flex items-center gap-4">
-          <Link to="/messages">
-            <Button variant="ghost" size="icon">
-              <MessageSquare className="h-5 w-5" />
+  // Requête pour obtenir les messages non lus
+  const { data: unreadMessages } = useQuery({
+    queryKey: ['unread-messages'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('id')
+        .eq('receiver_id', user?.id)
+        .eq('read', false);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+    refetchInterval: 5000, // Rafraîchir toutes les 5 secondes
+  });
+
+  useEffect(() => {
+    if (unreadMessages) {
+      setUnreadCount(unreadMessages.length);
+    }
+  }, [unreadMessages]);
+
+  return (
+    <div className="border-b sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-16 items-center px-4 gap-4">
+        {selectedClassId && (
+          <Button
+            variant="ghost"
+            onClick={onBackClick}
+            className="mr-2"
+          >
+            ← Retour
+          </Button>
+        )}
+        
+        <div className="flex-1 flex gap-4">
+          <form className="flex-1 flex items-center space-x-2">
+            <div className="relative flex-1 max-w-xl">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+          </form>
+          
+          <Link to="/messages" className="relative">
+            <Button variant="outline" size="icon" className="relative">
+              <MessageCircle className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                >
+                  {unreadCount}
+                </Badge>
+              )}
             </Button>
           </Link>
-          <ProfileMenu profile={profile} user={user} />
         </div>
+
+        <ProfileMenu profile={profile} user={user} />
       </div>
-    </nav>
+    </div>
   );
-};
+}
