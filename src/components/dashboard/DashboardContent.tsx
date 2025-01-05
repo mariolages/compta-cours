@@ -5,7 +5,6 @@ import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { ClassesGrid } from '@/components/dashboard/ClassesGrid';
 import { SubjectsGrid } from '@/components/dashboard/SubjectsGrid';
-import { ChatWindow } from "@/components/chat/ChatWindow";
 import { useQuery } from "@tanstack/react-query";
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
@@ -87,8 +86,6 @@ export function DashboardContent() {
       >
         <Plus className="h-6 w-6" />
       </Button>
-
-      {session && <ChatWindow />}
     </div>
   );
 }
