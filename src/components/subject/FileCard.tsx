@@ -48,11 +48,11 @@ export function FileCard({
 
   return (
     <Card 
-      className={`p-4 hover:shadow-md transition-shadow duration-300 ${
-        isTestFile ? 'bg-gradient-to-r from-white via-gray-50 to-white bg-[length:20px_20px]' : ''
+      className={`p-4 hover:shadow-md transition-shadow duration-300 relative ${
+        isTestFile ? 'before:absolute before:inset-0 before:bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#f3f4f6_10px,#f3f4f6_20px)] before:opacity-50 before:pointer-events-none before:rounded-lg overflow-hidden' : ''
       }`}
     >
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 relative z-10">
         <div className="flex-1 min-w-0">
           <FileCardTitle
             title={file.title}
@@ -86,7 +86,7 @@ export function FileCard({
       </div>
 
       {isPodcast && (
-        <div className="mt-4">
+        <div className="mt-4 relative z-10">
           <AudioPlayer filePath={file.file_path} isLocked={!hasAccess} />
         </div>
       )}
