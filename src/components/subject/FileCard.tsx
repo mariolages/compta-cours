@@ -109,6 +109,7 @@ export function FileCard({
           description: "Fichier ajouté aux favoris",
         });
       }
+      // Invalider les deux requêtes
       queryClient.invalidateQueries({ queryKey: ['favorite', file.id] });
       queryClient.invalidateQueries({ queryKey: ['favorites'] });
     } catch (error) {
