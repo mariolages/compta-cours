@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "./SearchBar";
 import { ProfileMenu } from "./ProfileMenu";
-import { ArrowLeft, Upload } from "lucide-react";
+import { ArrowLeft, MessageSquare, Upload } from "lucide-react";
 import { FileUploadDialog } from "./FileUploadDialog";
 import type { Profile } from "@/types/admin";
 import type { User } from "@supabase/supabase-js";
+import { useNavigate } from "react-router-dom";
 
 interface DashboardNavProps {
   searchQuery: string;
@@ -25,6 +26,7 @@ export function DashboardNav({
   user,
 }: DashboardNavProps) {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-sm">
@@ -44,6 +46,15 @@ export function DashboardNav({
         </div>
 
         <div className="flex items-center gap-2">
+          <Button 
+            onClick={() => navigate('/messages')} 
+            variant="ghost" 
+            size="icon"
+            className="shrink-0"
+          >
+            <MessageSquare className="h-5 w-5" />
+          </Button>
+
           {profile?.is_admin && (
             <Button onClick={() => setIsUploadOpen(true)} className="gap-2">
               <Upload className="h-4 w-4" />
