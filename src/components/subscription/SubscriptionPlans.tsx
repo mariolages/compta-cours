@@ -30,11 +30,19 @@ export const SubscriptionPlans = () => {
 
       console.log('Using access token:', session.access_token);
 
+      // Utiliser l'URL complète pour la redirection
+      const currentOrigin = window.location.origin;
+      const successUrl = `${currentOrigin}/dashboard?payment_status=success`;
+      const cancelUrl = `${currentOrigin}/subscription`;
+
+      console.log('Success URL:', successUrl);
+      console.log('Cancel URL:', cancelUrl);
+
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           price_id,
-          success_url: `${window.location.origin}/dashboard?payment_status=success`,
-          cancel_url: `${window.location.origin}/subscription`,
+          success_url: successUrl,
+          cancel_url: cancelUrl,
         }
       });
 
