@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ChatWindow } from "@/components/chat/ChatWindow";
 
 export default function Dashboard() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -193,6 +194,8 @@ export default function Dashboard() {
         >
           <Plus className="h-6 w-6" />
         </Button>
+
+        {session && <ChatWindow />}
       </div>
     </div>
   );
