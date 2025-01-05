@@ -70,11 +70,10 @@ export default function Messages() {
                 {isMobile && (
                   <Button
                     variant="ghost"
-                    className="absolute top-4 left-4 z-10 bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 px-6 py-2.5 rounded-full font-semibold shadow-lg transform transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-blue-400/30 flex items-center gap-2"
+                    className="absolute top-4 left-4 z-10 text-gray-400 hover:text-white hover:bg-[#2D4263]/50 rounded-lg px-3 py-2 transition-colors duration-200"
                     onClick={handleBackToList}
                   >
-                    <ArrowLeft className="h-5 w-5" />
-                    Retour
+                    <ArrowLeft className="h-4 w-4" />
                   </Button>
                 )}
                 <ChatWindow selectedChat={selectedChat} />
