@@ -9,10 +9,15 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Users } from "lucide-react";
 import type { ChatMessage } from '@/integrations/supabase/types/tables';
 
+interface SelectedUser {
+  id: string;
+  full_name: string | null;
+}
+
 export default function Messages() {
   const navigate = useNavigate();
   const { session } = useSessionContext();
-  const [selectedUser, setSelectedUser] = useState<{ id: string; email: string } | null>(null);
+  const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const { data: users } = useQuery({
