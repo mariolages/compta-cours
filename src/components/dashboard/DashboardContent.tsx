@@ -56,36 +56,38 @@ export function DashboardContent() {
 
   if (isLoadingClasses || isLoadingSubjects) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-[#141413]">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      <WelcomeCard lastRefresh={lastRefresh} />
-      
-      {selectedClassId ? (
-        <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
-      ) : (
-        <ClassesGrid classes={classes} onClassClick={handleClassClick} />
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-[#141413] via-[#1A1F2C] to-[#141413]">
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        <WelcomeCard lastRefresh={lastRefresh} />
+        
+        {selectedClassId ? (
+          <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
+        ) : (
+          <ClassesGrid classes={classes} onClassClick={handleClassClick} />
+        )}
 
-      <FileUploadDialog 
-        open={isUploadOpen} 
-        onOpenChange={setIsUploadOpen}
-        onSuccess={() => {
-          setIsUploadOpen(false);
-        }}
-      />
+        <FileUploadDialog 
+          open={isUploadOpen} 
+          onOpenChange={setIsUploadOpen}
+          onSuccess={() => {
+            setIsUploadOpen(false);
+          }}
+        />
 
-      <Button
-        onClick={() => setIsUploadOpen(true)}
-        className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-primary hover:bg-primary-hover transition-all duration-300 animate-fade-in"
-      >
-        <Plus className="h-6 w-6" />
-      </Button>
+        <Button
+          onClick={() => setIsUploadOpen(true)}
+          className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-primary hover:bg-primary-hover transition-all duration-300 animate-fade-in backdrop-blur-lg bg-opacity-90"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+      </div>
     </div>
   );
 }
