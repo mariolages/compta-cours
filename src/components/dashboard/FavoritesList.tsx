@@ -15,11 +15,7 @@ export function FavoritesList() {
         .from('favorites')
         .select(`
           files (
-            id,
-            title,
-            file_path,
-            created_at,
-            user_id,
+            *,
             category:category_id (
               id,
               name
@@ -39,8 +35,9 @@ export function FavoritesList() {
       }
       
       console.log("Fetched favorites:", data);
-      // Filter out any null files and map to get just the file data
-      return data?.map(f => f.files).filter(f => f !== null) || [];
+      const validFiles = data?.map(f => f.files).filter(f => f !== null) || [];
+      console.log("Valid files:", validFiles);
+      return validFiles;
     },
     enabled: !!session?.user?.id,
   });

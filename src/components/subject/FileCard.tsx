@@ -95,8 +95,8 @@ export function FileCard({
       }
       
       // Invalider les requêtes
-      queryClient.invalidateQueries({ queryKey: ['favorite', file.id] });
-      queryClient.invalidateQueries({ queryKey: ['favorites'] });
+      await queryClient.invalidateQueries({ queryKey: ['favorite', file.id] });
+      await queryClient.invalidateQueries({ queryKey: ['favorites'] });
     } catch (error) {
       console.error('Error toggling favorite:', error);
       toast({
