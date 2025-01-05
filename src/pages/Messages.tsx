@@ -105,7 +105,6 @@ export default function Messages() {
         </Button>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Liste des utilisateurs */}
           <div className="bg-white rounded-lg shadow-lg p-4">
             <div className="flex items-center gap-2 mb-4">
               <Users className="h-5 w-5" />
@@ -125,7 +124,6 @@ export default function Messages() {
             </div>
           </div>
 
-          {/* Zone de chat */}
           <div className="md:col-span-3">
             {selectedUser ? (
               <div className="bg-[#141413] rounded-lg shadow-lg h-[600px] flex flex-col">
