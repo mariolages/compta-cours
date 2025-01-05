@@ -5,14 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChatBubble } from "./ChatBubble";
 import { ChatInput } from "./ChatInput";
 import { useToast } from "@/hooks/use-toast";
-
-interface Message {
-  id: string;
-  content: string;
-  sender_id: string;
-  receiver_id: string | null;
-  created_at: string;
-}
+import { ChatMessage } from "@/integrations/supabase/types/tables";
 
 export const ChatWindow = () => {
   const { session } = useSessionContext();
@@ -20,7 +13,7 @@ export const ChatWindow = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const { data: messages = [], isLoading } = useQuery({
+  const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
     queryKey: ["chat-messages"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -29,7 +22,7 @@ export const ChatWindow = () => {
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      return data as Message[];
+      return data;
     },
   });
 
