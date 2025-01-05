@@ -73,7 +73,7 @@ export function FileCard({
         .select('id')
         .eq('file_id', file.id)
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
       return !!data;
     },
     enabled: !!session?.user?.id,

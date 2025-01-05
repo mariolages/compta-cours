@@ -18,6 +18,7 @@ export function FavoritesList() {
             id,
             title,
             file_path,
+            created_at,
             category:category_id (
               id,
               name
