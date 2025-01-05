@@ -14,7 +14,7 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
   const { messages, sendMessage } = useChat(selectedChat);
 
   return (
-    <div className="bg-[#141413] rounded-lg shadow-lg h-[600px] flex flex-col">
+    <div className="bg-[#141413] rounded-lg shadow-lg h-full md:h-[600px] flex flex-col">
       <ChatHeader name={selectedChat.name} />
       <ChatMessages messages={messages} currentUser={session?.user} />
       <ChatInput onSendMessage={(content) => sendMessage.mutate(content)} />

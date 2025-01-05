@@ -20,7 +20,7 @@ export const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2 p-4">
+    <form onSubmit={handleSubmit} className="flex gap-2 p-4 sticky bottom-0 bg-[#141413]">
       <Input
         value={message}
         onChange={(e) => setMessage(e.target.value)}
@@ -30,7 +30,7 @@ export const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
       <Button 
         type="submit" 
         disabled={isLoading || !message.trim()}
-        className="bg-[#61AAF2] hover:bg-[#3A3935] transition-colors"
+        className="bg-[#61AAF2] hover:bg-[#3A3935] transition-colors shrink-0"
       >
         <Send className="h-4 w-4" />
       </Button>
