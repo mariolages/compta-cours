@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardNav } from '@/components/dashboard/DashboardNav';
 import { DashboardContent } from '@/components/dashboard/DashboardContent';
