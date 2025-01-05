@@ -46,6 +46,7 @@ export function DashboardNav({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Le bouton de chat est maintenant visible pour tous les utilisateurs */}
           <Button 
             onClick={() => navigate('/messages')} 
             variant="ghost" 
@@ -55,6 +56,7 @@ export function DashboardNav({
             <MessageSquare className="h-5 w-5" />
           </Button>
 
+          {/* Le bouton de dépôt de fichier reste uniquement pour les administrateurs */}
           {profile?.is_admin && (
             <Button onClick={() => setIsUploadOpen(true)} className="gap-2">
               <Upload className="h-4 w-4" />
