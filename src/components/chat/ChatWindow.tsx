@@ -6,24 +6,43 @@ import { ChatBubble } from "./ChatBubble";
 import { ChatInput } from "./ChatInput";
 import { useToast } from "@/hooks/use-toast";
 import { ChatMessage } from "@/integrations/supabase/types/tables";
+import type { SelectedChat } from "./ChatList";
 
-export const ChatWindow = () => {
+interface ChatWindowProps {
+  selectedChat: SelectedChat;
+}
+
+export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
   const { session } = useSessionContext();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
-    queryKey: ["chat-messages"],
+  const { data: messages = [] } = useQuery<ChatMessage[]>({
+    queryKey: ["chat-messages", selectedChat.id, selectedChat.participants?.[0]],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("chat_messages")
         .select("*")
         .order("created_at", { ascending: true });
 
+      if (selectedChat.isGroup) {
+        // Pour les groupes, on filtre par les messages destinés au groupe
+        query = query.eq("receiver_id", selectedChat.id);
+      } else {
+        // Pour les messages privés, on récupère les messages entre les deux utilisateurs
+        query = query.or(
+          `and(sender_id.eq.${session?.user?.id},receiver_id.eq.${selectedChat.participants?.[0]}),` +
+          `and(sender_id.eq.${selectedChat.participants?.[0]},receiver_id.eq.${session?.user?.id})`
+        );
+      }
+      
+      const { data, error } = await query;
+      
       if (error) throw error;
       return data;
     },
+    enabled: !!session?.user?.id && (!!selectedChat.id || !!selectedChat.participants?.[0]),
   });
 
   const sendMessage = useMutation({
@@ -32,13 +51,16 @@ export const ChatWindow = () => {
         {
           content,
           sender_id: session?.user?.id,
+          receiver_id: selectedChat.isGroup ? selectedChat.id : selectedChat.participants?.[0],
         },
       ]);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["chat-messages"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ["chat-messages", selectedChat.id, selectedChat.participants?.[0]]
+      });
     },
     onError: () => {
       toast({
@@ -58,9 +80,14 @@ export const ChatWindow = () => {
           event: "INSERT",
           schema: "public",
           table: "chat_messages",
+          filter: selectedChat.isGroup
+            ? `receiver_id=eq.${selectedChat.id}`
+            : `or(and(sender_id=eq.${session?.user?.id},receiver_id=eq.${selectedChat.participants?.[0]}),and(sender_id=eq.${selectedChat.participants?.[0]},receiver_id=eq.${session?.user?.id}))`
         },
         (payload) => {
-          queryClient.invalidateQueries({ queryKey: ["chat-messages"] });
+          queryClient.invalidateQueries({ 
+            queryKey: ["chat-messages", selectedChat.id, selectedChat.participants?.[0]]
+          });
         }
       )
       .subscribe();
@@ -68,14 +95,20 @@ export const ChatWindow = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, selectedChat, session?.user?.id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   return (
-    <div className="fixed bottom-20 right-8 w-96 h-[500px] bg-[#141413]/90 backdrop-blur-lg rounded-lg shadow-xl border border-gray-800 flex flex-col">
+    <div className="bg-[#141413] rounded-lg shadow-lg h-[600px] flex flex-col">
+      <div className="p-4 border-b border-gray-800">
+        <h3 className="text-white font-semibold">
+          {selectedChat.name}
+        </h3>
+      </div>
+      
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <ChatBubble
@@ -87,10 +120,8 @@ export const ChatWindow = () => {
         ))}
         <div ref={messagesEndRef} />
       </div>
-      <ChatInput
-        onSendMessage={(content) => sendMessage.mutate(content)}
-        isLoading={sendMessage.isPending}
-      />
+
+      <ChatInput onSendMessage={(content) => sendMessage.mutate(content)} />
     </div>
   );
 };

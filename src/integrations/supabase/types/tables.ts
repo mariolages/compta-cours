@@ -80,6 +80,24 @@ export type Tables = {
       user_id?: string | null
     }
   }
+  chat_groups: {
+    Row: {
+      id: string;
+      name: string;
+      created_by: string;
+      participants: string[];
+      created_at: string;
+    };
+    Insert: {
+      name: string;
+      created_by: string;
+      participants: string[];
+    };
+    Update: {
+      name?: string;
+      participants?: string[];
+    };
+  };
   chat_messages: {
     Row: {
       id: string;
@@ -102,3 +120,4 @@ export type Tables = {
 }
 
 export type ChatMessage = Tables['chat_messages']['Row']
+export type ChatGroup = Tables['chat_groups']['Row']
