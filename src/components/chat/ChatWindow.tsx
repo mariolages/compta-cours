@@ -17,6 +17,7 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const { data: messages = [] } = useQuery<ChatMessage[]>({
     queryKey: ["chat-messages", selectedChat.id, selectedChat.participants?.[0]],
@@ -42,6 +43,7 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
     },
     enabled: !!session?.user?.id && (!!selectedChat.id || !!selectedChat.participants?.[0]),
     refetchOnWindowFocus: false,
+    staleTime: Infinity,
   });
 
   const sendMessage = useMutation({
@@ -50,6 +52,7 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
         content,
         sender_id: session?.user?.id,
         receiver_id: selectedChat.isGroup ? selectedChat.id : selectedChat.participants?.[0],
+        read: false,
       };
 
       const { data, error } = await supabase
@@ -59,7 +62,9 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
         .single();
 
       if (error) throw error;
-      
+      return data;
+    },
+    onSuccess: (newMessage) => {
       // Mettre à jour le cache immédiatement
       const currentMessages = queryClient.getQueryData<ChatMessage[]>([
         "chat-messages",
@@ -67,12 +72,12 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
         selectedChat.participants?.[0],
       ]) || [];
       
-      queryClient.setQueryData(
-        ["chat-messages", selectedChat.id, selectedChat.participants?.[0]],
-        [...currentMessages, data]
-      );
-
-      return data;
+      if (!currentMessages.some(msg => msg.id === newMessage.id)) {
+        queryClient.setQueryData(
+          ["chat-messages", selectedChat.id, selectedChat.participants?.[0]],
+          [...currentMessages, newMessage]
+        );
+      }
     },
     onError: () => {
       toast({
@@ -85,12 +90,18 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
 
   // Écoute des changements en temps réel avec gestion optimisée
   useEffect(() => {
+    // Nettoyer l'ancien channel s'il existe
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
+
+    const channelId = selectedChat.id || selectedChat.participants?.[0];
     const channel = supabase
-      .channel(`chat-${selectedChat.id || selectedChat.participants?.[0]}`)
+      .channel(`chat-${channelId}`)
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*", // Écouter tous les événements (INSERT, UPDATE, DELETE)
           schema: "public",
           table: "chat_messages",
           filter: selectedChat.isGroup
@@ -98,30 +109,45 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
             : `or(and(sender_id=eq.${session?.user?.id},receiver_id=eq.${selectedChat.participants?.[0]}),and(sender_id=eq.${selectedChat.participants?.[0]},receiver_id=eq.${session?.user?.id}))`
         },
         (payload) => {
-          const newMessage = payload.new as ChatMessage;
-          
-          // Ne pas ajouter le message si c'est nous qui l'avons envoyé
-          if (newMessage.sender_id === session?.user?.id) return;
-          
-          // Mettre à jour le cache avec le nouveau message
+          console.log("Realtime event received:", payload);
           const currentMessages = queryClient.getQueryData<ChatMessage[]>([
             "chat-messages",
             selectedChat.id,
             selectedChat.participants?.[0],
           ]) || [];
-          
-          if (!currentMessages.some(msg => msg.id === newMessage.id)) {
+
+          if (payload.eventType === "INSERT") {
+            const newMessage = payload.new as ChatMessage;
+            // Ne pas ajouter le message si c'est nous qui l'avons envoyé ou s'il existe déjà
+            if (newMessage.sender_id !== session?.user?.id && 
+                !currentMessages.some(msg => msg.id === newMessage.id)) {
+              queryClient.setQueryData(
+                ["chat-messages", selectedChat.id, selectedChat.participants?.[0]],
+                [...currentMessages, newMessage]
+              );
+            }
+          } else if (payload.eventType === "UPDATE") {
+            const updatedMessage = payload.new as ChatMessage;
             queryClient.setQueryData(
               ["chat-messages", selectedChat.id, selectedChat.participants?.[0]],
-              [...currentMessages, newMessage]
+              currentMessages.map(msg => 
+                msg.id === updatedMessage.id ? updatedMessage : msg
+              )
             );
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Subscription status:", status);
+      });
+
+    channelRef.current = channel;
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        console.log("Cleaning up channel");
+        supabase.removeChannel(channelRef.current);
+      }
     };
   }, [queryClient, selectedChat, session?.user?.id]);
 
@@ -129,6 +155,33 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Marquer les messages comme lus quand on les voit
+  useEffect(() => {
+    const markMessagesAsRead = async () => {
+      if (!session?.user?.id || messages.length === 0) return;
+
+      const unreadMessages = messages.filter(
+        msg => !msg.read && msg.sender_id !== session.user?.id
+      );
+
+      if (unreadMessages.length > 0) {
+        const { error } = await supabase
+          .from("chat_messages")
+          .update({ read: true })
+          .in(
+            'id',
+            unreadMessages.map(msg => msg.id)
+          );
+
+        if (error) {
+          console.error("Error marking messages as read:", error);
+        }
+      }
+    };
+
+    markMessagesAsRead();
+  }, [messages, session?.user?.id]);
 
   return (
     <div className="bg-[#141413] rounded-lg shadow-lg h-[600px] flex flex-col">
