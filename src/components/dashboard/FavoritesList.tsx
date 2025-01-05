@@ -14,7 +14,6 @@ export function FavoritesList() {
       const { data, error } = await supabase
         .from('favorites')
         .select(`
-          file_id,
           files (
             id,
             title,
@@ -40,7 +39,8 @@ export function FavoritesList() {
       }
       
       console.log("Fetched favorites:", data);
-      return data?.map(f => f.files) || [];
+      // Filter out any null files and map to get just the file data
+      return data?.map(f => f.files).filter(f => f !== null) || [];
     },
     enabled: !!session?.user?.id,
   });
