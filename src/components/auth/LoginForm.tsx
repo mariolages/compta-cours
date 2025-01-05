@@ -45,10 +45,7 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
       } else {
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
-          password: password.trim(),
-          options: {
-            autoRefreshToken: true // Use autoRefreshToken instead of persistSession
-          }
+          password: password.trim()
         });
 
         if (signInError) {
