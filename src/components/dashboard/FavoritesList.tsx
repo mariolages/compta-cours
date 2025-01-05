@@ -11,11 +11,17 @@ export function FavoritesList() {
     queryKey: ['favorites', session?.user?.id],
     queryFn: async () => {
       console.log("Fetching favorites for user:", session?.user?.id);
-      const { data, error } = await supabase
+      const { data: favoritesData, error } = await supabase
         .from('favorites')
         .select(`
-          files (
-            *,
+          id,
+          file_id,
+          files:file_id (
+            id,
+            title,
+            file_path,
+            category_id,
+            subject_id,
             category:category_id (
               id,
               name
@@ -34,9 +40,18 @@ export function FavoritesList() {
         throw error;
       }
       
-      console.log("Fetched favorites:", data);
-      const validFiles = data?.map(f => f.files).filter(f => f !== null) || [];
-      console.log("Valid files:", validFiles);
+      console.log("Fetched favorites data:", favoritesData);
+      
+      // Filtrer les fichiers valides et les transformer au bon format
+      const validFiles = favoritesData
+        ?.filter(f => f.files !== null)
+        .map(f => ({
+          ...f.files,
+          category: f.files.category,
+          subject: f.files.subject
+        })) || [];
+        
+      console.log("Valid files to display:", validFiles);
       return validFiles;
     },
     enabled: !!session?.user?.id,
