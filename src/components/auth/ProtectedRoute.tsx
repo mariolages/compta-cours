@@ -71,15 +71,16 @@ export const ProtectedRoute = ({
 
             if (upsertError) {
               console.error('Erreur de mise à jour de l\'abonnement:', upsertError);
-            } else {
-              toast({
-                title: "Abonnement activé",
-                description: "Votre abonnement a été activé avec succès !",
-              });
-
-              window.history.replaceState({}, '', window.location.pathname);
-              return { status: 'active' };
+              throw upsertError;
             }
+
+            toast({
+              title: "Abonnement activé",
+              description: "Votre abonnement a été activé avec succès !",
+            });
+
+            window.history.replaceState({}, '', window.location.pathname);
+            return { status: 'active' };
           }
         }
 
@@ -106,13 +107,14 @@ export const ProtectedRoute = ({
           title: "Erreur",
           description: "Impossible de vérifier votre abonnement",
         });
-        return null;
+        throw error;
       }
     },
     enabled: !!session?.user?.id && requireSubscription,
-    refetchInterval: paymentStatus === 'success' ? 0 : 10000,
+    refetchInterval: paymentStatus === 'success' ? 1000 : 10000, // Vérifier plus fréquemment après un paiement
     gcTime: 0,
     staleTime: 0,
+    retry: 3, // Réessayer 3 fois en cas d'échec
   });
 
   if (isLoading || isLoadingProfile || (requireSubscription && isLoadingSubscription)) {
@@ -134,6 +136,12 @@ export const ProtectedRoute = ({
   // Vérifier si l'utilisateur a un abonnement actif
   const hasActiveSubscription = subscription?.status === 'active';
   console.log('Statut de l\'abonnement actif:', hasActiveSubscription);
+
+  // Si un abonnement est requis et que l'utilisateur n'en a pas, rediriger vers la page d'abonnement
+  if (requireSubscription && !hasActiveSubscription && !profile?.is_admin) {
+    console.log('Redirection vers la page d\'abonnement - Pas d\'abonnement actif');
+    return <Navigate to="/subscription" replace />;
+  }
 
   return <>{React.cloneElement(children as React.ReactElement, { 
     hasSubscription: hasActiveSubscription || profile?.is_admin,
