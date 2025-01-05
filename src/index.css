@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,11 +6,27 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 217 89% 61%;
+    --primary-foreground: 0 0% 98%;
+    --primary-hover: 217 89% 55%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 217 89% 61%;
+    --radius: 0.75rem;
   }
 
   * {
@@ -18,30 +34,63 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-family: 'Inter', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Montserrat', sans-serif;
-    @apply font-semibold;
+    @apply font-semibold tracking-tight;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-lg;
+    @apply bg-white/5 backdrop-blur-lg border border-white/10 shadow-xl;
+  }
+
+  .glass-input {
+    @apply bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20;
+  }
+
+  .nav-link {
+    @apply px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors;
   }
 
   .btn-primary {
-    @apply px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors duration-300;
+    @apply px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-all duration-300 disabled:opacity-50;
   }
 
   .btn-secondary {
-    @apply px-4 py-2 bg-secondary text-gray-700 rounded-lg hover:bg-secondary-hover transition-colors duration-300;
+    @apply px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-all duration-300;
   }
 
-  .input-field {
-    @apply w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300;
+  .animate-fade-in {
+    @apply animate-[fade-in_0.3s_ease-out];
+  }
+
+  .animate-slide-in {
+    @apply animate-[slide-in_0.3s_ease-out];
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
