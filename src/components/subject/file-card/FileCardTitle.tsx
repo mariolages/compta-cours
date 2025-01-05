@@ -1,6 +1,5 @@
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Check, X, Lock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface FileCardTitleProps {
   title: string;
@@ -19,43 +18,59 @@ export function FileCardTitle({
   newTitle,
   onNewTitleChange,
   onRenameSubmit,
-  onRenameCancel
+  onRenameCancel,
 }: FileCardTitleProps) {
+  const isTestFile = title.toLowerCase().includes("test");
+
   if (isEditing) {
     return (
-      <div className="flex items-center gap-2">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          onRenameSubmit();
+        }}
+        className="flex items-center gap-2"
+      >
         <Input
+          type="text"
           value={newTitle}
           onChange={(e) => onNewTitleChange(e.target.value)}
           className="flex-1"
           autoFocus
         />
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={onRenameSubmit}
-          className="h-8 w-8"
-        >
-          <Check className="h-4 w-4" />
-        </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={onRenameCancel}
-          className="h-8 w-8"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
+        <div className="flex items-center gap-1">
+          <button
+            type="submit"
+            className="px-2 py-1 text-sm bg-primary text-white rounded hover:bg-primary-hover"
+          >
+            OK
+          </button>
+          <button
+            type="button"
+            onClick={onRenameCancel}
+            className="px-2 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300"
+          >
+            Annuler
+          </button>
+        </div>
+      </form>
     );
   }
 
   return (
-    <div className="flex items-center gap-4">
-      <h3 className="text-lg font-medium text-gray-900 truncate flex items-center gap-2">
-        {!hasAccess && <Lock className="h-4 w-4 text-gray-400" />}
+    <div className="flex items-center gap-2">
+      <h3
+        className={`text-base font-medium truncate ${
+          !hasAccess ? "text-gray-400" : ""
+        }`}
+      >
         {title}
       </h3>
+      {isTestFile && (
+        <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800">
+          TEST
+        </Badge>
+      )}
     </div>
   );
 }
