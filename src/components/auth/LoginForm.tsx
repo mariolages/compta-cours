@@ -46,6 +46,9 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password: password.trim(),
+          options: {
+            persistSession: true // Assurez-vous que la session est persistante
+          }
         });
 
         if (signInError) {
@@ -99,6 +102,12 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
           email: email,
           event_type: 'login_success'
         }]);
+
+      // Vérifier que la session est bien établie
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session) {
+        throw new Error('La session n\'a pas pu être établie');
+      }
 
       toast({
         title: "Connexion réussie",
