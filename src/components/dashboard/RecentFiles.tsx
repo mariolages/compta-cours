@@ -89,7 +89,7 @@ export const RecentFiles = ({ files, searchQuery, onDelete }: RecentFilesProps) 
     
     // Recherche générale (plus flexible)
     const searchTerms = searchLower.split(/\s+/);
-    const isMatch = searchTerms.some(term => 
+    const isMatch = searchTerms.every(term => 
       fileTitle.includes(term) || 
       fileSubject.includes(term) || 
       fileCategory.includes(term) ||
