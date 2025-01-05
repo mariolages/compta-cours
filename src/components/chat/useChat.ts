@@ -108,13 +108,21 @@ export const useChat = (selectedChat: SelectedChat) => {
 
           if (payload.eventType === "INSERT") {
             const newMessage = payload.new as ChatMessage;
-            if (newMessage.sender_id !== session?.user?.id && 
-                !currentMessages.some(msg => msg.id === newMessage.id)) {
+            if (!currentMessages.some(msg => msg.id === newMessage.id)) {
               queryClient.setQueryData(
                 ["chat-messages", selectedChat.id, selectedChat.participants?.[0]],
                 [...currentMessages, newMessage]
               );
             }
+          } else if (payload.eventType === "UPDATE") {
+            const updatedMessage = payload.new as ChatMessage;
+            const updatedMessages = currentMessages.map(msg =>
+              msg.id === updatedMessage.id ? updatedMessage : msg
+            );
+            queryClient.setQueryData(
+              ["chat-messages", selectedChat.id, selectedChat.participants?.[0]],
+              updatedMessages
+            );
           }
         }
       )

@@ -105,16 +105,19 @@ export type Tables = {
       sender_id: string;
       receiver_id: string | null;
       created_at: string;
+      read: boolean | null;
     };
     Insert: {
       content: string;
       sender_id: string;
       receiver_id?: string | null;
+      read?: boolean | null;
     };
     Update: {
       content?: string;
       sender_id?: string;
       receiver_id?: string | null;
+      read?: boolean | null;
     };
   }
 }
