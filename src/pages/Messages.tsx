@@ -70,7 +70,7 @@ export default function Messages() {
                 {isMobile && (
                   <Button
                     variant="ghost"
-                    className="absolute top-4 left-4 z-10 text-white hover:bg-[#2D4263]"
+                    className="absolute top-4 left-4 z-10 bg-[#2D4263] text-white hover:bg-[#3D5275] px-4 py-2 font-medium shadow-lg"
                     onClick={handleBackToList}
                   >
                     <ArrowLeft className="h-5 w-5 mr-2" />
