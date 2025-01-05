@@ -27,10 +27,8 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
         .order("created_at", { ascending: true });
 
       if (selectedChat.isGroup) {
-        // Pour les groupes, on filtre par les messages destinés au groupe
         query = query.eq("receiver_id", selectedChat.id);
       } else {
-        // Pour les messages privés, on récupère les messages entre les deux utilisateurs
         query = query.or(
           `and(sender_id.eq.${session?.user?.id},receiver_id.eq.${selectedChat.participants?.[0]}),` +
           `and(sender_id.eq.${selectedChat.participants?.[0]},receiver_id.eq.${session?.user?.id})`
@@ -47,13 +45,15 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
 
   const sendMessage = useMutation({
     mutationFn: async (content: string) => {
-      const { error } = await supabase.from("chat_messages").insert([
-        {
-          content,
-          sender_id: session?.user?.id,
-          receiver_id: selectedChat.isGroup ? selectedChat.id : selectedChat.participants?.[0],
-        },
-      ]);
+      const newMessage = {
+        content,
+        sender_id: session?.user?.id,
+        receiver_id: selectedChat.isGroup ? selectedChat.id : selectedChat.participants?.[0],
+      };
+
+      const { error } = await supabase
+        .from("chat_messages")
+        .insert([newMessage]);
 
       if (error) throw error;
     },
@@ -71,6 +71,7 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
     },
   });
 
+  // Écoute des changements en temps réel
   useEffect(() => {
     const channel = supabase
       .channel("chat-changes")
@@ -84,7 +85,7 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
             ? `receiver_id=eq.${selectedChat.id}`
             : `or(and(sender_id=eq.${session?.user?.id},receiver_id=eq.${selectedChat.participants?.[0]}),and(sender_id=eq.${selectedChat.participants?.[0]},receiver_id=eq.${session?.user?.id}))`
         },
-        (payload) => {
+        () => {
           queryClient.invalidateQueries({ 
             queryKey: ["chat-messages", selectedChat.id, selectedChat.participants?.[0]]
           });
@@ -97,6 +98,7 @@ export const ChatWindow = ({ selectedChat }: ChatWindowProps) => {
     };
   }, [queryClient, selectedChat, session?.user?.id]);
 
+  // Scroll automatique vers le bas à chaque nouveau message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
