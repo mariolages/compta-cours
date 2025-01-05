@@ -23,6 +23,7 @@ export const ChatMessages = ({ messages, currentUser }: ChatMessagesProps) => {
           content={message.content}
           isCurrentUser={message.sender_id === currentUser?.id}
           timestamp={new Date(message.created_at)}
+          read={message.read}
         />
       ))}
       <div ref={messagesEndRef} />

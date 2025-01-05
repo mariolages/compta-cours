@@ -12,6 +12,7 @@ export const useChat = (selectedChat: SelectedChat) => {
   const { toast } = useToast();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
+  // Requête pour récupérer les messages
   const { data: messages = [] } = useQuery<ChatMessage[]>({
     queryKey: ["chat-messages", selectedChat.id, selectedChat.participants?.[0]],
     queryFn: async () => {
@@ -39,9 +40,9 @@ export const useChat = (selectedChat: SelectedChat) => {
     },
     enabled: !!session?.user?.id && (!!selectedChat.id || !!selectedChat.participants?.[0]),
     refetchOnWindowFocus: false,
-    staleTime: Infinity,
   });
 
+  // Mutation pour envoyer un message
   const sendMessage = useMutation({
     mutationFn: async (content: string) => {
       const newMessage = {
@@ -65,18 +66,10 @@ export const useChat = (selectedChat: SelectedChat) => {
     },
     onSuccess: (newMessage) => {
       console.log("Message sent successfully:", newMessage);
-      const currentMessages = queryClient.getQueryData<ChatMessage[]>([
-        "chat-messages",
-        selectedChat.id,
-        selectedChat.participants?.[0],
-      ]) || [];
-      
-      if (!currentMessages.some(msg => msg.id === newMessage.id)) {
-        queryClient.setQueryData(
-          ["chat-messages", selectedChat.id, selectedChat.participants?.[0]],
-          [...currentMessages, newMessage]
-        );
-      }
+      queryClient.setQueryData(
+        ["chat-messages", selectedChat.id, selectedChat.participants?.[0]],
+        (oldMessages: ChatMessage[] = []) => [...oldMessages, newMessage]
+      );
     },
     onError: (error) => {
       console.error("Error in mutation:", error);
@@ -88,18 +81,21 @@ export const useChat = (selectedChat: SelectedChat) => {
     },
   });
 
+  // Gestion des mises à jour en temps réel
   useEffect(() => {
-    if (channelRef.current) {
-      console.log("Removing existing channel");
-      supabase.removeChannel(channelRef.current);
-    }
+    const setupRealtimeSubscription = async () => {
+      if (channelRef.current) {
+        console.log("Removing existing channel");
+        await supabase.removeChannel(channelRef.current);
+      }
 
-    const channelId = selectedChat.id || selectedChat.participants?.[0];
-    console.log("Creating new channel for:", channelId);
-    
-    const channel = supabase
-      .channel(`chat-${channelId}`)
-      .on(
+      const channelId = selectedChat.id || selectedChat.participants?.[0];
+      console.log("Creating new channel for:", channelId);
+      
+      let channel = supabase.channel(`chat-${channelId}`);
+      
+      // Configuration des événements en temps réel
+      channel = channel.on(
         "postgres_changes",
         {
           event: "*",
@@ -109,8 +105,9 @@ export const useChat = (selectedChat: SelectedChat) => {
             ? `receiver_id=eq.${selectedChat.id}`
             : `or(and(sender_id=eq.${session?.user?.id},receiver_id=eq.${selectedChat.participants?.[0]}),and(sender_id=eq.${selectedChat.participants?.[0]},receiver_id=eq.${session?.user?.id}))`
         },
-        (payload) => {
+        async (payload) => {
           console.log("Realtime event received:", payload);
+          
           const currentMessages = queryClient.getQueryData<ChatMessage[]>([
             "chat-messages",
             selectedChat.id,
@@ -125,6 +122,14 @@ export const useChat = (selectedChat: SelectedChat) => {
                 ["chat-messages", selectedChat.id, selectedChat.participants?.[0]],
                 [...currentMessages, newMessage]
               );
+
+              // Marquer automatiquement comme lu si c'est le destinataire
+              if (newMessage.receiver_id === session?.user?.id) {
+                await supabase
+                  .from("chat_messages")
+                  .update({ read: true })
+                  .eq("id", newMessage.id);
+              }
             }
           } else if (payload.eventType === "UPDATE") {
             const updatedMessage = payload.new as ChatMessage;
@@ -138,12 +143,20 @@ export const useChat = (selectedChat: SelectedChat) => {
             );
           }
         }
-      )
-      .subscribe((status) => {
+      );
+
+      // Souscription au canal
+      channel.subscribe(async (status) => {
         console.log("Subscription status:", status);
+        if (status === "SUBSCRIBED") {
+          await markMessagesAsRead();
+        }
       });
 
-    channelRef.current = channel;
+      channelRef.current = channel;
+    };
+
+    setupRealtimeSubscription();
 
     return () => {
       if (channelRef.current) {
@@ -153,32 +166,29 @@ export const useChat = (selectedChat: SelectedChat) => {
     };
   }, [queryClient, selectedChat, session?.user?.id]);
 
-  useEffect(() => {
-    const markMessagesAsRead = async () => {
-      if (!session?.user?.id || messages.length === 0) return;
+  // Marquer les messages comme lus
+  const markMessagesAsRead = async () => {
+    if (!session?.user?.id || !messages.length) return;
 
-      const unreadMessages = messages.filter(
-        msg => !msg.read && msg.sender_id !== session.user?.id
-      );
+    const unreadMessages = messages.filter(
+      msg => !msg.read && msg.sender_id !== session.user?.id
+    );
 
-      if (unreadMessages.length > 0) {
-        console.log("Marking messages as read:", unreadMessages);
-        const { error } = await supabase
-          .from("chat_messages")
-          .update({ read: true })
-          .in(
-            'id',
-            unreadMessages.map(msg => msg.id)
-          );
+    if (unreadMessages.length > 0) {
+      console.log("Marking messages as read:", unreadMessages);
+      const { error } = await supabase
+        .from("chat_messages")
+        .update({ read: true })
+        .in(
+          'id',
+          unreadMessages.map(msg => msg.id)
+        );
 
-        if (error) {
-          console.error("Error marking messages as read:", error);
-        }
+      if (error) {
+        console.error("Error marking messages as read:", error);
       }
-    };
-
-    markMessagesAsRead();
-  }, [messages, session?.user?.id]);
+    }
+  };
 
   return {
     messages,
