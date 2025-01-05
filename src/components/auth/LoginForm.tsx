@@ -47,7 +47,7 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
           email: email.trim(),
           password: password.trim(),
           options: {
-            persistSession: true // Assurez-vous que la session est persistante
+            autoRefreshToken: true // Use autoRefreshToken instead of persistSession
           }
         });
 
