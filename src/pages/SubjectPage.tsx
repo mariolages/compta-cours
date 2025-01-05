@@ -17,6 +17,24 @@ export default function SubjectPage({ hasSubscription = false }) {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
+  // Requête pour vérifier si l'utilisateur est admin
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { data: subject, isLoading: isLoadingSubject } = useQuery({
     queryKey: ["subject", subjectId],
     queryFn: async () => {
@@ -149,6 +167,8 @@ export default function SubjectPage({ hasSubscription = false }) {
             isMobile={isMobile}
             hasSubscription={hasSubscription}
             classCode={subject?.class?.code}
+            subjectId={subjectId}
+            isAdmin={profile?.is_admin}
           />
         </div>
 

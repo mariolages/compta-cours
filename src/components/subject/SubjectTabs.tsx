@@ -18,8 +18,21 @@ interface SubjectTabsProps {
   isMobile?: boolean;
   hasSubscription?: boolean;
   classCode?: string;
+  subjectId?: string;
+  isAdmin?: boolean;
 }
 
+export function SubjectTabs({ 
+  files, 
+  selectedCategory, 
+  onCategoryChange, 
+  onDownload, 
+  isMobile,
+  hasSubscription,
+  classCode,
+  subjectId,
+  isAdmin = false
+}: SubjectTabsProps) {
 const categories = [
   { id: "1", title: "Cours", icon: BookOpen },
   { id: "2", title: "Exercices", icon: FileText },
@@ -30,15 +43,6 @@ const categories = [
   { id: "7", title: "Quiz", icon: BrainCircuit },
 ];
 
-export function SubjectTabs({ 
-  files, 
-  selectedCategory, 
-  onCategoryChange, 
-  onDownload, 
-  isMobile,
-  hasSubscription,
-  classCode
-}: SubjectTabsProps) {
   if (isMobile) {
     return (
       <div className="space-y-6">
@@ -71,6 +75,8 @@ export function SubjectTabs({
               hasSubscription={hasSubscription}
               classCode={classCode}
               selectedCategory={selectedCategory}
+              subjectId={subjectId}
+              isAdmin={isAdmin}
             />
           )}
         </div>
@@ -110,6 +116,8 @@ export function SubjectTabs({
                   hasSubscription={hasSubscription}
                   classCode={classCode}
                   selectedCategory={category.id}
+                  subjectId={subjectId}
+                  isAdmin={isAdmin}
                 />
               )}
             </TabsContent>

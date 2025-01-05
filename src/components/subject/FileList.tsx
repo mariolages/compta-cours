@@ -6,6 +6,9 @@ import { FileCard } from "./FileCard";
 import { EmptyFileList } from "./EmptyFileList";
 import { FileListHeader } from "./FileListHeader";
 import { hasAccessToContent } from "@/utils/access";
+import { FileUploadDialog } from "@/components/dashboard/FileUploadDialog";
+import { Button } from "@/components/ui/button";
+import { Upload } from "lucide-react";
 import type { File } from "@/types/files";
 
 interface FileListProps {
@@ -14,6 +17,8 @@ interface FileListProps {
   hasSubscription?: boolean;
   classCode?: string;
   selectedCategory: string;
+  subjectId?: string;
+  isAdmin?: boolean;
 }
 
 export function FileList({ 
@@ -21,7 +26,9 @@ export function FileList({
   onDownload, 
   hasSubscription = false,
   classCode,
-  selectedCategory
+  selectedCategory,
+  subjectId,
+  isAdmin = false
 }: FileListProps) {
   const { toast } = useToast();
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -29,6 +36,7 @@ export function FileList({
   const queryClient = useQueryClient();
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
 
   const handleDelete = async (fileId: string) => {
     try {
@@ -98,7 +106,31 @@ export function FileList({
   };
 
   if (!files || files.length === 0) {
-    return <EmptyFileList searchQuery="" />;
+    return (
+      <div>
+        {isAdmin && (
+          <div className="mb-6">
+            <Button
+              onClick={() => setIsUploadOpen(true)}
+              className="w-full md:w-auto flex items-center gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Ajouter des fichiers
+            </Button>
+          </div>
+        )}
+        <EmptyFileList searchQuery="" />
+        <FileUploadDialog
+          open={isUploadOpen}
+          onOpenChange={setIsUploadOpen}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['subject-files'] });
+            setIsUploadOpen(false);
+          }}
+          defaultSubjectId={subjectId}
+        />
+      </div>
+    );
   }
 
   const sortedFiles = [...files].sort((a, b) => {
@@ -131,12 +163,23 @@ export function FileList({
 
   return (
     <div className="space-y-6">
-      <FileListHeader 
-        sortOrder={sortOrder} 
-        onSortToggle={toggleSort}
-        sortType={sortType}
-        onSortTypeToggle={toggleSortType}
-      />
+      <div className="flex justify-between items-center">
+        <FileListHeader 
+          sortOrder={sortOrder} 
+          onSortToggle={toggleSort}
+          sortType={sortType}
+          onSortTypeToggle={toggleSortType}
+        />
+        {isAdmin && (
+          <Button
+            onClick={() => setIsUploadOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            Ajouter des fichiers
+          </Button>
+        )}
+      </div>
       <div className="space-y-4">
         {sortedFiles.map((file) => (
           <FileCard
@@ -156,6 +199,15 @@ export function FileList({
           />
         ))}
       </div>
+      <FileUploadDialog
+        open={isUploadOpen}
+        onOpenChange={setIsUploadOpen}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['subject-files'] });
+          setIsUploadOpen(false);
+        }}
+        defaultSubjectId={subjectId}
+      />
     </div>
   );
 }
