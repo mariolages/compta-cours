@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { ChatMessage } from "@/integrations/supabase/types/tables";
 import { ChatBubble } from "./ChatBubble";
 import { User } from "@supabase/auth-helpers-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ChatMessagesProps {
   messages: ChatMessage[];
@@ -21,7 +20,7 @@ export const ChatMessages = ({ messages, currentUser }: ChatMessagesProps) => {
   }, [messages]);
 
   return (
-    <ScrollArea className="flex-1 h-full">
+    <div className="flex-1 overflow-y-auto">
       <div className="flex-1 px-4 py-2 space-y-2">
         {messages.map((message) => (
           <ChatBubble
@@ -34,6 +33,6 @@ export const ChatMessages = ({ messages, currentUser }: ChatMessagesProps) => {
         ))}
         <div ref={messagesEndRef} />
       </div>
-    </ScrollArea>
+    </div>
   );
 };
