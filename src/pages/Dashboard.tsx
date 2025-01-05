@@ -1,29 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
-import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
-import { ClassesGrid } from '@/components/dashboard/ClassesGrid';
-import { SubjectsGrid } from '@/components/dashboard/SubjectsGrid';
 import { DashboardNav } from '@/components/dashboard/DashboardNav';
+import { DashboardContent } from '@/components/dashboard/DashboardContent';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ChatWindow } from "@/components/chat/ChatWindow";
 
 export default function Dashboard() {
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
-  const [lastRefresh] = useState<Date>(new Date());
+  const [searchParams] = useSearchParams();
+  const paymentStatus = searchParams.get('payment_status');
   const { toast } = useToast();
   const navigate = useNavigate();
   const { session, isLoading: isLoadingSession } = useSessionContext();
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
-  const paymentStatus = searchParams.get('payment_status');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (paymentStatus === 'success') {
@@ -110,35 +101,6 @@ export default function Dashboard() {
     refetchInterval: paymentStatus === 'success' ? 1000 : false,
   });
 
-  const { data: classes = [], isLoading: isLoadingClasses } = useQuery({
-    queryKey: ['classes'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('classes')
-        .select('*')
-        .order('code');
-      
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!session,
-  });
-
-  const { data: subjects = [], isLoading: isLoadingSubjects } = useQuery({
-    queryKey: ['subjects', selectedClassId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('subjects')
-        .select('*')
-        .eq('class_id', selectedClassId)
-        .order('code');
-      
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!session && !!selectedClassId,
-  });
-
   if (!isLoadingSession && !session) {
     navigate('/login', { replace: true });
     return null;
@@ -152,51 +114,17 @@ export default function Dashboard() {
     );
   }
 
-  const handleClassClick = (classId: number) => {
-    setSelectedClassId(classId);
-  };
-
-  const handleSubjectClick = (subjectId: number) => {
-    navigate(`/subjects/${subjectId}`);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       <DashboardNav 
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        selectedClassId={selectedClassId}
-        onBackClick={() => setSelectedClassId(null)}
+        selectedClassId={null}
+        onBackClick={() => {}}
         profile={profile}
         user={session?.user}
       />
-
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        <WelcomeCard lastRefresh={lastRefresh} />
-        
-        {selectedClassId ? (
-          <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
-        ) : (
-          <ClassesGrid classes={classes} onClassClick={handleClassClick} />
-        )}
-
-        <FileUploadDialog 
-          open={isUploadOpen} 
-          onOpenChange={setIsUploadOpen}
-          onSuccess={() => {
-            setIsUploadOpen(false);
-          }}
-        />
-
-        <Button
-          onClick={() => setIsUploadOpen(true)}
-          className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-primary hover:bg-primary-hover transition-all duration-300 animate-fade-in"
-        >
-          <Plus className="h-6 w-6" />
-        </Button>
-
-        {session && <ChatWindow />}
-      </div>
+      <DashboardContent />
     </div>
   );
 }
