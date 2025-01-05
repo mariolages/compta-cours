@@ -22,11 +22,17 @@ export const useChat = (selectedChat: SelectedChat) => {
         .order("created_at", { ascending: true });
 
       if (selectedChat.isGroup) {
+        // Pour les groupes, on récupère tous les messages du groupe
         query = query.eq("receiver_id", selectedChat.id);
       } else {
+        // Pour les conversations individuelles, on récupère les messages dans les deux sens
+        const currentUserId = session?.user?.id;
+        const otherUserId = selectedChat.participants?.[0];
+        
         query = query.or(
-          `and(sender_id.eq.${session?.user?.id},receiver_id.eq.${selectedChat.participants?.[0]}),` +
-          `and(sender_id.eq.${selectedChat.participants?.[0]},receiver_id.eq.${session?.user?.id})`
+          `sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`
+        ).or(
+          `sender_id.eq.${otherUserId},receiver_id.eq.${otherUserId}`
         );
       }
       
@@ -36,7 +42,21 @@ export const useChat = (selectedChat: SelectedChat) => {
         console.error("Error fetching messages:", error);
         throw error;
       }
-      return data;
+
+      // Filtrer les messages pour ne garder que ceux de la conversation
+      const filteredMessages = data.filter(message => {
+        if (selectedChat.isGroup) {
+          return message.receiver_id === selectedChat.id;
+        } else {
+          const isMessageBetweenUsers = (
+            (message.sender_id === session?.user?.id && message.receiver_id === selectedChat.participants?.[0]) ||
+            (message.sender_id === selectedChat.participants?.[0] && message.receiver_id === session?.user?.id)
+          );
+          return isMessageBetweenUsers;
+        }
+      });
+
+      return filteredMessages;
     },
     enabled: !!session?.user?.id && (!!selectedChat.id || !!selectedChat.participants?.[0]),
     refetchOnWindowFocus: false,
