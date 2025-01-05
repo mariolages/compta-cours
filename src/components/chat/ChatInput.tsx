@@ -20,20 +20,23 @@ export const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2 p-4 sticky bottom-0 bg-[#141413]">
-      <Input
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        placeholder="Écrivez votre message..."
-        className="flex-1 bg-[#0000001f] border-none text-white placeholder:text-gray-400"
-      />
-      <Button 
-        type="submit" 
-        disabled={isLoading || !message.trim()}
-        className="bg-[#61AAF2] hover:bg-[#3A3935] transition-colors shrink-0"
-      >
-        <Send className="h-4 w-4" />
-      </Button>
+    <form onSubmit={handleSubmit} className="chat-input-container">
+      <div className="flex items-center gap-2">
+        <Input
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Écrivez votre message..."
+          className="chat-input"
+        />
+        <Button 
+          type="submit" 
+          size="icon"
+          disabled={isLoading || !message.trim()}
+          className="chat-send-button"
+        >
+          <Send className="h-5 w-5" />
+        </Button>
+      </div>
     </form>
   );
 };

@@ -20,32 +20,21 @@ export default function Messages() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
-      <div className="container mx-auto h-screen p-0 md:p-8">
+    <div className="chat-container">
+      <div className="container mx-auto h-screen p-0">
         <div className={cn(
           "grid h-full",
-          isMobile ? "grid-cols-1" : "grid-cols-4 gap-6"
+          isMobile ? "grid-cols-1" : "grid-cols-4"
         )}>
           <div className={cn(
-            "bg-white md:rounded-lg shadow-lg",
+            "chat-sidebar",
             isMobile && selectedChat ? "hidden" : "block"
           )}>
-            {!isMobile && (
-              <Button
-                variant="ghost"
-                className="mb-6 ml-4 mt-4"
-                onClick={() => navigate('/dashboard')}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Retour au tableau de bord
-              </Button>
-            )}
-
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  <h2 className="text-lg font-semibold">Conversations</h2>
+                  <Users className="h-5 w-5 text-gray-400" />
+                  <h2 className="text-lg font-semibold text-white">Messages</h2>
                 </div>
                 <CreateGroupDialog 
                   onGroupCreated={() => {
@@ -69,7 +58,7 @@ export default function Messages() {
                 {isMobile && (
                   <Button
                     variant="ghost"
-                    className="absolute top-2 left-2 z-10"
+                    className="absolute top-2 left-2 z-10 text-white hover:bg-gray-700"
                     onClick={handleBackToList}
                   >
                     <ArrowLeft className="h-4 w-4 mr-2" />
@@ -79,10 +68,8 @@ export default function Messages() {
                 <ChatWindow selectedChat={selectedChat} />
               </>
             ) : (
-              <div className="bg-white h-full md:rounded-lg shadow-lg flex items-center justify-center">
-                <p className="text-gray-500">
-                  Sélectionnez une conversation pour commencer à discuter
-                </p>
+              <div className="h-full flex items-center justify-center bg-[#1C1C1E] text-gray-400">
+                <p>Sélectionnez une conversation pour commencer</p>
               </div>
             )}
           </div>
