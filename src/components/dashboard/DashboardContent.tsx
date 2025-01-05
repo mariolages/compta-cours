@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Calendar } from "lucide-react";
 import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { ClassesGrid } from '@/components/dashboard/ClassesGrid';
 import { SubjectsGrid } from '@/components/dashboard/SubjectsGrid';
+import { RecentFiles } from '@/components/dashboard/RecentFiles';
+import { ExamCalendar } from '@/components/dashboard/ExamCalendar';
 import { useQuery } from "@tanstack/react-query";
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function DashboardContent() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -82,11 +85,24 @@ export function DashboardContent() {
     <div className="container mx-auto px-4 py-8 space-y-8">
       <WelcomeCard lastRefresh={lastRefresh} />
       
-      {selectedClassId ? (
-        <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
-      ) : (
-        <ClassesGrid classes={classes} onClassClick={handleClassClick} />
-      )}
+      <Tabs defaultValue="classes" className="w-full">
+        <TabsList>
+          <TabsTrigger value="classes">Classes et Matières</TabsTrigger>
+          <TabsTrigger value="calendar">Calendrier d'examens</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="classes">
+          {selectedClassId ? (
+            <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
+          ) : (
+            <ClassesGrid classes={classes} onClassClick={handleClassClick} />
+          )}
+        </TabsContent>
+        
+        <TabsContent value="calendar">
+          <ExamCalendar />
+        </TabsContent>
+      </Tabs>
 
       <FileUploadDialog 
         open={isUploadOpen} 
