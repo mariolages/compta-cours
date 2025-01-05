@@ -10,7 +10,8 @@ import {
   Check, 
   X,
   ExternalLink,
-  Lock
+  Lock,
+  Star
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -20,6 +21,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AudioPlayer } from "./AudioPlayer";
 import { hasAccessToContent } from "@/utils/access";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSessionContext } from '@supabase/auth-helpers-react';
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 import type { File } from "@/types/files";
 
 interface FileCardProps {
@@ -55,6 +60,65 @@ export function FileCard({
   const isEditing = editingFileId === file.id;
   const isPodcast = file.category?.id === 6;
   const hasAccess = hasAccessToContent(hasSubscription, classCode, selectedCategory, file.title);
+  const { session } = useSessionContext();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: isFavorite } = useQuery({
+    queryKey: ['favorite', file.id, session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return false;
+      const { data } = await supabase
+        .from('favorites')
+        .select('id')
+        .eq('file_id', file.id)
+        .eq('user_id', session.user.id)
+        .single();
+      return !!data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  const toggleFavorite = async () => {
+    if (!session?.user?.id) return;
+
+    try {
+      if (isFavorite) {
+        await supabase
+          .from('favorites')
+          .delete()
+          .eq('file_id', file.id)
+          .eq('user_id', session.user.id);
+        
+        toast({
+          title: "Succès",
+          description: "Fichier retiré des favoris",
+        });
+      } else {
+        await supabase
+          .from('favorites')
+          .insert([
+            {
+              file_id: file.id,
+              user_id: session.user.id,
+            },
+          ]);
+        
+        toast({
+          title: "Succès",
+          description: "Fichier ajouté aux favoris",
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['favorite', file.id] });
+      queryClient.invalidateQueries({ queryKey: ['favorites'] });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue",
+      });
+    }
+  };
 
   const getFileUrl = () => {
     return `https://sxpddyeasmcsnrbtvrgm.supabase.co/storage/v1/object/public/dcg_files/${file.file_path}`;
@@ -100,6 +164,14 @@ export function FileCard({
         </div>
 
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleFavorite}
+            className={`h-8 w-8 ${isFavorite ? 'text-yellow-500' : 'text-gray-500'} hover:text-yellow-600 hover:bg-yellow-50`}
+          >
+            <Star className="h-4 w-4" fill={isFavorite ? "currentColor" : "none"} />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
