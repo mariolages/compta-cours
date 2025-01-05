@@ -17,6 +17,22 @@ export function DashboardContent() {
   const navigate = useNavigate();
   const { session } = useSessionContext();
 
+  const { data: profile } = useQuery({
+    queryKey: ['profile', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
   const { data: classes = [], isLoading: isLoadingClasses } = useQuery({
     queryKey: ['classes'],
     queryFn: async () => {
@@ -80,12 +96,14 @@ export function DashboardContent() {
         }}
       />
 
-      <Button
-        onClick={() => setIsUploadOpen(true)}
-        className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-primary hover:bg-primary-hover transition-all duration-300 animate-fade-in"
-      >
-        <Plus className="h-6 w-6" />
-      </Button>
+      {profile?.is_admin && (
+        <Button
+          onClick={() => setIsUploadOpen(true)}
+          className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-primary hover:bg-primary-hover transition-all duration-300 animate-fade-in"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+      )}
     </div>
   );
 }
