@@ -44,7 +44,7 @@ export function FileListHeader({
       <Button
         variant="outline"
         onClick={handleSortType}
-        className="flex items-center gap-2 bg-[#1A1F2C] text-white border border-white/10 hover:bg-white/10"
+        className="flex items-center gap-2 hover:bg-gray-50"
       >
         <SortAsc className="h-4 w-4" />
         Trier par {
@@ -58,7 +58,7 @@ export function FileListHeader({
       <Button
         variant="outline"
         onClick={handleSort}
-        className="flex items-center gap-2 bg-[#1A1F2C] text-white border border-white/10 hover:bg-white/10"
+        className="flex items-center gap-2 hover:bg-gray-50"
       >
         <ArrowUpDown className="h-4 w-4" />
         {sortOrder === 'asc' ? '↑' : '↓'}

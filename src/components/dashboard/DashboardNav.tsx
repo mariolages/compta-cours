@@ -79,13 +79,13 @@ export function DashboardNav({
   }, [user?.id, queryClient]);
 
   return (
-    <div className="border-b border-[#ffffff1a] sticky top-0 z-50 bg-[#141413]/95 backdrop-blur supports-[backdrop-filter]:bg-[#141413]/60">
+    <div className="border-b sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-16 items-center px-4 gap-4">
         {selectedClassId && (
           <Button
             variant="ghost"
             onClick={onBackClick}
-            className="mr-2 text-[#FAFAF8] hover:text-[#61AAF2] hover:bg-[#ffffff0a]"
+            className="mr-2"
           >
             ← Retour
           </Button>
@@ -94,23 +94,19 @@ export function DashboardNav({
         <div className="flex-1 flex gap-4">
           <form className="flex-1 flex items-center space-x-2">
             <div className="relative flex-1 max-w-xl">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-[#FAFAF8]/60" />
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Rechercher..."
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-8 bg-[#ffffff0a] border-[#ffffff1a] text-[#FAFAF8] placeholder-[#FAFAF8]/60 focus:border-[#61AAF2]/50 focus:ring-[#61AAF2]/20"
+                className="pl-8"
               />
             </div>
           </form>
           
           <Link to="/messages" className="relative">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className="relative bg-[#ffffff0a] border-[#ffffff1a] hover:bg-[#ffffff14] hover:border-[#61AAF2]/50"
-            >
-              <MessageCircle className="h-5 w-5 text-[#FAFAF8]" />
+            <Button variant="outline" size="icon" className="relative">
+              <MessageCircle className="h-5 w-5" />
               {unreadCount > 0 && (
                 <Badge 
                   variant="destructive" 

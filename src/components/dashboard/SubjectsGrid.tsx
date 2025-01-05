@@ -32,7 +32,7 @@ export const SubjectsGrid = ({ subjects, onSubjectClick }: SubjectsGridProps) =>
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <h2 className="text-2xl font-semibold text-[#FAFAF8] pl-4 border-l-4 border-[#61AAF2]">
+      <h2 className="text-2xl font-semibold text-gray-800 pl-2 border-l-4 border-primary">
         Matières
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -42,19 +42,16 @@ export const SubjectsGrid = ({ subjects, onSubjectClick }: SubjectsGridProps) =>
             <Button
               key={subject.id}
               variant="ghost"
-              className="p-0 h-auto w-full hover:bg-transparent group"
+              className="p-0 h-auto w-full hover:bg-transparent"
               onClick={() => onSubjectClick(subject.id)}
             >
-              <Card className="w-full group relative overflow-hidden backdrop-blur-xl bg-gradient-to-br from-[#ffffff0a] to-[#ffffff14] border-[#ffffff1a] hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02]">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#61AAF2]/5 via-[#8989DE]/5 to-[#EBDBBC]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <Card className="w-full group hover:shadow-xl transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm hover:bg-white transform hover:scale-[1.02]">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-3 relative">
-                    <Icon className="h-5 w-5 text-[#61AAF2] group-hover:scale-110 transition-transform duration-300" />
+                  <CardTitle className="flex items-center gap-3 group-hover:text-primary transition-colors">
+                    <Icon className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
                     <div className="flex flex-col flex-1">
-                      <span className="text-[#FAFAF8] group-hover:text-[#61AAF2] transition-colors">
-                        {subject.code}
-                      </span>
-                      <span className="text-sm font-normal text-[#FAFAF8]/60 group-hover:text-[#FAFAF8]/80">
+                      <span className="text-primary">{subject.code}</span>
+                      <span className="text-sm font-normal text-gray-600 group-hover:text-primary/80">
                         {subject.name}
                       </span>
                     </div>

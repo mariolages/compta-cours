@@ -61,7 +61,7 @@ export function FileCard({
   };
 
   return (
-    <Card className="p-4 bg-[#1A1F2C] border border-white/10 hover:border-white/20 transition-all duration-300">
+    <Card className="p-4 hover:shadow-md transition-shadow duration-300">
       <div className="flex items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
           {isEditing ? (
@@ -69,14 +69,14 @@ export function FileCard({
               <Input
                 value={newTitle}
                 onChange={(e) => onNewTitleChange(e.target.value)}
-                className="flex-1 bg-[#221F26] border-white/10 text-white"
+                className="flex-1"
                 autoFocus
               />
               <Button
                 size="icon"
                 variant="ghost"
                 onClick={() => onRenameSubmit(file.id)}
-                className="h-8 w-8 hover:bg-white/10 text-white"
+                className="h-8 w-8"
               >
                 <Check className="h-4 w-4" />
               </Button>
@@ -84,14 +84,14 @@ export function FileCard({
                 size="icon"
                 variant="ghost"
                 onClick={onRenameCancel}
-                className="h-8 w-8 hover:bg-white/10 text-white"
+                className="h-8 w-8"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           ) : (
             <div className="flex items-center gap-4">
-              <h3 className="text-lg font-medium text-white truncate flex items-center gap-2">
+              <h3 className="text-lg font-medium text-gray-900 truncate flex items-center gap-2">
                 {!hasAccess && <Lock className="h-4 w-4 text-gray-400" />}
                 {file.title}
               </h3>
@@ -104,7 +104,7 @@ export function FileCard({
             variant="ghost"
             size="icon"
             onClick={() => window.open(getFileUrl(), '_blank')}
-            className={`h-8 w-8 ${hasAccess ? 'text-white hover:bg-white/10' : 'text-gray-500 cursor-not-allowed'}`}
+            className={`h-8 w-8 ${hasAccess ? 'text-gray-500 hover:text-primary hover:bg-primary-light' : 'text-gray-300 cursor-not-allowed'}`}
             disabled={!hasAccess}
           >
             <ExternalLink className="h-4 w-4" />
@@ -113,7 +113,7 @@ export function FileCard({
             variant="ghost"
             size="icon"
             onClick={() => onDownload(file.id, file.file_path, file.title)}
-            className={`h-8 w-8 ${hasAccess ? 'text-white hover:bg-white/10' : 'text-gray-500 cursor-not-allowed'}`}
+            className={`h-8 w-8 ${hasAccess ? 'text-gray-500 hover:text-primary hover:bg-primary-light' : 'text-gray-300 cursor-not-allowed'}`}
             disabled={!hasAccess}
           >
             <Download className="h-4 w-4" />
@@ -121,13 +121,13 @@ export function FileCard({
 
           <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10 text-white">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-[#1A1F2C] border border-white/10">
+            <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem
-                className="flex items-center gap-2 text-white hover:bg-white/10"
+                className="flex items-center gap-2"
                 onClick={() => {
                   setIsMenuOpen(false);
                   onRenameClick(file.id, file.title);
@@ -137,7 +137,7 @@ export function FileCard({
                 Renommer
               </DropdownMenuItem>
               <DropdownMenuItem
-                className="flex items-center gap-2 text-red-400 hover:bg-white/10"
+                className="flex items-center gap-2 text-red-600"
                 onClick={() => {
                   setIsMenuOpen(false);
                   onDelete(file.id);
