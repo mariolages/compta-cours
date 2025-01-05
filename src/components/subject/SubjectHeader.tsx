@@ -56,12 +56,12 @@ export function SubjectHeader({ code, name, onUploadClick, onDeleteClick }: Subj
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button
-            variant="ghost"
-            size="icon"
             onClick={() => navigate("/dashboard")}
-            className="hover:bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center"
+            className="flex items-center gap-2 text-primary hover:bg-primary/10 transition-colors duration-200"
+            variant="ghost"
           >
             <ArrowLeft className="h-5 w-5" />
+            <span className="hidden md:inline">Retour au tableau de bord</span>
           </Button>
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-gray-900">{name}</h1>
