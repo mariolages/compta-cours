@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Users } from "lucide-react";
 import { ChatList, SelectedChat } from "@/components/chat/ChatList";
@@ -9,12 +10,17 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
 export default function Messages() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedChat, setSelectedChat] = useState<SelectedChat | null>(null);
   const isMobile = useIsMobile();
 
   const handleBackToList = () => {
     setSelectedChat(null);
+  };
+
+  const handleBackToDashboard = () => {
+    navigate('/dashboard');
   };
 
   return (
@@ -31,6 +37,14 @@ export default function Messages() {
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleBackToDashboard}
+                    className="mr-2 text-gray-400 hover:text-white hover:bg-gray-700"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
                   <Users className="h-5 w-5 text-gray-400" />
                   <h2 className="text-lg font-semibold text-white">Messages</h2>
                 </div>
