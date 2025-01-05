@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarPlus } from "lucide-react";
+import { useSessionContext } from '@supabase/auth-helpers-react';
 
 export function ExamCalendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -19,6 +20,7 @@ export function ExamCalendar() {
   const [description, setDescription] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { session } = useSessionContext();
 
   const { data: exams = [] } = useQuery({
     queryKey: ['exams'],
@@ -34,7 +36,7 @@ export function ExamCalendar() {
   });
 
   const handleAddExam = async () => {
-    if (!date || !title) {
+    if (!date || !title || !session?.user?.id) {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -51,6 +53,7 @@ export function ExamCalendar() {
             title,
             description,
             date: date.toISOString(),
+            user_id: session.user.id,
           },
         ]);
 
