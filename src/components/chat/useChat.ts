@@ -31,7 +31,10 @@ export const useChat = (selectedChat: SelectedChat) => {
       
       const { data, error } = await query;
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching messages:", error);
+        throw error;
+      }
       return data;
     },
     enabled: !!session?.user?.id && (!!selectedChat.id || !!selectedChat.participants?.[0]),
@@ -54,10 +57,14 @@ export const useChat = (selectedChat: SelectedChat) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error sending message:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: (newMessage) => {
+      console.log("Message sent successfully:", newMessage);
       const currentMessages = queryClient.getQueryData<ChatMessage[]>([
         "chat-messages",
         selectedChat.id,
@@ -71,7 +78,8 @@ export const useChat = (selectedChat: SelectedChat) => {
         );
       }
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Error in mutation:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -82,10 +90,13 @@ export const useChat = (selectedChat: SelectedChat) => {
 
   useEffect(() => {
     if (channelRef.current) {
+      console.log("Removing existing channel");
       supabase.removeChannel(channelRef.current);
     }
 
     const channelId = selectedChat.id || selectedChat.participants?.[0];
+    console.log("Creating new channel for:", channelId);
+    
     const channel = supabase
       .channel(`chat-${channelId}`)
       .on(
@@ -109,6 +120,7 @@ export const useChat = (selectedChat: SelectedChat) => {
           if (payload.eventType === "INSERT") {
             const newMessage = payload.new as ChatMessage;
             if (!currentMessages.some(msg => msg.id === newMessage.id)) {
+              console.log("Adding new message to cache:", newMessage);
               queryClient.setQueryData(
                 ["chat-messages", selectedChat.id, selectedChat.participants?.[0]],
                 [...currentMessages, newMessage]
@@ -116,6 +128,7 @@ export const useChat = (selectedChat: SelectedChat) => {
             }
           } else if (payload.eventType === "UPDATE") {
             const updatedMessage = payload.new as ChatMessage;
+            console.log("Updating message in cache:", updatedMessage);
             const updatedMessages = currentMessages.map(msg =>
               msg.id === updatedMessage.id ? updatedMessage : msg
             );
@@ -149,6 +162,7 @@ export const useChat = (selectedChat: SelectedChat) => {
       );
 
       if (unreadMessages.length > 0) {
+        console.log("Marking messages as read:", unreadMessages);
         const { error } = await supabase
           .from("chat_messages")
           .update({ read: true })
