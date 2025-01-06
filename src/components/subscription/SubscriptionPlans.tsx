@@ -1,128 +1,115 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useSessionContext } from '@supabase/auth-helpers-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { SecurityInfo } from './SecurityInfo';
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { ArrowLeft, Check } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-export const SubscriptionPlans = () => {
-  const [isLoading, setIsLoading] = useState(false);
+export function SubscriptionPlans() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { session } = useSessionContext();
 
-  const handleSubscribe = async (price_id: string) => {
+  const handleSubscribe = async (priceId: string) => {
     try {
-      setIsLoading(true);
-      console.log('Starting checkout session creation with price ID:', price_id);
-
+      const { data: { session } } = await supabase.auth.getSession();
+      
       if (!session) {
         toast({
           variant: "destructive",
-          title: "Session expirée",
-          description: "Veuillez vous connecter pour souscrire à un abonnement.",
+          title: "Erreur",
+          description: "Vous devez être connecté pour souscrire à un abonnement",
         });
-        navigate('/login');
         return;
       }
 
-      console.log('Using access token:', session.access_token);
-
-      // Utiliser l'URL complète pour la redirection
-      const currentOrigin = window.location.origin;
-      const successUrl = `${currentOrigin}/dashboard?payment_status=success`;
-      const cancelUrl = `${currentOrigin}/subscription`;
-
-      console.log('Success URL:', successUrl);
-      console.log('Cancel URL:', cancelUrl);
-
-      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-        body: { 
-          price_id,
-          success_url: successUrl,
-          cancel_url: cancelUrl,
-        }
+      const response = await fetch(`${window.location.origin}/functions/v1/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          priceId,
+          successUrl: `${window.location.origin}/dashboard?payment_status=success`,
+          cancelUrl: `${window.location.origin}/subscription`,
+        }),
       });
 
-      if (error) {
-        console.error('Error creating checkout session:', error);
-        
-        if (error.message.includes('refresh_token_not_found') || 
-            error.message.includes('JWT expired') ||
-            error.message.includes('session_id claim in JWT does not exist')) {
-          toast({
-            variant: "destructive",
-            title: "Session expirée",
-            description: "Votre session a expiré. Veuillez vous reconnecter.",
-          });
-          navigate('/login');
-          return;
-        }
-
-        throw error;
+      const { url } = await response.json();
+      
+      if (url) {
+        window.location.href = url;
       }
-
-      if (!data?.url) {
-        throw new Error('URL de paiement non reçue');
-      }
-
-      // Redirection vers Stripe
-      window.location.href = data.url;
-    } catch (error: any) {
-      console.error('Subscription error:', error);
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Une erreur est survenue lors de la création de la session de paiement. Nos équipes ont été notifiées. Veuillez réessayer dans quelques instants.",
+        description: "Une erreur est survenue lors de la création de la session de paiement",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <div className="mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-primary hover:bg-primary/5"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          Retour
+        </Button>
+      </div>
+
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Nos offres d'abonnement</h1>
-        <p className="text-xl text-gray-600">
-          Choisissez l'offre qui vous convient le mieux
-        </p>
+        <p className="text-xl text-gray-600">Choisissez l'offre qui vous convient le mieux</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-        <Card className="relative">
+        <Card className="relative overflow-hidden">
           <CardHeader>
             <CardTitle>Mensuel</CardTitle>
-            <CardDescription>Idéal pour une utilisation à court terme</CardDescription>
+            <CardDescription>Idéal pour essayer</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold mb-4">9.99€ <span className="text-lg font-normal text-gray-600">/mois</span></div>
+            <div className="text-3xl font-bold mb-4">
+              9.99€ <span className="text-lg font-normal text-gray-600">/mois</span>
+            </div>
             <ul className="space-y-2">
-              <li>✓ Accès à tous les cours</li>
-              <li>✓ Exercices corrigés</li>
-              <li>✓ Support communautaire</li>
+              <li className="flex items-center gap-2">
+                <Check className="h-5 w-5 text-green-500" />
+                <span>Accès à tous les cours</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="h-5 w-5 text-green-500" />
+                <span>Support premium</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="h-5 w-5 text-green-500" />
+                <span>Mises à jour régulières</span>
+              </li>
             </ul>
           </CardContent>
           <CardFooter>
             <Button 
               className="w-full" 
-              onClick={() => handleSubscribe('price_1QdcI0II3n6IJC5voYqaw2hs')}
-              disabled={isLoading}
+              onClick={() => handleSubscribe('price_1OqhQoKMGjOJw7bNmwLGXzxE')}
             >
-              {isLoading ? "Chargement..." : "Souscrire"}
+              Commencer
             </Button>
           </CardFooter>
         </Card>
 
-        <Card className="relative">
-          <div className="absolute top-0 right-0 bg-primary text-white px-3 py-1 rounded-bl-lg rounded-tr-lg text-sm">
-            Meilleure offre
+        <Card className="relative overflow-hidden border-primary">
+          <div className="absolute top-0 right-0 bg-primary text-white px-4 py-1 rounded-bl-lg text-sm">
+            Populaire
           </div>
           <CardHeader>
             <CardTitle>Annuel</CardTitle>
-            <CardDescription>La solution la plus économique</CardDescription>
+            <CardDescription>La meilleure offre</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold mb-4">
@@ -130,26 +117,30 @@ export const SubscriptionPlans = () => {
               <div className="text-sm text-green-600 mt-1">Économisez 30%</div>
             </div>
             <ul className="space-y-2">
-              <li>✓ Tous les avantages du plan mensuel</li>
-              <li>✓ 30% de réduction</li>
-              <li>✓ Accès prioritaire aux nouveautés</li>
+              <li className="flex items-center gap-2">
+                <Check className="h-5 w-5 text-green-500" />
+                <span>Tout ce qui est inclus dans l'offre mensuelle</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="h-5 w-5 text-green-500" />
+                <span>30% de réduction</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="h-5 w-5 text-green-500" />
+                <span>Accès prioritaire aux nouveautés</span>
+              </li>
             </ul>
           </CardContent>
           <CardFooter>
             <Button 
-              className="w-full" 
-              onClick={() => handleSubscribe('price_1QdcIaII3n6IJC5vECDkmJXr')}
-              disabled={isLoading}
+              className="w-full bg-primary hover:bg-primary-hover" 
+              onClick={() => handleSubscribe('price_1OqhQoKMGjOJw7bNYSF5T4k8')}
             >
-              {isLoading ? "Chargement..." : "Souscrire"}
+              Commencer
             </Button>
           </CardFooter>
         </Card>
       </div>
-
-      <div className="mt-12">
-        <SecurityInfo />
-      </div>
     </div>
   );
-};
+}
