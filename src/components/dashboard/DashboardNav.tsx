@@ -32,18 +32,21 @@ export function DashboardNav({
     <div className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-sm">
       <div className="container flex h-16 items-center justify-between gap-4 px-4">
         <div className="flex flex-1 items-center gap-4">
-          <Button
-            onClick={onBackClick}
-            variant="ghost"
-            size="icon"
-            className="shrink-0"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+          {selectedClassId && (
+            <Button
+              onClick={onBackClick}
+              variant="ghost"
+              size="icon"
+              className="shrink-0"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
           <SearchBar value={searchQuery} onChange={onSearchChange} />
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Le bouton de chat est maintenant visible pour tous les utilisateurs */}
           <Button 
             onClick={() => navigate('/messages')} 
             variant="ghost" 
@@ -53,6 +56,7 @@ export function DashboardNav({
             <MessageSquare className="h-5 w-5" />
           </Button>
 
+          {/* Le bouton de dépôt de fichier reste uniquement pour les administrateurs */}
           {profile?.is_admin && (
             <Button onClick={() => setIsUploadOpen(true)} className="gap-2">
               <Upload className="h-4 w-4" />
