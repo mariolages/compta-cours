@@ -126,7 +126,7 @@ export const SubscriptionPlans = () => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold mb-4">
-              89.99€ <span className="text-lg font-normal text-gray-600">/an</span>
+              83.99€ <span className="text-lg font-normal text-gray-600">/an</span>
               <div className="text-sm text-green-600 mt-1">Économisez 30%</div>
             </div>
             <ul className="space-y-2">
