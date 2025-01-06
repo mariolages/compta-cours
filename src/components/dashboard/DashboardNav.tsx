@@ -33,7 +33,7 @@ export function DashboardNav({
       <div className="container flex h-16 items-center justify-between gap-4 px-4">
         <div className="flex flex-1 items-center gap-4">
           <Button
-            onClick={() => navigate(-1)}
+            onClick={onBackClick}
             variant="ghost"
             size="icon"
             className="shrink-0"
