@@ -10,11 +10,13 @@ import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DashboardNav } from './DashboardNav';
 
 export function DashboardContent() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const [lastRefresh] = useState<Date>(new Date());
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const { session } = useSessionContext();
 
@@ -71,6 +73,10 @@ export function DashboardContent() {
     navigate(`/subjects/${subjectId}`);
   };
 
+  const handleBackClick = () => {
+    setSelectedClassId(null);
+  };
+
   if (isLoadingClasses || isLoadingSubjects) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -80,39 +86,49 @@ export function DashboardContent() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      <WelcomeCard lastRefresh={lastRefresh} />
-      
-      <Tabs defaultValue="classes" className="w-full">
-        <TabsList>
-          <TabsTrigger value="classes">Classes et Matières</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="classes">
-          {selectedClassId ? (
-            <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
-          ) : (
-            <ClassesGrid classes={classes} onClassClick={handleClassClick} />
-          )}
-        </TabsContent>
-      </Tabs>
-
-      <FileUploadDialog 
-        open={isUploadOpen} 
-        onOpenChange={setIsUploadOpen}
-        onSuccess={() => {
-          setIsUploadOpen(false);
-        }}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      <DashboardNav 
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        selectedClassId={selectedClassId}
+        onBackClick={handleBackClick}
+        profile={profile}
+        user={session?.user}
       />
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        <WelcomeCard lastRefresh={lastRefresh} />
+        
+        <Tabs defaultValue="classes" className="w-full">
+          <TabsList>
+            <TabsTrigger value="classes">Classes et Matières</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="classes">
+            {selectedClassId ? (
+              <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
+            ) : (
+              <ClassesGrid classes={classes} onClassClick={handleClassClick} />
+            )}
+          </TabsContent>
+        </Tabs>
 
-      {profile?.is_admin && (
-        <Button
-          onClick={() => setIsUploadOpen(true)}
-          className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-primary hover:bg-primary-hover transition-all duration-300 animate-fade-in"
-        >
-          <Plus className="h-6 w-6" />
-        </Button>
-      )}
+        <FileUploadDialog 
+          open={isUploadOpen} 
+          onOpenChange={setIsUploadOpen}
+          onSuccess={() => {
+            setIsUploadOpen(false);
+          }}
+        />
+
+        {profile?.is_admin && (
+          <Button
+            onClick={() => setIsUploadOpen(true)}
+            className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-primary hover:bg-primary-hover transition-all duration-300 animate-fade-in"
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
