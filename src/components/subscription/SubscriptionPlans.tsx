@@ -30,7 +30,6 @@ export const SubscriptionPlans = () => {
 
       console.log('Using access token:', session.access_token);
 
-      // Utiliser l'URL complète pour la redirection
       const currentOrigin = window.location.origin;
       const successUrl = `${currentOrigin}/dashboard?payment_status=success`;
       const cancelUrl = `${currentOrigin}/subscription`;
@@ -68,7 +67,6 @@ export const SubscriptionPlans = () => {
         throw new Error('URL de paiement non reçue');
       }
 
-      // Redirection vers Stripe
       window.location.href = data.url;
     } catch (error: any) {
       console.error('Subscription error:', error);
@@ -91,7 +89,7 @@ export const SubscriptionPlans = () => {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+      <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
         <Card className="relative">
           <CardHeader>
             <CardTitle>Mensuel</CardTitle>
@@ -139,6 +137,37 @@ export const SubscriptionPlans = () => {
             <Button 
               className="w-full" 
               onClick={() => handleSubscribe('price_1QdcIaII3n6IJC5vECDkmJXr')}
+              disabled={isLoading}
+            >
+              {isLoading ? "Chargement..." : "Souscrire"}
+            </Button>
+          </CardFooter>
+        </Card>
+
+        <Card className="relative">
+          <div className="absolute top-0 right-0 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1 rounded-bl-lg rounded-tr-lg text-sm">
+            Premium
+          </div>
+          <CardHeader>
+            <CardTitle>Premium + IA</CardTitle>
+            <CardDescription>L'expérience ultime d'apprentissage</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold mb-4">
+              129.99€ <span className="text-lg font-normal text-gray-600">/an</span>
+              <div className="text-sm text-green-600 mt-1">Accès illimité à l'IA</div>
+            </div>
+            <ul className="space-y-2">
+              <li>✓ Tous les avantages du plan annuel</li>
+              <li>✓ Assistant IA personnel illimité</li>
+              <li>✓ Génération de quiz personnalisés</li>
+              <li>✓ Explications détaillées par IA</li>
+            </ul>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              className="w-full" 
+              onClick={() => handleSubscribe('price_1QdcIaII3n6IJC5vECDkmJXr_premium')}
               disabled={isLoading}
             >
               {isLoading ? "Chargement..." : "Souscrire"}
