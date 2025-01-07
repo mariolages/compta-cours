@@ -101,7 +101,7 @@ export const SubscriptionPlans = () => {
               <li>✓ Accès à tous les cours</li>
               <li>✓ Exercices corrigés</li>
               <li>✓ Support communautaire</li>
-              <li>✓ Assistant IA (100 questions/mois)</li>
+              <li>✓ Assistant IA</li>
               <li>✓ Quiz personnalisés par IA</li>
             </ul>
           </CardContent>
