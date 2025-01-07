@@ -89,7 +89,7 @@ export const SubscriptionPlans = () => {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+      <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
         <Card className="relative">
           <CardHeader>
             <CardTitle>Mensuel</CardTitle>
@@ -101,6 +101,8 @@ export const SubscriptionPlans = () => {
               <li>✓ Accès à tous les cours</li>
               <li>✓ Exercices corrigés</li>
               <li>✓ Support communautaire</li>
+              <li>✓ Assistant IA (100 questions/mois)</li>
+              <li>✓ Quiz personnalisés par IA</li>
             </ul>
           </CardContent>
           <CardFooter>
@@ -131,43 +133,15 @@ export const SubscriptionPlans = () => {
               <li>✓ Tous les avantages du plan mensuel</li>
               <li>✓ 30% de réduction</li>
               <li>✓ Accès prioritaire aux nouveautés</li>
+              <li>✓ Assistant IA illimité</li>
+              <li>✓ Explications détaillées par IA</li>
+              <li>✓ Génération illimitée de quiz</li>
             </ul>
           </CardContent>
           <CardFooter>
             <Button 
               className="w-full" 
               onClick={() => handleSubscribe('price_1QdcIaII3n6IJC5vECDkmJXr')}
-              disabled={isLoading}
-            >
-              {isLoading ? "Chargement..." : "Souscrire"}
-            </Button>
-          </CardFooter>
-        </Card>
-
-        <Card className="relative">
-          <div className="absolute top-0 right-0 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1 rounded-bl-lg rounded-tr-lg text-sm">
-            Premium
-          </div>
-          <CardHeader>
-            <CardTitle>Premium + IA</CardTitle>
-            <CardDescription>L'expérience ultime d'apprentissage</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-4">
-              129.99€ <span className="text-lg font-normal text-gray-600">/an</span>
-              <div className="text-sm text-green-600 mt-1">Accès illimité à l'IA</div>
-            </div>
-            <ul className="space-y-2">
-              <li>✓ Tous les avantages du plan annuel</li>
-              <li>✓ Assistant IA personnel illimité</li>
-              <li>✓ Génération de quiz personnalisés</li>
-              <li>✓ Explications détaillées par IA</li>
-            </ul>
-          </CardContent>
-          <CardFooter>
-            <Button 
-              className="w-full" 
-              onClick={() => handleSubscribe('price_1QdcIaII3n6IJC5vECDkmJXr_premium')}
               disabled={isLoading}
             >
               {isLoading ? "Chargement..." : "Souscrire"}
