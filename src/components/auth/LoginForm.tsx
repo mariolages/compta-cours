@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { AuthError, AuthApiError } from '@supabase/supabase-js';
 
 interface LoginFormProps {
   onSubmit?: (email: string, password: string) => Promise<any>;
@@ -18,6 +19,20 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
   const [validationError, setValidationError] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const getErrorMessage = (error: AuthError) => {
+    if (error instanceof AuthApiError) {
+      switch (error.status) {
+        case 400:
+          return 'Email ou mot de passe incorrect';
+        case 422:
+          return 'Format d\'email invalide';
+        default:
+          return error.message;
+      }
+    }
+    return error.message;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,9 +65,6 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
 
         if (signInError) {
           console.error('Erreur de connexion:', signInError);
-          if (signInError.message.includes('Invalid login credentials')) {
-            throw new Error('Email ou mot de passe incorrect');
-          }
           throw signInError;
         }
 
@@ -114,7 +126,7 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
       navigate('/dashboard');
     } catch (error: any) {
       console.error('Erreur de connexion:', error);
-      setValidationError(error.message || 'Une erreur est survenue lors de la connexion');
+      setValidationError(getErrorMessage(error));
       
       // Log failed login attempt if we have more details
       if (error.message) {
