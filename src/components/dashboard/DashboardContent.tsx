@@ -5,6 +5,7 @@ import { FileUploadDialog } from '@/components/dashboard/FileUploadDialog';
 import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { ClassesGrid } from '@/components/dashboard/ClassesGrid';
 import { SubjectsGrid } from '@/components/dashboard/SubjectsGrid';
+import { AIChatBox } from '@/components/dashboard/AIChatBox';
 import { useQuery } from "@tanstack/react-query";
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
@@ -86,6 +87,7 @@ export function DashboardContent() {
       <Tabs defaultValue="classes" className="w-full">
         <TabsList>
           <TabsTrigger value="classes">Classes et Matières</TabsTrigger>
+          <TabsTrigger value="ai">Assistant IA</TabsTrigger>
         </TabsList>
         
         <TabsContent value="classes">
@@ -94,6 +96,10 @@ export function DashboardContent() {
           ) : (
             <ClassesGrid classes={classes} onClassClick={handleClassClick} />
           )}
+        </TabsContent>
+
+        <TabsContent value="ai">
+          <AIChatBox />
         </TabsContent>
       </Tabs>
 
