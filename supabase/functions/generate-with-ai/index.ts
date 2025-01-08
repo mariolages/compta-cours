@@ -14,19 +14,15 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, mode } = await req.json();
+    const { prompt, fileContent } = await req.json();
 
-    let systemPrompt = '';
-    
-    switch (mode) {
-      case 'summary':
-        systemPrompt = "Tu es un assistant spécialisé dans la création de résumés clairs et concis. Résume le texte suivant en gardant les points essentiels :";
-        break;
-      case 'quiz':
-        systemPrompt = "Tu es un expert en création de quiz pédagogiques. Génère 5 questions de quiz pertinentes basées sur le texte suivant, avec 4 options de réponse pour chaque question. Indique la bonne réponse. Format : Q1. [Question] A) [Option] B) [Option] C) [Option] D) [Option] Réponse: [Lettre]";
-        break;
-      default:
-        systemPrompt = "Tu es un assistant pédagogique expert qui aide les étudiants à comprendre leurs cours et à répondre à leurs questions. Sois précis et donne des exemples concrets quand c'est pertinent.";
+    let systemPrompt = "Tu es un assistant pédagogique expert qui aide les étudiants à comprendre leurs cours et à répondre à leurs questions. Sois précis et donne des exemples concrets quand c'est pertinent.";
+    let userPrompt = prompt;
+
+    // If file content is provided, include it in the context
+    if (fileContent) {
+      userPrompt = `Contexte du document:\n${fileContent}\n\nQuestion: ${prompt}`;
+      systemPrompt += " Base tes réponses sur le contenu du document fourni quand c'est pertinent.";
     }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -39,9 +35,9 @@ serve(async (req) => {
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt }
+          { role: 'user', content: userPrompt }
         ],
-        temperature: mode === 'quiz' ? 0.8 : 0.7,
+        temperature: 0.7,
       }),
     });
 

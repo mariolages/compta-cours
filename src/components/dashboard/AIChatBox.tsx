@@ -4,24 +4,64 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Send, Book, Brain, HelpCircle } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
+import { useSessionContext } from '@supabase/auth-helpers-react';
 
 export function AIChatBox() {
   const [prompt, setPrompt] = useState('');
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<string>('');
   const { toast } = useToast();
+  const { session } = useSessionContext();
 
-  const handleSubmit = async (e: React.FormEvent, mode: 'chat' | 'summary' | 'quiz') => {
+  // Fetch user's files
+  const { data: files = [] } = useQuery({
+    queryKey: ['user-files'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('files')
+        .select(`
+          id,
+          title,
+          file_path,
+          subject:subject_id (name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prompt.trim()) return;
 
     setIsLoading(true);
     try {
+      let fileContent = '';
+      
+      // If a file is selected, download its content
+      if (selectedFile) {
+        const selectedFileData = files.find(f => f.id === selectedFile);
+        if (selectedFileData) {
+          const { data, error: downloadError } = await supabase.storage
+            .from('dcg_files')
+            .download(selectedFileData.file_path);
+
+          if (downloadError) throw downloadError;
+          fileContent = await data.text();
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-with-ai', {
         body: { 
-          prompt: prompt,
-          mode: mode 
+          prompt,
+          fileContent,
+          mode: 'chat'
         }
       });
 
@@ -43,139 +83,65 @@ export function AIChatBox() {
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4 space-y-4 bg-white rounded-lg shadow-lg">
-      <Tabs defaultValue="chat" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="chat" className="flex items-center gap-2">
-            <HelpCircle className="w-4 h-4" />
-            Assistant
-          </TabsTrigger>
-          <TabsTrigger value="summary" className="flex items-center gap-2">
-            <Book className="w-4 h-4" />
-            Résumé
-          </TabsTrigger>
-          <TabsTrigger value="quiz" className="flex items-center gap-2">
-            <Brain className="w-4 h-4" />
-            Quiz
-          </TabsTrigger>
-        </TabsList>
+      <div className="space-y-4">
+        <h3 className="font-medium">Assistant IA</h3>
+        <p className="text-sm text-gray-500">
+          Posez vos questions sur n'importe quel sujet lié à vos cours.
+        </p>
 
-        <TabsContent value="chat">
-          <div className="space-y-4">
-            <h3 className="font-medium">Assistant IA</h3>
-            <p className="text-sm text-gray-500">
-              Posez vos questions sur n'importe quel sujet lié à vos cours.
-            </p>
-            {response && (
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="whitespace-pre-wrap">{response}</p>
-              </div>
-            )}
-            <form onSubmit={(e) => handleSubmit(e, 'chat')} className="space-y-2">
-              <Textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Ex: Peux-tu m'expliquer le concept de débit/crédit en comptabilité ?"
-                className="min-h-[100px]"
-              />
-              <Button 
-                type="submit" 
-                disabled={isLoading || !prompt.trim()}
-                className="w-full"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Génération en cours...
-                  </>
-                ) : (
-                  <>
-                    <Send className="mr-2 h-4 w-4" />
-                    Envoyer
-                  </>
-                )}
-              </Button>
-            </form>
-          </div>
-        </TabsContent>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700">
+            Sélectionner un fichier (optionnel)
+          </label>
+          <Select value={selectedFile} onValueChange={setSelectedFile}>
+            <SelectTrigger>
+              <SelectValue placeholder="Choisir un fichier pour le contexte" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Aucun fichier</SelectItem>
+              {files.map((file: any) => (
+                <SelectItem key={file.id} value={file.id}>
+                  {file.title} ({file.subject?.name})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-        <TabsContent value="summary">
-          <div className="space-y-4">
-            <h3 className="font-medium">Générateur de résumés</h3>
-            <p className="text-sm text-gray-500">
-              Collez un texte de cours pour obtenir un résumé clair et concis.
-            </p>
-            {response && (
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="whitespace-pre-wrap">{response}</p>
-              </div>
-            )}
-            <form onSubmit={(e) => handleSubmit(e, 'summary')} className="space-y-2">
-              <Textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Collez votre texte ici..."
-                className="min-h-[200px]"
-              />
-              <Button 
-                type="submit" 
-                disabled={isLoading || !prompt.trim()}
-                className="w-full"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Génération du résumé...
-                  </>
-                ) : (
-                  <>
-                    <Book className="mr-2 h-4 w-4" />
-                    Générer un résumé
-                  </>
-                )}
-              </Button>
-            </form>
+        {response && (
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <p className="whitespace-pre-wrap">{response}</p>
           </div>
-        </TabsContent>
+        )}
 
-        <TabsContent value="quiz">
-          <div className="space-y-4">
-            <h3 className="font-medium">Générateur de quiz</h3>
-            <p className="text-sm text-gray-500">
-              Collez un texte de cours pour générer automatiquement des questions de quiz.
-            </p>
-            {response && (
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="whitespace-pre-wrap">{response}</p>
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-2">
+          <Textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder={selectedFile 
+              ? "Posez une question sur ce document..." 
+              : "Ex: Peux-tu m'expliquer le concept de débit/crédit en comptabilité ?"}
+            className="min-h-[100px]"
+          />
+          <Button 
+            type="submit" 
+            disabled={isLoading || !prompt.trim()}
+            className="w-full"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Génération en cours...
+              </>
+            ) : (
+              <>
+                <Send className="mr-2 h-4 w-4" />
+                Envoyer
+              </>
             )}
-            <form onSubmit={(e) => handleSubmit(e, 'quiz')} className="space-y-2">
-              <Textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Collez votre texte de cours ici..."
-                className="min-h-[200px]"
-              />
-              <Button 
-                type="submit" 
-                disabled={isLoading || !prompt.trim()}
-                className="w-full"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Génération des questions...
-                  </>
-                ) : (
-                  <>
-                    <Brain className="mr-2 h-4 w-4" />
-                    Générer des questions
-                  </>
-                )}
-              </Button>
-            </form>
-          </div>
-        </TabsContent>
-      </Tabs>
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }
