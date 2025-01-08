@@ -16,14 +16,15 @@ serve(async (req) => {
   try {
     const { prompt, fileContent } = await req.json();
 
-    let systemPrompt = "Tu es un assistant pédagogique expert qui aide les étudiants à comprendre leurs cours et à répondre à leurs questions. Sois précis et donne des exemples concrets quand c'est pertinent.";
-    let userPrompt = prompt;
-
-    // If file content is provided, include it in the context
-    if (fileContent) {
-      userPrompt = `Contexte du document:\n${fileContent}\n\nQuestion: ${prompt}`;
-      systemPrompt += " Base tes réponses sur le contenu du document fourni quand c'est pertinent.";
-    }
+    let systemPrompt = "Tu es un assistant pédagogique expert qui aide à créer des quiz éducatifs. Pour chaque question, génère une question pertinente avec une réponse correcte et trois réponses incorrectes mais plausibles.";
+    let userPrompt = `Basé sur ce contenu: "${fileContent}", génère 5 questions de quiz au format suivant:
+    [
+      {
+        "question": "La question",
+        "correct_answer": "La bonne réponse",
+        "options": ["La bonne réponse", "Mauvaise réponse 1", "Mauvaise réponse 2", "Mauvaise réponse 3"]
+      }
+    ]`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -43,8 +44,9 @@ serve(async (req) => {
 
     const data = await response.json();
     const generatedText = data.choices[0].message.content;
+    const questions = JSON.parse(generatedText);
 
-    return new Response(JSON.stringify({ generatedText }), {
+    return new Response(JSON.stringify(questions), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
