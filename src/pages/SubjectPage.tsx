@@ -17,6 +17,9 @@ export default function SubjectPage({ hasSubscription = false }) {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
+  // Convert subjectId from string to number
+  const numericSubjectId = subjectId ? parseInt(subjectId, 10) : undefined;
+
   // Requête pour vérifier si l'utilisateur est admin
   const { data: profile } = useQuery({
     queryKey: ["profile"],
@@ -36,12 +39,14 @@ export default function SubjectPage({ hasSubscription = false }) {
   });
 
   const { data: subject, isLoading: isLoadingSubject } = useQuery({
-    queryKey: ["subject", subjectId],
+    queryKey: ["subject", numericSubjectId],
     queryFn: async () => {
+      if (!numericSubjectId) throw new Error("Subject ID is required");
+
       const { data, error } = await supabase
         .from("subjects")
         .select("*, class:class_id(*)")
-        .eq("id", subjectId)
+        .eq("id", numericSubjectId)
         .single();
 
       if (error) {
@@ -54,11 +59,14 @@ export default function SubjectPage({ hasSubscription = false }) {
       }
       return data as Subject & { class: { code: string } };
     },
+    enabled: !!numericSubjectId,
   });
 
   const { data: files, refetch: refetchFiles } = useQuery({
-    queryKey: ["subject-files", subjectId, selectedCategory],
+    queryKey: ["subject-files", numericSubjectId, selectedCategory],
     queryFn: async () => {
+      if (!numericSubjectId) throw new Error("Subject ID is required");
+
       const { data, error } = await supabase
         .from("files")
         .select(`
@@ -69,8 +77,8 @@ export default function SubjectPage({ hasSubscription = false }) {
           category:category_id(id, name),
           subject:subject_id(id, code, name)
         `)
-        .eq("subject_id", subjectId)
-        .eq("category_id", selectedCategory)
+        .eq("subject_id", numericSubjectId)
+        .eq("category_id", parseInt(selectedCategory, 10))
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -83,6 +91,7 @@ export default function SubjectPage({ hasSubscription = false }) {
       }
       return data;
     },
+    enabled: !!numericSubjectId,
   });
 
   const handleDownload = async (fileId: string, filePath: string, fileName: string) => {
@@ -140,7 +149,7 @@ export default function SubjectPage({ hasSubscription = false }) {
                 const { error } = await supabase
                   .from("subjects")
                   .delete()
-                  .eq("id", subjectId);
+                  .eq("id", numericSubjectId);
 
                 if (error) throw error;
 
@@ -168,7 +177,7 @@ export default function SubjectPage({ hasSubscription = false }) {
             isMobile={isMobile}
             hasSubscription={hasSubscription}
             classCode={subject?.class?.code}
-            subjectId={subjectId}
+            subjectId={numericSubjectId}
             isAdmin={profile?.is_admin}
           />
         </div>
@@ -180,7 +189,7 @@ export default function SubjectPage({ hasSubscription = false }) {
             refetchFiles();
             setIsUploadOpen(false);
           }}
-          defaultSubjectId={subjectId}
+          defaultSubjectId={numericSubjectId}
         />
       </div>
     </div>

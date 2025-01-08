@@ -52,7 +52,6 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
       });
 
       if (signInError) {
-        console.error('Erreur de connexion:', signInError);
         throw signInError;
       }
 
