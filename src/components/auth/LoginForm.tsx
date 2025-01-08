@@ -46,32 +46,17 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
     }
 
     try {
-      // Log the login attempt first
-      await supabase
-        .from('auth_logs')
-        .insert([{ 
-          email: email,
-          event_type: 'login_attempt'
-        }]);
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim()
+      });
 
-      let result;
-      if (onSubmit) {
-        result = await onSubmit(email.trim(), password.trim());
-      } else {
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password: password.trim()
-        });
-
-        if (signInError) {
-          console.error('Erreur de connexion:', signInError);
-          throw signInError;
-        }
-
-        result = data;
+      if (signInError) {
+        console.error('Erreur de connexion:', signInError);
+        throw signInError;
       }
 
-      const user = result?.user;
+      const user = signInData?.user;
       if (!user) {
         throw new Error('Erreur lors de la connexion');
       }
@@ -81,7 +66,7 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .maybeSingle();
+        .single();
 
       if (!existingProfile) {
         const { error: profileError } = await supabase
@@ -112,12 +97,6 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
           event_type: 'login_success'
         }]);
 
-      // Vérifier que la session est bien établie
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session) {
-        throw new Error('La session n\'a pas pu être établie');
-      }
-
       toast({
         title: "Connexion réussie",
         description: "Vous êtes maintenant connecté",
@@ -128,15 +107,13 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
       console.error('Erreur de connexion:', error);
       setValidationError(getErrorMessage(error));
       
-      // Log failed login attempt if we have more details
-      if (error.message) {
-        await supabase
-          .from('auth_logs')
-          .insert([{ 
-            email: email,
-            event_type: 'login_failed',
-          }]);
-      }
+      // Log failed login attempt
+      await supabase
+        .from('auth_logs')
+        .insert([{ 
+          email: email,
+          event_type: 'login_failed',
+        }]);
     } finally {
       setIsLoading(false);
     }
