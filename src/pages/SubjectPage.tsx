@@ -177,7 +177,7 @@ export default function SubjectPage({ hasSubscription = false }) {
             isMobile={isMobile}
             hasSubscription={hasSubscription}
             classCode={subject?.class?.code}
-            subjectId={numericSubjectId?.toString()} // Convert number back to string
+            subjectId={String(numericSubjectId)} // Explicitly convert to string
             isAdmin={profile?.is_admin}
           />
         </div>

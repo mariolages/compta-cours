@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, FileText, CheckSquare, Archive, CheckCircle, Headphones, BrainCircuit } from "lucide-react";
+import { BookOpen, FileText, CheckSquare, Archive, CheckCircle, Headphones, BrainCircuit, ClipboardEdit } from "lucide-react";
 import { FileList } from "./FileList";
 import { QuizList } from "./QuizList";
 import {
@@ -41,6 +41,7 @@ const categories = [
   { id: "5", title: "Corrections de sujets", icon: CheckCircle },
   { id: "6", title: "Podcasts", icon: Headphones },
   { id: "7", title: "Quiz", icon: BrainCircuit },
+  { id: "8", title: "Fiches", icon: ClipboardEdit },
 ];
 
   if (isMobile) {
