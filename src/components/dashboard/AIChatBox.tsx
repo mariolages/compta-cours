@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Send, Book, Brain, HelpCircle } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { useSessionContext } from '@supabase/auth-helpers-react';
@@ -98,7 +98,7 @@ export function AIChatBox() {
               <SelectValue placeholder="Choisir un fichier pour le contexte" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Aucun fichier</SelectItem>
+              <SelectItem value="no-file">Aucun fichier</SelectItem>
               {files.map((file: any) => (
                 <SelectItem key={file.id} value={file.id}>
                   {file.title} ({file.subject?.name})
