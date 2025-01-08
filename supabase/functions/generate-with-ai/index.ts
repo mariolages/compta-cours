@@ -26,32 +26,60 @@ serve(async (req) => {
       }
     ]`;
 
-    console.log("Sending request to OpenAI with prompt:", prompt);
+    console.log("Sending request to OpenAI with content length:", fileContent.length);
     
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.7,
-      }),
-    });
+    // Add exponential backoff for retries
+    let retries = 3;
+    let delay = 1000;
+    let response;
+    let error;
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API responded with status ${response.status}`);
+    while (retries > 0) {
+      try {
+        response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
+            ],
+            temperature: 0.7,
+          }),
+        });
+
+        if (response.status === 429) {
+          console.log(`Rate limited, retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay *= 2;
+          retries--;
+          continue;
+        }
+
+        break;
+      } catch (e) {
+        error = e;
+        console.error("Error calling OpenAI:", e);
+        retries--;
+        if (retries > 0) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay *= 2;
+        }
+      }
+    }
+
+    if (!response?.ok) {
+      throw new Error(`OpenAI API responded with status ${response?.status}`);
     }
 
     const data = await response.json();
     console.log("OpenAI response:", data);
 
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    if (!data.choices?.[0]?.message?.content) {
       throw new Error("Unexpected response format from OpenAI");
     }
 
@@ -60,6 +88,9 @@ serve(async (req) => {
     
     try {
       questions = JSON.parse(generatedText);
+      if (!Array.isArray(questions)) {
+        throw new Error("Generated content is not an array");
+      }
     } catch (error) {
       console.error("Failed to parse OpenAI response as JSON:", error);
       throw new Error("Failed to parse generated questions");
