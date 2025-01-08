@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,74 +6,83 @@ import { Loader2, Send } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { useSessionContext } from '@supabase/auth-helpers-react';
+import { Button } from "../ui/button";
 
 export function AIChatBox() {
-  const [prompt, setPrompt] = useState('');
-  const [response, setResponse] = useState('');
+  const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<string>('');
+  const [selectedFileId, setSelectedFileId] = useState<string>("no-file");
   const { toast } = useToast();
   const { session } = useSessionContext();
 
-  // Fetch user's files
-  const { data: files = [] } = useQuery({
-    queryKey: ['user-files'],
+  const { data: files } = useQuery({
+    queryKey: ["user-files"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
       const { data, error } = await supabase
-        .from('files')
+        .from("files")
         .select(`
           id,
           title,
           file_path,
-          subject:subject_id (name)
+          subject:subject_id(name)
         `)
-        .order('created_at', { ascending: false });
+        .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching files:", error);
+        return [];
+      }
+
       return data;
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!prompt.trim()) return;
+    if (!input.trim()) return;
 
+    const newMessage = { role: "user", content: input };
+    setMessages((prev) => [...prev, newMessage]);
+    setInput("");
     setIsLoading(true);
-    try {
-      let fileContent = '';
-      
-      // If a file is selected, download its content
-      if (selectedFile) {
-        const selectedFileData = files.find(f => f.id === selectedFile);
-        if (selectedFileData) {
-          const { data, error: downloadError } = await supabase.storage
-            .from('dcg_files')
-            .download(selectedFileData.file_path);
 
-          if (downloadError) throw downloadError;
-          fileContent = await data.text();
+    try {
+      let fileContent = "";
+      if (selectedFileId && selectedFileId !== "no-file") {
+        const file = files?.find((f) => f.id === selectedFileId);
+        if (file) {
+          const { data, error } = await supabase.storage
+            .from("dcg_files")
+            .download(file.file_path);
+
+          if (!error && data) {
+            fileContent = await data.text();
+          }
         }
       }
 
-      const { data, error } = await supabase.functions.invoke('generate-with-ai', {
-        body: { 
-          prompt,
-          fileContent,
-          mode: 'chat'
-        }
+      const response = await supabase.functions.invoke("generate-with-ai", {
+        body: { prompt: input, fileContent },
       });
 
-      if (error) throw error;
+      if (response.error) throw response.error;
 
-      setResponse(data.generatedText);
-      setPrompt('');
+      const aiMessage = {
+        role: "assistant",
+        content: response.data.generatedText,
+      };
+      setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de générer une réponse. Veuillez réessayer.",
+        description: "Une erreur est survenue lors de la génération de la réponse",
       });
     } finally {
       setIsLoading(false);
@@ -82,24 +90,16 @@ export function AIChatBox() {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 space-y-4 bg-white rounded-lg shadow-lg">
-      <div className="space-y-4">
-        <h3 className="font-medium">Assistant IA</h3>
-        <p className="text-sm text-gray-500">
-          Posez vos questions sur n'importe quel sujet lié à vos cours.
-        </p>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">
-            Sélectionner un fichier (optionnel)
-          </label>
-          <Select value={selectedFile} onValueChange={setSelectedFile}>
+    <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+      <div className="p-6">
+        <div className="mb-4">
+          <Select value={selectedFileId} onValueChange={setSelectedFileId}>
             <SelectTrigger>
               <SelectValue placeholder="Choisir un fichier pour le contexte" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="no-file">Aucun fichier</SelectItem>
-              {files.map((file: any) => (
+              {files?.map((file: any) => (
                 <SelectItem key={file.id} value={file.id}>
                   {file.title} ({file.subject?.name})
                 </SelectItem>
@@ -108,38 +108,43 @@ export function AIChatBox() {
           </Select>
         </div>
 
-        {response && (
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="whitespace-pre-wrap">{response}</p>
-          </div>
-        )}
+        <div className="space-y-4">
+          {messages.map((message, i) => (
+            <div
+              key={i}
+              className={`flex ${
+                message.role === "assistant" ? "justify-start" : "justify-end"
+              }`}
+            >
+              <div
+                className={`rounded-lg px-4 py-2 max-w-[80%] ${
+                  message.role === "assistant"
+                    ? "bg-muted text-muted-foreground"
+                    : "bg-primary text-primary-foreground"
+                }`}
+              >
+                {message.content}
+              </div>
+            </div>
+          ))}
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-2">
-          <Textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder={selectedFile 
-              ? "Posez une question sur ce document..." 
-              : "Ex: Peux-tu m'expliquer le concept de débit/crédit en comptabilité ?"}
-            className="min-h-[100px]"
-          />
-          <Button 
-            type="submit" 
-            disabled={isLoading || !prompt.trim()}
-            className="w-full"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Génération en cours...
-              </>
-            ) : (
-              <>
-                <Send className="mr-2 h-4 w-4" />
-                Envoyer
-              </>
-            )}
-          </Button>
+        <form onSubmit={handleSubmit} className="mt-4">
+          <div className="flex gap-4">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Posez votre question..."
+              className="flex-1"
+            />
+            <Button type="submit" disabled={isLoading || !input.trim()}>
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </form>
       </div>
     </div>

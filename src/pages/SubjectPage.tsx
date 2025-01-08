@@ -177,7 +177,7 @@ export default function SubjectPage({ hasSubscription = false }) {
             isMobile={isMobile}
             hasSubscription={hasSubscription}
             classCode={subject?.class?.code}
-            subjectId={numericSubjectId}
+            subjectId={numericSubjectId?.toString()}
             isAdmin={profile?.is_admin}
           />
         </div>
