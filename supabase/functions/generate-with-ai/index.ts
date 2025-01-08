@@ -26,6 +26,8 @@ serve(async (req) => {
       }
     ]`;
 
+    console.log("Sending request to OpenAI with prompt:", prompt);
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -42,9 +44,26 @@ serve(async (req) => {
       }),
     });
 
+    if (!response.ok) {
+      throw new Error(`OpenAI API responded with status ${response.status}`);
+    }
+
     const data = await response.json();
+    console.log("OpenAI response:", data);
+
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error("Unexpected response format from OpenAI");
+    }
+
     const generatedText = data.choices[0].message.content;
-    const questions = JSON.parse(generatedText);
+    let questions;
+    
+    try {
+      questions = JSON.parse(generatedText);
+    } catch (error) {
+      console.error("Failed to parse OpenAI response as JSON:", error);
+      throw new Error("Failed to parse generated questions");
+    }
 
     return new Response(JSON.stringify(questions), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
