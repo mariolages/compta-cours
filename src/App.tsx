@@ -47,6 +47,12 @@ const App = () => {
           title: "Connexion réussie",
           description: "Bienvenue !",
         });
+      } else if (event === 'PASSWORD_RECOVERY') {
+        // Gérer l'événement de récupération de mot de passe
+        toast({
+          title: "Réinitialisation du mot de passe",
+          description: "Vous pouvez maintenant réinitialiser votre mot de passe",
+        });
       }
     });
 
@@ -108,6 +114,8 @@ const App = () => {
             />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            {/* Ajout d'une route catch-all pour rediriger vers la page d'accueil */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
