@@ -24,7 +24,10 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
     if (error instanceof AuthApiError) {
       switch (error.status) {
         case 400:
-          return 'Email ou mot de passe incorrect';
+          if (error.message.includes('Invalid login credentials')) {
+            return 'Email ou mot de passe incorrect';
+          }
+          return error.message;
         case 422:
           return 'Format d\'email invalide';
         default:
@@ -46,6 +49,9 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
     }
 
     try {
+      // Clear any existing sessions first
+      await supabase.auth.signOut();
+
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim()
