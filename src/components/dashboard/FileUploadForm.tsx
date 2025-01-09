@@ -37,7 +37,9 @@ export function FileUploadForm({
 }: FileUploadFormProps) {
   const acceptedFileTypes = categoryId === "6" 
     ? ".mp3,.wav,.m4a,.aac"
-    : ".pdf,.doc,.docx,.xls,.xlsx";
+    : categoryId === "8" 
+      ? ".doc,.docx,.pdf"
+      : ".pdf,.doc,.docx,.xls,.xlsx";
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -87,6 +89,7 @@ export function FileUploadForm({
             <SelectItem value="4">📂 Sujets d'examen</SelectItem>
             <SelectItem value="5">✅ Corrections de sujets d'examen</SelectItem>
             <SelectItem value="6">🎧 Podcasts</SelectItem>
+            <SelectItem value="8">📝 Fiches</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -104,6 +107,11 @@ export function FileUploadForm({
         {categoryId === "6" && (
           <p className="text-sm text-gray-500">
             Formats acceptés : MP3, WAV, M4A, AAC
+          </p>
+        )}
+        {categoryId === "8" && (
+          <p className="text-sm text-gray-500">
+            Formats acceptés : DOC, DOCX, PDF
           </p>
         )}
       </div>

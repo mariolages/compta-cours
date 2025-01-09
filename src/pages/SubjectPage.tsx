@@ -177,7 +177,7 @@ export default function SubjectPage({ hasSubscription = false }) {
             isMobile={isMobile}
             hasSubscription={hasSubscription}
             classCode={subject?.class?.code}
-            subjectId={String(numericSubjectId)} // Explicitly convert to string
+            subjectId={numericSubjectId?.toString()} // Convert to string here
             isAdmin={profile?.is_admin}
           />
         </div>
@@ -189,7 +189,7 @@ export default function SubjectPage({ hasSubscription = false }) {
             refetchFiles();
             setIsUploadOpen(false);
           }}
-          defaultSubjectId={numericSubjectId}
+          defaultSubjectId={numericSubjectId?.toString()} // Convert to string here
         />
       </div>
     </div>
