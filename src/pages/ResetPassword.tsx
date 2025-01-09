@@ -1,152 +1,135 @@
-import { useState } from 'react';
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from 'react-router-dom';
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-const ResetPassword = () => {
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+export default function ResetPassword() {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const validatePassword = (password: string) => {
-    if (password.length < 8) {
-      return 'Le mot de passe doit contenir au moins 8 caractères';
-    }
-    if (!/[A-Z]/.test(password)) {
-      return 'Le mot de passe doit contenir au moins une majuscule';
-    }
-    if (!/[0-9]/.test(password)) {
-      return 'Le mot de passe doit contenir au moins un chiffre';
-    }
-    return null;
-  };
+  useEffect(() => {
+    // Vérifier si l'utilisateur a un hash de réinitialisation valide
+    const checkResetToken = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Le lien de réinitialisation est invalide ou a expiré.",
+        });
+        navigate('/login');
+      }
+    };
+
+    checkResetToken();
+  }, [navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
-
-    // Validation du mot de passe
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-      setError(passwordError);
-      setIsLoading(false);
-      return;
-    }
-
+    
     if (password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
-      setIsLoading(false);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Les mots de passe ne correspondent pas.",
+      });
       return;
     }
+
+    if (password.length < 8) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Le mot de passe doit contenir au moins 8 caractères.",
+      });
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
-      const { error: updateError } = await supabase.auth.updateUser({
+      const { error } = await supabase.auth.updateUser({
         password: password
       });
 
-      if (updateError) {
-        if (updateError.message.includes('auth')) {
-          setError('Le lien de réinitialisation a expiré. Veuillez recommencer le processus.');
-          return;
-        }
-        throw updateError;
-      }
-
-      // Log successful password reset
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
-          .from('auth_logs')
-          .insert([{ 
-            user_id: user.id,
-            event_type: 'password_reset_success'
-          }]);
-      }
+      if (error) throw error;
 
       toast({
-        title: "Succès",
-        description: "Votre mot de passe a été mis à jour avec succès",
+        title: "Mot de passe mis à jour",
+        description: "Votre mot de passe a été réinitialisé avec succès.",
       });
 
-      // Déconnexion pour forcer une nouvelle connexion avec le nouveau mot de passe
-      await supabase.auth.signOut();
+      // Log the successful password reset
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('auth_logs').insert([
+          {
+            user_id: user.id,
+            event_type: 'password_reset_success'
+          }
+        ]);
+      }
+
       navigate('/login');
     } catch (error: any) {
-      console.error('Password reset error:', error);
-      setError('Une erreur est survenue lors de la mise à jour du mot de passe');
+      console.error('Password update error:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: error.message || "Une erreur est survenue lors de la réinitialisation du mot de passe.",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-white to-secondary">
-      <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-md animate-fade-in bg-white/80 backdrop-blur-sm p-8 rounded-xl shadow-xl">
-        <div className="space-y-2">
-          <h2 className="text-2xl font-semibold text-center">Réinitialiser le mot de passe</h2>
-          <p className="text-gray-500 text-center">
-            Choisissez un nouveau mot de passe sécurisé
-          </p>
-        </div>
-
-        {error && (
-          <Alert variant="destructive" className="animate-fade-in">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        <div className="space-y-4">
-          <div>
-            <Input
-              type="password"
-              placeholder="Nouveau mot de passe"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
-              required
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-white to-secondary">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Réinitialisation du mot de passe</CardTitle>
+          <CardDescription>
+            Entrez votre nouveau mot de passe
+          </CardDescription>
+        </CardHeader>
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
+            <div>
+              <Input
+                type="password"
+                placeholder="Nouveau mot de passe"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Input
+                type="password"
+                placeholder="Confirmez le mot de passe"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              type="submit" 
+              className="w-full"
               disabled={isLoading}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Le mot de passe doit contenir au moins 8 caractères, une majuscule et un chiffre
-            </p>
-          </div>
-          
-          <Input
-            type="password"
-            placeholder="Confirmer le mot de passe"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
-            required
-            disabled={isLoading}
-          />
-        </div>
-
-        <Button 
-          type="submit" 
-          className="w-full bg-primary hover:bg-primary-hover text-white py-2 rounded-lg transition-colors duration-300"
-          disabled={isLoading}
-        >
-          {isLoading ? "Mise à jour..." : "Mettre à jour le mot de passe"}
-        </Button>
-
-        <div className="text-center">
-          <a href="/login" className="text-primary hover:text-primary-hover text-sm">
-            Retour à la connexion
-          </a>
-        </div>
-      </form>
+            >
+              {isLoading ? "Mise à jour..." : "Réinitialiser le mot de passe"}
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   );
-};
-
-export default ResetPassword;
+}
