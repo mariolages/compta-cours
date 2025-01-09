@@ -27,9 +27,14 @@ export const LoginForm = ({ onSubmit }: LoginFormProps) => {
           if (error.message.includes('Invalid login credentials')) {
             return 'Email ou mot de passe incorrect';
           }
+          if (error.message.includes('Email not confirmed')) {
+            return 'Veuillez confirmer votre email avant de vous connecter';
+          }
           return error.message;
         case 422:
           return 'Format d\'email invalide';
+        case 429:
+          return 'Trop de tentatives de connexion. Veuillez réessayer plus tard.';
         default:
           return error.message;
       }
