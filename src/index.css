@@ -4,6 +4,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Optimisation des performances de rendu */
+* {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -11,77 +18,65 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
+    
+    /* Ajout de variables pour la performance */
+    --transition-speed: 0.3s;
+    --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   * {
     @apply border-border;
   }
 
+  /* Optimisation du rendu des polices */
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-display: swap;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
     @apply font-semibold;
+    font-display: swap;
   }
 }
 
 @layer components {
+  /* Optimisation des animations */
   .glass-card {
     @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-lg;
+    transition: transform var(--transition-speed) var(--ease-out),
+                box-shadow var(--transition-speed) var(--ease-out);
+  }
+
+  .glass-card:hover {
+    transform: translateY(-2px);
   }
 
   .btn-primary {
-    @apply px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors duration-300;
+    @apply px-4 py-2 bg-primary text-white rounded-lg transition-all duration-300;
+  }
+
+  .btn-primary:hover {
+    @apply bg-primary-hover transform scale-[1.02];
   }
 
   .btn-secondary {
-    @apply px-4 py-2 bg-secondary text-gray-700 rounded-lg hover:bg-secondary-hover transition-colors duration-300;
+    @apply px-4 py-2 bg-secondary text-gray-700 rounded-lg transition-all duration-300;
+  }
+
+  .btn-secondary:hover {
+    @apply bg-secondary-hover transform scale-[1.02];
   }
 
   .input-field {
-    @apply w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300;
+    @apply w-full px-4 py-2 rounded-lg border border-gray-200 transition-all duration-300;
   }
 
-  .chat-container {
-    @apply bg-[#1A1F2C] min-h-screen text-white;
+  .input-field:focus {
+    @apply ring-2 ring-primary/20 border-primary;
   }
 
-  .chat-sidebar {
-    @apply bg-[#222831] border-r border-gray-700/50;
-  }
-
-  .chat-header {
-    @apply bg-[#222831] border-b border-gray-700/50 p-4 flex items-center gap-3;
-  }
-
-  .chat-messages {
-    @apply bg-[#1A1F2C] p-4 space-y-4 overflow-y-auto;
-  }
-
-  .chat-input-container {
-    @apply bg-[#222831] border-t border-gray-700/50 p-4;
-  }
-
-  .chat-input {
-    @apply bg-[#2D4263] border-none text-white placeholder-gray-300 rounded-full px-6 py-3 focus:ring-2 focus:ring-blue-500/50;
-  }
-
-  .chat-send-button {
-    @apply bg-[#0EA5E9] hover:bg-[#0284C7] text-white rounded-full p-3 transition-colors;
-  }
-
-  .chat-bubble-received {
-    @apply bg-[#2D4263] text-white rounded-3xl rounded-tl-md px-4 py-2 max-w-[80%] break-words;
-  }
-
-  .chat-bubble-sent {
-    @apply bg-[#0EA5E9] text-white rounded-3xl rounded-tr-md px-4 py-2 max-w-[80%] break-words ml-auto;
-  }
-
-  .chat-timestamp {
-    @apply text-xs text-gray-300 mt-1;
-  }
+  /* ... keep existing code */
 }
