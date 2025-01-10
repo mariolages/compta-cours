@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, BookOpen, GraduationCap, Award, Check, Users, Target, Brain } from "lucide-react";
+import { ArrowRight, BookOpen, GraduationCap, Award, Check, Users, Target, Brain, Star } from "lucide-react";
 import { motion } from "framer-motion";
 
 const container = {
@@ -57,17 +57,23 @@ export default function Index() {
     }
   ];
 
+  const stats = [
+    { number: "10k+", label: "Étudiants satisfaits" },
+    { number: "95%", label: "Taux de réussite" },
+    { number: "500+", label: "Ressources disponibles" }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-white to-white">
-      <div className="container mx-auto px-4 py-16 space-y-20">
-        {/* Hero Section avec animation améliorée */}
+      <div className="container mx-auto px-4 py-16 space-y-32">
+        {/* Hero Section */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="max-w-4xl mx-auto text-center space-y-8"
         >
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-hover">
+          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-hover">
             Compta-Cours.fr
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
@@ -78,6 +84,7 @@ export default function Index() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 pt-8">
             <Button 
               onClick={() => navigate("/register")}
+              size="lg"
               className="w-full sm:w-auto text-lg py-6 px-8 bg-primary hover:bg-primary-hover transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               Commencer gratuitement
@@ -85,7 +92,8 @@ export default function Index() {
             </Button>
             <Button 
               onClick={() => navigate("/login")}
-              variant="secondary"
+              variant="outline"
+              size="lg"
               className="w-full sm:w-auto text-lg py-6 px-8 hover:bg-gray-100"
             >
               Se connecter
@@ -93,17 +101,39 @@ export default function Index() {
           </div>
         </motion.div>
 
-        {/* Features Section avec animation améliorée */}
+        {/* Stats Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto"
+        >
+          {stats.map((stat, index) => (
+            <motion.div
+              key={index}
+              whileHover={{ scale: 1.05 }}
+              className="text-center p-6 rounded-xl bg-white shadow-lg border border-gray-100"
+            >
+              <div className="text-4xl font-bold text-primary mb-2">{stat.number}</div>
+              <div className="text-gray-600">{stat.label}</div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Features Section */}
         <motion.div
           variants={container}
           initial="hidden"
-          animate="show"
+          whileInView="show"
+          viewport={{ once: true }}
           className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto"
         >
           {features.map((feature, index) => (
             <motion.div
               key={index}
               variants={item}
+              whileHover={{ scale: 1.05 }}
               className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100"
             >
               <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6 text-primary">
@@ -133,7 +163,7 @@ export default function Index() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="flex items-start gap-4 p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100"
+                className="flex items-start gap-4 p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100"
               >
                 <div className="flex-shrink-0">
                   {benefit.icon}
@@ -152,8 +182,15 @@ export default function Index() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center space-y-8 bg-primary/5 p-12 rounded-2xl"
+          className="text-center space-y-8 bg-gradient-to-r from-primary/5 to-primary/10 p-12 rounded-2xl"
         >
+          <div className="flex justify-center mb-6">
+            <div className="flex space-x-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star key={star} className="h-6 w-6 text-yellow-400 fill-yellow-400" />
+              ))}
+            </div>
+          </div>
           <h2 className="text-3xl font-bold">
             Prêt à commencer votre réussite ?
           </h2>
@@ -162,6 +199,7 @@ export default function Index() {
           </p>
           <Button 
             onClick={() => navigate("/register")}
+            size="lg"
             className="text-lg py-6 px-8 bg-primary hover:bg-primary-hover transition-all duration-300"
           >
             S'inscrire maintenant
