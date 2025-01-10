@@ -23,26 +23,38 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
     setIsLoading(true);
 
     try {
-      // Vérifier si l'utilisateur existe
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('is_banned')
-        .eq('id', email)
-        .single();
+      // D'abord, on récupère l'utilisateur pour avoir son UUID
+      const { data: { user }, error: userError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (profiles?.is_banned) {
-        throw new Error('Votre compte a été banni. Contactez le support pour plus d\'informations.');
-      }
+      if (userError) throw userError;
 
-      await onSubmit(email, password);
+      if (user) {
+        // Ensuite on vérifie si l'utilisateur est banni
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_banned')
+          .eq('id', user.id)
+          .single();
 
-      // Log successful login
-      await supabase.from('auth_logs').insert([
-        {
-          email,
-          event_type: 'login_success'
+        if (profile?.is_banned) {
+          throw new Error('Votre compte a été banni. Contactez le support pour plus d\'informations.');
         }
-      ]);
+
+        // Si tout est bon, on procède à la connexion
+        await onSubmit(email, password);
+
+        // Log successful login
+        await supabase.from('auth_logs').insert([
+          {
+            email,
+            event_type: 'login_success',
+            user_id: user.id
+          }
+        ]);
+      }
 
     } catch (error: any) {
       console.error('Login error:', error);
@@ -61,6 +73,8 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
         errorMessage = "Email ou mot de passe incorrect.";
       } else if (error.message.includes('Email not confirmed')) {
         errorMessage = "Veuillez confirmer votre email avant de vous connecter.";
+      } else if (error.message.includes('banni')) {
+        errorMessage = error.message;
       }
 
       toast({
