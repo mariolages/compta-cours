@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, BookOpen, GraduationCap, Award, Check } from "lucide-react";
+import { ArrowRight, BookOpen, GraduationCap, Award, Check, Users, Target, Brain } from "lucide-react";
 import { motion } from "framer-motion";
 
 const container = {
@@ -25,35 +25,54 @@ export default function Index() {
     {
       icon: <BookOpen className="h-6 w-6" />,
       title: "Cours détaillés",
-      description: "Accédez à des cours complets et structurés"
+      description: "Accédez à des cours complets et structurés pour une meilleure compréhension"
     },
     {
       icon: <GraduationCap className="h-6 w-6" />,
       title: "Préparation aux examens",
-      description: "Exercices et corrections pour réussir"
+      description: "Exercices et corrections pour maximiser vos chances de réussite"
     },
     {
       icon: <Award className="h-6 w-6" />,
       title: "Certification",
-      description: "Validez vos compétences"
+      description: "Validez vos compétences avec nos certifications reconnues"
+    }
+  ];
+
+  const benefits = [
+    {
+      icon: <Users className="h-6 w-6 text-primary" />,
+      title: "Communauté active",
+      description: "Échangez avec d'autres étudiants et professeurs"
+    },
+    {
+      icon: <Target className="h-6 w-6 text-primary" />,
+      title: "Objectifs personnalisés",
+      description: "Suivez votre progression et atteignez vos objectifs"
+    },
+    {
+      icon: <Brain className="h-6 w-6 text-primary" />,
+      title: "Apprentissage adaptatif",
+      description: "Un parcours qui s'adapte à votre niveau"
     }
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-white to-white">
       <div className="container mx-auto px-4 py-16 space-y-20">
-        {/* Hero Section */}
+        {/* Hero Section avec animation améliorée */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="max-w-4xl mx-auto text-center space-y-8"
         >
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-hover">
             Compta-Cours.fr
           </h1>
-          <p className="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto">
-            La plateforme de référence pour réussir vos examens en DCG et BTS-CG
+          <p className="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            La plateforme de référence pour réussir vos examens en DCG et BTS-CG. 
+            Une formation complète et adaptée à vos besoins.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 pt-8">
@@ -67,14 +86,14 @@ export default function Index() {
             <Button 
               onClick={() => navigate("/login")}
               variant="secondary"
-              className="w-full sm:w-auto text-lg py-6 px-8"
+              className="w-full sm:w-auto text-lg py-6 px-8 hover:bg-gray-100"
             >
               Se connecter
             </Button>
           </div>
         </motion.div>
 
-        {/* Features Section */}
+        {/* Features Section avec animation améliorée */}
         <motion.div
           variants={container}
           initial="hidden"
@@ -85,13 +104,13 @@ export default function Index() {
             <motion.div
               key={index}
               variants={item}
-              className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+              className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100"
             >
-              <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 text-primary">
+              <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6 text-primary">
                 {feature.icon}
               </div>
-              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-              <p className="text-gray-600">{feature.description}</p>
+              <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+              <p className="text-gray-600 leading-relaxed">{feature.description}</p>
             </motion.div>
           ))}
         </motion.div>
@@ -101,34 +120,34 @@ export default function Index() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="max-w-4xl mx-auto space-y-8"
+          className="max-w-4xl mx-auto space-y-12"
         >
           <h2 className="text-3xl font-bold text-center mb-12">
             Pourquoi choisir Compta-Cours.fr ?
           </h2>
-          <div className="space-y-6">
-            {[
-              "Cours mis à jour régulièrement",
-              "Exercices corrigés détaillés",
-              "Support pédagogique personnalisé",
-              "Préparation optimale aux examens"
-            ].map((benefit, index) => (
+          <div className="grid md:grid-cols-2 gap-8">
+            {benefits.map((benefit, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="flex items-center gap-3 bg-white p-4 rounded-lg shadow-sm"
+                className="flex items-start gap-4 p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100"
               >
-                <Check className="h-5 w-5 text-green-500" />
-                <span className="text-gray-700">{benefit}</span>
+                <div className="flex-shrink-0">
+                  {benefit.icon}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">{benefit.title}</h3>
+                  <p className="text-gray-600">{benefit.description}</p>
+                </div>
               </motion.div>
             ))}
           </div>
         </motion.div>
 
-        {/* CTA Section */}
+        {/* Testimonials Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
