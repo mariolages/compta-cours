@@ -35,116 +35,28 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
-    
-    /* Variables pour la performance */
-    --transition-speed: 0.3s;
-    --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  * {
-    @apply border-border;
-  }
-
-  /* Optimisation du rendu des polices */
-  body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    font-display: swap;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
-    @apply font-semibold tracking-tight;
-    font-display: swap;
-  }
-}
-
-@layer components {
-  /* Optimisation des animations */
-  .glass-card {
-    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-lg;
-    transition: transform var(--transition-speed) var(--ease-out),
-                box-shadow var(--transition-speed) var(--ease-out);
-  }
-
-  .glass-card:hover {
-    transform: translateY(-2px);
-  }
-
-  .btn-primary {
-    @apply px-4 py-2 bg-primary text-white rounded-lg transition-all duration-300;
-  }
-
-  .btn-primary:hover {
-    @apply bg-primary-hover transform scale-[1.02];
-  }
-
-  .btn-secondary {
-    @apply px-4 py-2 bg-secondary text-gray-700 rounded-lg transition-all duration-300;
-  }
-
-  .btn-secondary:hover {
-    @apply bg-secondary-hover transform scale-[1.02];
-  }
-
-  .input-field {
-    @apply w-full px-4 py-2 rounded-lg border border-gray-200 transition-all duration-300;
-  }
-
-  .input-field:focus {
-    @apply ring-2 ring-primary/20 border-primary;
-  }
-
-  /* Animations */
-  .fade-in {
-    animation: fadeIn 0.5s ease-out;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .slide-in {
-    animation: slideIn 0.3s ease-out;
-  }
-
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateX(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  /* Nouvelles animations */
-  .hover-scale {
-    @apply transition-transform duration-300;
-  }
-
-  .hover-scale:hover {
-    @apply transform scale-105;
-  }
-
-  .hover-lift {
-    @apply transition-all duration-300;
-  }
-
-  .hover-lift:hover {
-    @apply transform -translate-y-1 shadow-lg;
-  }
-
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-hover;
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
   }
 }
 
@@ -174,4 +86,38 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Classes d'animation */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Classes utilitaires */
+.glass-card {
+  @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-lg;
+  transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+}
+
+.hover-scale {
+  @apply transition-transform duration-300 hover:scale-105;
+}
+
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-hover;
 }
