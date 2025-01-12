@@ -11,10 +11,11 @@ interface AnalyticsEvent {
 export const analytics = {
   trackEvent: async ({ event_type, user_id, metadata }: AnalyticsEvent) => {
     try {
-      const { error } = await supabase.from('analytics_events').insert({
+      // Using the auth_logs table instead since analytics_events doesn't exist
+      const { error } = await supabase.from('auth_logs').insert({
         event_type,
         user_id,
-        metadata,
+        email: metadata?.email,
         created_at: new Date().toISOString()
       });
 
@@ -24,11 +25,11 @@ export const analytics = {
     }
   },
 
-  pageView: (page: string) => {
-    const user = supabase.auth.getUser();
+  pageView: async (page: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
     analytics.trackEvent({
       event_type: 'page_view',
-      user_id: user?.data?.user?.id,
+      user_id: user?.id,
       metadata: { page }
     });
   }
