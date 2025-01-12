@@ -1,20 +1,21 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { supabase } from '@/integrations/supabase/client';
+import type { Tables } from '@/integrations/supabase/types/tables';
 
-interface SearchOptions {
-  table: string;
-  columns: string[];
+interface SearchOptions<T extends keyof Tables> {
+  table: T;
+  columns: (keyof Tables[T]['Row'])[];
   limit?: number;
 }
 
-export const useSearch = <T extends Record<string, any>>({ 
+export const useSearch = <T extends keyof Tables>({ 
   table, 
   columns, 
   limit = 10 
-}: SearchOptions) => {
+}: SearchOptions<T>) => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<T[]>([]);
+  const [results, setResults] = useState<Tables[T]['Row'][]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -37,7 +38,7 @@ export const useSearch = <T extends Record<string, any>>({
 
       // Ajouter des conditions de recherche pour chaque colonne
       columns.forEach((column) => {
-        supabaseQuery = supabaseQuery.or(`${column}.ilike.%${searchQuery}%`);
+        supabaseQuery = supabaseQuery.or(`${String(column)}.ilike.%${searchQuery}%`);
       });
 
       const { data, error: searchError } = await supabaseQuery;

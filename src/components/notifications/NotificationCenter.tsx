@@ -9,9 +9,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Notification } from '@/integrations/supabase/types/tables';
 
 export const NotificationCenter = () => {
-  const { data: notifications = [], isLoading } = useQuery({
+  const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ['notifications'],
     queryFn: async () => {
       const { data, error } = await supabase

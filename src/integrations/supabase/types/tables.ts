@@ -120,7 +120,30 @@ export type Tables = {
       read?: boolean | null;
     };
   }
+  notifications: {
+    Row: {
+      id: string;
+      user_id: string | null;
+      title: string;
+      message: string;
+      read: boolean | null;
+      created_at: string;
+    };
+    Insert: {
+      user_id?: string | null;
+      title: string;
+      message: string;
+      read?: boolean | null;
+    };
+    Update: {
+      user_id?: string | null;
+      title?: string;
+      message?: string;
+      read?: boolean | null;
+    };
+  };
 }
 
 export type ChatMessage = Tables['chat_messages']['Row']
 export type ChatGroup = Tables['chat_groups']['Row']
+export type Notification = Tables['notifications']['Row']
