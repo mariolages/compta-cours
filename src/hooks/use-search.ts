@@ -44,7 +44,9 @@ export const useSearch = <T extends keyof Tables>({
       const { data, error: searchError } = await supabaseQuery;
 
       if (searchError) throw searchError;
-      setResults(data || []);
+      
+      // Assertion de type pour garantir que data est du bon type
+      setResults(data as Tables[T]['Row'][]);
     } catch (err) {
       console.error('Erreur de recherche:', err);
       setError('Une erreur est survenue lors de la recherche');
