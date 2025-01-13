@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useMobile } from '@/hooks/use-mobile';
-import { SubjectHeader } from '@/components/subject/SubjectHeader';
+import SubjectHeader from '@/components/subject/SubjectHeader';
 import { SubjectContent } from '@/components/subject/SubjectContent';
 import { SubjectSidebar } from '@/components/subject/SubjectSidebar';
 import { SubjectProgress } from '@/components/subject/SubjectProgress';
@@ -17,7 +17,7 @@ const SubjectPage = () => {
   const [showSidebar, setShowSidebar] = useState(!isMobile);
 
   const { data: subject, isLoading } = useQuery({
-    queryKey: ['subject', subjectId],
+    queryKey: ['subject', Number(subjectId)],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('subjects')
@@ -28,7 +28,7 @@ const SubjectPage = () => {
             lessons (*)
           )
         `)
-        .eq('id', subjectId)
+        .eq('id', Number(subjectId))
         .single();
 
       if (error) throw error;
@@ -38,7 +38,7 @@ const SubjectPage = () => {
 
   useEffect(() => {
     if (subject) {
-      analytics.pageView(`subject/${subject.title}`);
+      analytics.pageView(`subject/${subject.name}`);
     }
   }, [subject]);
 
