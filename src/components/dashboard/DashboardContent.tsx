@@ -11,7 +11,6 @@ import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
 
 export function DashboardContent() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -19,126 +18,67 @@ export function DashboardContent() {
   const [lastRefresh] = useState<Date>(new Date());
   const navigate = useNavigate();
   const { session } = useSessionContext();
-  const { toast } = useToast();
 
-  // Vérification du profil
-  const { data: profile, isLoading: isLoadingProfile, error: profileError } = useQuery({
+  const { data: profile } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
-      console.log('Chargement du profil pour:', session?.user?.id);
       if (!session?.user?.id) return null;
-      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
         .single();
       
-      if (error) {
-        console.error('Erreur lors du chargement du profil:', error);
-        throw error;
-      }
-      
-      console.log('Profil chargé:', data);
+      if (error) throw error;
       return data;
     },
     enabled: !!session?.user?.id,
-    retry: 1
   });
 
-  // Chargement des classes
-  const { data: classes = [], isLoading: isLoadingClasses, error: classesError } = useQuery({
+  const { data: classes = [], isLoading: isLoadingClasses } = useQuery({
     queryKey: ['classes'],
     queryFn: async () => {
-      console.log('Chargement des classes...');
       const { data, error } = await supabase
         .from('classes')
         .select('*')
         .order('code');
       
-      if (error) {
-        console.error('Erreur lors du chargement des classes:', error);
-        throw error;
-      }
-      
-      console.log('Classes chargées:', data);
+      if (error) throw error;
       return data || [];
     },
-    enabled: !!session && !!profile,
-    retry: 1
+    enabled: !!session,
   });
 
-  // Chargement des matières
-  const { data: subjects = [], isLoading: isLoadingSubjects, error: subjectsError } = useQuery({
+  const { data: subjects = [], isLoading: isLoadingSubjects } = useQuery({
     queryKey: ['subjects', selectedClassId],
     queryFn: async () => {
-      console.log('Chargement des matières pour la classe:', selectedClassId);
       const { data, error } = await supabase
         .from('subjects')
         .select('*')
         .eq('class_id', selectedClassId)
         .order('code');
       
-      if (error) {
-        console.error('Erreur lors du chargement des matières:', error);
-        throw error;
-      }
-      
-      console.log('Matières chargées:', data);
+      if (error) throw error;
       return data || [];
     },
-    enabled: !!session && !!selectedClassId && !!profile,
-    retry: 1
+    enabled: !!session && !!selectedClassId,
   });
 
-  // Gestion des erreurs
-  if (profileError || classesError || subjectsError) {
-    const error = profileError || classesError || subjectsError;
-    console.error('Erreur lors du chargement des données:', error);
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <p className="text-red-500 font-medium">Une erreur est survenue lors du chargement des données</p>
-          <Button 
-            onClick={() => window.location.reload()}
-            variant="outline"
-          >
-            Réessayer
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Affichage du loader pendant le chargement
-  if (isLoadingProfile || isLoadingClasses || (selectedClassId && isLoadingSubjects)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Vérification du profil
-  if (!profile) {
-    console.error('Profil non trouvé');
-    toast({
-      variant: "destructive",
-      title: "Erreur",
-      description: "Impossible de charger votre profil. Veuillez vous reconnecter.",
-    });
-    navigate('/login');
-    return null;
-  }
-
   const handleClassClick = (classId: number) => {
-    console.log('Classe sélectionnée:', classId);
     setSelectedClassId(classId);
   };
 
   const handleSubjectClick = (subjectId: number) => {
     navigate(`/subjects/${subjectId}`);
   };
+
+  if (isLoadingClasses || isLoadingSubjects) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -152,15 +92,9 @@ export function DashboardContent() {
         
         <TabsContent value="classes">
           {selectedClassId ? (
-            <SubjectsGrid 
-              subjects={subjects} 
-              onSubjectClick={handleSubjectClick} 
-            />
+            <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
           ) : (
-            <ClassesGrid 
-              classes={classes} 
-              onClassClick={handleClassClick} 
-            />
+            <ClassesGrid classes={classes} onClassClick={handleClassClick} />
           )}
         </TabsContent>
 

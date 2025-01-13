@@ -11,67 +11,13 @@ export default function Login() {
   const { session, isLoading } = useSessionContext();
 
   useEffect(() => {
-    const checkUserAccess = async () => {
-      if (!isLoading && session?.user) {
-        console.log('Login - Session active, checking profile...', session.user.id);
-        
-        try {
-          // Vérifier si l'utilisateur a un profil valide
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('is_banned, is_validated')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profileError) {
-            console.error('Login - Error fetching profile:', profileError);
-            throw profileError;
-          }
-
-          console.log('Login - Profile found:', profile);
-
-          if (profile?.is_banned) {
-            console.error('Login - User is banned');
-            toast({
-              variant: "destructive",
-              title: "Accès refusé",
-              description: "Votre compte a été banni. Contactez le support pour plus d'informations.",
-            });
-            await supabase.auth.signOut();
-            return;
-          }
-
-          if (!profile?.is_validated) {
-            console.log('Login - User not validated');
-            toast({
-              variant: "destructive",
-              title: "Compte non validé",
-              description: "Votre compte n'a pas encore été validé. Veuillez patienter.",
-            });
-            await supabase.auth.signOut();
-            return;
-          }
-
-          console.log('Login - Profile valid, redirecting to dashboard');
-          navigate('/dashboard', { replace: true });
-        } catch (error) {
-          console.error('Login - Error during profile check:', error);
-          toast({
-            variant: "destructive",
-            title: "Erreur",
-            description: "Une erreur est survenue lors de la vérification de votre profil.",
-          });
-        }
-      }
-    };
-
-    checkUserAccess();
-  }, [session, isLoading, navigate, toast]);
+    if (!isLoading && session) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [session, isLoading, navigate]);
 
   const handleLogin = async (email: string, password: string) => {
     try {
-      console.log('Login - Attempting login for email:', email);
-      
       // Log the login attempt
       await supabase
         .from('auth_logs')
@@ -88,11 +34,19 @@ export default function Login() {
       });
 
       if (error) {
-        console.error('Login - Authentication error:', error);
         throw error;
       }
 
-      console.log('Login - Authentication successful:', data.user);
+      // Check if user is banned
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_banned')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profile?.is_banned) {
+        throw new Error('Votre compte a été banni');
+      }
 
       // Log successful login
       await supabase
@@ -105,10 +59,9 @@ export default function Login() {
           }
         ]);
 
-      console.log('Login - Login process completed successfully');
       return data;
-    } catch (error: any) {
-      console.error('Login - Error during login process:', error);
+    } catch (error) {
+      console.error('Login error:', error);
       toast({
         variant: "destructive",
         title: "Erreur de connexion",
@@ -119,7 +72,6 @@ export default function Login() {
   };
 
   if (isLoading) {
-    console.log('Login - Showing loading spinner');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -129,15 +81,9 @@ export default function Login() {
 
   // If already logged in, don't render the login form
   if (session) {
-    console.log('Login - User already logged in, waiting for profile check...');
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
+    return null;
   }
 
-  console.log('Login - Rendering login form');
   return (
     <div className="min-h-screen flex">
       {/* Left side with background and text */}

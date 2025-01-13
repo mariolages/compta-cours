@@ -8,13 +8,13 @@ export const useMobile = (breakpoint = 768) => {
       setIsMobile(window.innerWidth < breakpoint);
     };
 
-    // Initial check
+    // Vérification initiale
     checkMobile();
 
-    // Listen for window resize
+    // Écouter les changements de taille d'écran
     window.addEventListener('resize', checkMobile);
 
-    // Cleanup
+    // Nettoyage
     return () => window.removeEventListener('resize', checkMobile);
   }, [breakpoint]);
 

@@ -1,7 +1,9 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
+
+type EventType = 'page_view' | 'button_click' | 'file_download' | 'search' | 'login' | 'signup';
 
 interface AnalyticsEvent {
-  event_type: string;
+  event_type: EventType;
   user_id?: string;
   metadata?: Record<string, any>;
 }
@@ -9,24 +11,24 @@ interface AnalyticsEvent {
 export const analytics = {
   trackEvent: async ({ event_type, user_id, metadata }: AnalyticsEvent) => {
     try {
-      const { error } = await supabase.from('auth_logs').insert({
+      const { error } = await supabase.from('analytics_events').insert({
         event_type,
         user_id,
-        email: metadata?.email,
+        metadata,
         created_at: new Date().toISOString()
       });
 
       if (error) throw error;
-    } catch (error) {
-      console.error('Error tracking event:', error);
+    } catch (err) {
+      console.error('Error tracking event:', err);
     }
   },
 
-  pageView: async (page: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
+  pageView: (page: string) => {
+    const user = supabase.auth.getUser();
     analytics.trackEvent({
       event_type: 'page_view',
-      user_id: user?.id,
+      user_id: user?.data?.user?.id,
       metadata: { page }
     });
   }
