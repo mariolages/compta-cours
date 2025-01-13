@@ -1,35 +1,49 @@
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 
-type EventType = 'page_view' | 'button_click' | 'file_download' | 'search' | 'login' | 'signup';
-
-interface AnalyticsEvent {
-  event_type: EventType;
-  user_id?: string;
-  metadata?: Record<string, any>;
-}
-
-export const analytics = {
-  trackEvent: async ({ event_type, user_id, metadata }: AnalyticsEvent) => {
-    try {
-      const { error } = await supabase.from('analytics_events').insert({
-        event_type,
-        user_id,
-        metadata,
-        created_at: new Date().toISOString()
-      });
-
-      if (error) throw error;
-    } catch (err) {
-      console.error('Error tracking event:', err);
+export const trackEvent = async (eventType: string, metadata?: any) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.warn('No user found when tracking event:', eventType);
+      return;
     }
-  },
 
-  pageView: (page: string) => {
-    const user = supabase.auth.getUser();
-    analytics.trackEvent({
-      event_type: 'page_view',
-      user_id: user?.data?.user?.id,
-      metadata: { page }
-    });
+    const { error } = await supabase
+      .from('analytics_events')
+      .insert([
+        {
+          event_type: eventType,
+          user_id: user.id,
+          metadata
+        }
+      ]);
+
+    if (error) {
+      console.error('Error tracking event:', error);
+    }
+  } catch (error) {
+    console.error('Error in trackEvent:', error);
+  }
+};
+
+export const getAnalytics = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const { data, error } = await supabase
+      .from('analytics_events')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching analytics:', error);
+    throw error;
   }
 };
