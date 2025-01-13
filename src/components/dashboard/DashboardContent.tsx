@@ -11,6 +11,7 @@ import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
 
 export function DashboardContent() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -18,11 +19,15 @@ export function DashboardContent() {
   const [lastRefresh] = useState<Date>(new Date());
   const navigate = useNavigate();
   const { session } = useSessionContext();
+  const { toast } = useToast();
 
-  const { data: profile, isLoading: isLoadingProfile } = useQuery({
+  // Vérification du profil
+  const { data: profile, isLoading: isLoadingProfile, error: profileError } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
+      console.log('Chargement du profil pour:', session?.user?.id);
       if (!session?.user?.id) return null;
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -33,11 +38,15 @@ export function DashboardContent() {
         console.error('Erreur lors du chargement du profil:', error);
         throw error;
       }
+      
+      console.log('Profil chargé:', data);
       return data;
     },
     enabled: !!session?.user?.id,
+    retry: 1
   });
 
+  // Chargement des classes
   const { data: classes = [], isLoading: isLoadingClasses, error: classesError } = useQuery({
     queryKey: ['classes'],
     queryFn: async () => {
@@ -51,12 +60,15 @@ export function DashboardContent() {
         console.error('Erreur lors du chargement des classes:', error);
         throw error;
       }
+      
       console.log('Classes chargées:', data);
       return data || [];
     },
-    enabled: !!session,
+    enabled: !!session && !!profile,
+    retry: 1
   });
 
+  // Chargement des matières
   const { data: subjects = [], isLoading: isLoadingSubjects, error: subjectsError } = useQuery({
     queryKey: ['subjects', selectedClassId],
     queryFn: async () => {
@@ -71,11 +83,53 @@ export function DashboardContent() {
         console.error('Erreur lors du chargement des matières:', error);
         throw error;
       }
+      
       console.log('Matières chargées:', data);
       return data || [];
     },
-    enabled: !!session && !!selectedClassId,
+    enabled: !!session && !!selectedClassId && !!profile,
+    retry: 1
   });
+
+  // Gestion des erreurs
+  if (profileError || classesError || subjectsError) {
+    const error = profileError || classesError || subjectsError;
+    console.error('Erreur lors du chargement des données:', error);
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <p className="text-red-500 font-medium">Une erreur est survenue lors du chargement des données</p>
+          <Button 
+            onClick={() => window.location.reload()}
+            variant="outline"
+          >
+            Réessayer
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Affichage du loader pendant le chargement
+  if (isLoadingProfile || isLoadingClasses || (selectedClassId && isLoadingSubjects)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Vérification du profil
+  if (!profile) {
+    console.error('Profil non trouvé');
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible de charger votre profil. Veuillez vous reconnecter.",
+    });
+    navigate('/login');
+    return null;
+  }
 
   const handleClassClick = (classId: number) => {
     console.log('Classe sélectionnée:', classId);
@@ -85,25 +139,6 @@ export function DashboardContent() {
   const handleSubjectClick = (subjectId: number) => {
     navigate(`/subjects/${subjectId}`);
   };
-
-  if (isLoadingProfile || isLoadingClasses) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (classesError || subjectsError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <p className="text-red-500">Une erreur est survenue lors du chargement des données</p>
-          <Button onClick={() => window.location.reload()}>Réessayer</Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
