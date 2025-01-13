@@ -19,7 +19,7 @@ export function DashboardContent() {
   const navigate = useNavigate();
   const { session } = useSessionContext();
 
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
@@ -29,42 +29,56 @@ export function DashboardContent() {
         .eq('id', session.user.id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur lors du chargement du profil:', error);
+        throw error;
+      }
       return data;
     },
     enabled: !!session?.user?.id,
   });
 
-  const { data: classes = [], isLoading: isLoadingClasses } = useQuery({
+  const { data: classes = [], isLoading: isLoadingClasses, error: classesError } = useQuery({
     queryKey: ['classes'],
     queryFn: async () => {
+      console.log('Chargement des classes...');
       const { data, error } = await supabase
         .from('classes')
         .select('*')
         .order('code');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur lors du chargement des classes:', error);
+        throw error;
+      }
+      console.log('Classes chargées:', data);
       return data || [];
     },
     enabled: !!session,
   });
 
-  const { data: subjects = [], isLoading: isLoadingSubjects } = useQuery({
+  const { data: subjects = [], isLoading: isLoadingSubjects, error: subjectsError } = useQuery({
     queryKey: ['subjects', selectedClassId],
     queryFn: async () => {
+      console.log('Chargement des matières pour la classe:', selectedClassId);
       const { data, error } = await supabase
         .from('subjects')
         .select('*')
         .eq('class_id', selectedClassId)
         .order('code');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur lors du chargement des matières:', error);
+        throw error;
+      }
+      console.log('Matières chargées:', data);
       return data || [];
     },
     enabled: !!session && !!selectedClassId,
   });
 
   const handleClassClick = (classId: number) => {
+    console.log('Classe sélectionnée:', classId);
     setSelectedClassId(classId);
   };
 
@@ -72,10 +86,21 @@ export function DashboardContent() {
     navigate(`/subjects/${subjectId}`);
   };
 
-  if (isLoadingClasses || isLoadingSubjects) {
+  if (isLoadingProfile || isLoadingClasses) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (classesError || subjectsError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-red-500">Une erreur est survenue lors du chargement des données</p>
+          <Button onClick={() => window.location.reload()}>Réessayer</Button>
+        </div>
       </div>
     );
   }
@@ -92,9 +117,15 @@ export function DashboardContent() {
         
         <TabsContent value="classes">
           {selectedClassId ? (
-            <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
+            <SubjectsGrid 
+              subjects={subjects} 
+              onSubjectClick={handleSubjectClick} 
+            />
           ) : (
-            <ClassesGrid classes={classes} onClassClick={handleClassClick} />
+            <ClassesGrid 
+              classes={classes} 
+              onClassClick={handleClassClick} 
+            />
           )}
         </TabsContent>
 
