@@ -3,13 +3,12 @@ import { useMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { FileCard } from "@/components/subject/FileCard";
 import { EmptyFileList } from "@/components/subject/EmptyFileList";
+import { File } from "@/types/files";
 
 const SubjectPage = () => {
   const { subjectId } = useParams<{ subjectId: string }>();
-  const [files, setFiles] = useState<any[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const isMobile = useMobile();
@@ -20,12 +19,12 @@ const SubjectPage = () => {
       try {
         const { data, error } = await supabase
           .from('files')
-          .select('*')
-          .eq('subject_id', subjectId);
+          .select('*, category:categories(*), subject:subjects(*)')
+          .eq('subject_id', parseInt(subjectId || '0', 10));
 
         if (error) throw error;
 
-        setFiles(data);
+        setFiles(data || []);
       } catch (error) {
         toast({
           variant: "destructive",
@@ -37,7 +36,9 @@ const SubjectPage = () => {
       }
     };
 
-    fetchFiles();
+    if (subjectId) {
+      fetchFiles();
+    }
   }, [subjectId, toast]);
 
   if (loading) {
@@ -53,7 +54,12 @@ const SubjectPage = () => {
       <h1 className="text-2xl font-bold mb-4">Fichiers pour la matière</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {files.map(file => (
-          <FileCard key={file.id} file={file} />
+          <div key={file.id} className="p-4 border rounded-lg">
+            <h3 className="font-medium">{file.title}</h3>
+            <p className="text-sm text-gray-500">
+              {file.subject.name} - {file.category.name}
+            </p>
+          </div>
         ))}
       </div>
     </div>

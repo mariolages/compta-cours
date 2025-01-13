@@ -1,5 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
 
+type AnalyticsEvent = {
+  event_type: string;
+  user_id: string;
+  metadata?: any;
+};
+
 export const trackEvent = async (eventType: string, metadata?: any) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -9,8 +15,9 @@ export const trackEvent = async (eventType: string, metadata?: any) => {
       return;
     }
 
+    // Utiliser la table auth_logs au lieu de analytics_events
     const { error } = await supabase
-      .from('analytics_events')
+      .from('auth_logs')
       .insert([
         {
           event_type: eventType,
@@ -36,7 +43,7 @@ export const getAnalytics = async () => {
     }
 
     const { data, error } = await supabase
-      .from('analytics_events')
+      .from('auth_logs')
       .select('*')
       .order('created_at', { ascending: false });
 
