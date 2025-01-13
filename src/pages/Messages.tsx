@@ -7,10 +7,8 @@ const Messages = () => {
   const isMobile = useMobile();
 
   return (
-    <div className={`messages-container ${isMobile ? 'mobile' : 'desktop'}`}>
-      <h1>Messages</h1>
+    <div className={`h-screen bg-background ${isMobile ? 'flex flex-col' : 'flex'}`}>
       <MessageList />
-      <MessageInput />
     </div>
   );
 };
