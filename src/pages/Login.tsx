@@ -11,13 +11,17 @@ export default function Login() {
   const { session, isLoading } = useSessionContext();
 
   useEffect(() => {
+    console.log('Login - Session state:', { session, isLoading });
     if (!isLoading && session) {
+      console.log('Login - Redirecting to dashboard, user is authenticated');
       navigate('/dashboard', { replace: true });
     }
   }, [session, isLoading, navigate]);
 
   const handleLogin = async (email: string, password: string) => {
     try {
+      console.log('Login - Attempting login for email:', email);
+      
       // Log the login attempt
       await supabase
         .from('auth_logs')
@@ -34,15 +38,25 @@ export default function Login() {
       });
 
       if (error) {
+        console.error('Login - Authentication error:', error);
         throw error;
       }
 
+      console.log('Login - Authentication successful:', data.user);
+
       // Check if user is banned
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('is_banned')
+        .select('is_banned, is_validated')
         .eq('id', data.user.id)
         .single();
+
+      if (profileError) {
+        console.error('Login - Error fetching profile:', profileError);
+        throw profileError;
+      }
+
+      console.log('Login - User profile:', profile);
 
       if (profile?.is_banned) {
         throw new Error('Votre compte a été banni');
@@ -59,9 +73,10 @@ export default function Login() {
           }
         ]);
 
+      console.log('Login - Login process completed successfully');
       return data;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login - Error during login process:', error);
       toast({
         variant: "destructive",
         title: "Erreur de connexion",
@@ -72,6 +87,7 @@ export default function Login() {
   };
 
   if (isLoading) {
+    console.log('Login - Showing loading spinner');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -81,9 +97,11 @@ export default function Login() {
 
   // If already logged in, don't render the login form
   if (session) {
+    console.log('Login - User already logged in, not rendering login form');
     return null;
   }
 
+  console.log('Login - Rendering login form');
   return (
     <div className="min-h-screen flex">
       {/* Left side with background and text */}
