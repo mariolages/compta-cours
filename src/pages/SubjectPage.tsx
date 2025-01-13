@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useMobile } from '@/hooks/use-mobile';
-import SubjectHeader from '@/components/subject/SubjectHeader';
+import { SubjectHeader } from '@/components/subject/SubjectHeader';
 import { SubjectContent } from '@/components/subject/SubjectContent';
 import { SubjectSidebar } from '@/components/subject/SubjectSidebar';
 import { SubjectProgress } from '@/components/subject/SubjectProgress';
