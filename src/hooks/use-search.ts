@@ -36,6 +36,7 @@ export const useSearch = <T extends keyof Tables>({
         .select('*')
         .limit(limit);
 
+      // Ajouter des conditions de recherche pour chaque colonne
       columns.forEach((column) => {
         supabaseQuery = supabaseQuery.or(`${String(column)}.ilike.%${searchQuery}%`);
       });
@@ -43,10 +44,7 @@ export const useSearch = <T extends keyof Tables>({
       const { data, error: searchError } = await supabaseQuery;
 
       if (searchError) throw searchError;
-      
-      // Utilisation d'une double assertion pour contourner l'erreur de typage
-      // Nous savons que les données correspondent au type attendu
-      setResults((data || []) as unknown as Tables[T]['Row'][]);
+      setResults(data || []);
     } catch (err) {
       console.error('Erreur de recherche:', err);
       setError('Une erreur est survenue lors de la recherche');
