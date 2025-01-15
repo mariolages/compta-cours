@@ -7,17 +7,6 @@ import { EmptyFileList } from "@/components/subject/EmptyFileList";
 import { File } from "@/types/files";
 import { FileCard } from "@/components/subject/FileCard";
 
-interface FileCardProps {
-  file: File;
-  editingFileId: string | null;
-  newTitle: string;
-  onRenameClick: (id: string) => void;
-  onRenameSubmit: (id: string) => void;
-  onRenameCancel: () => void;
-  onTitleChange: (value: string) => void;
-  onDelete: (id: string) => void;
-}
-
 const SubjectPage = () => {
   const { subjectId } = useParams<{ subjectId: string }>();
   const [files, setFiles] = useState<File[]>([]);
@@ -136,7 +125,7 @@ const SubjectPage = () => {
   }
 
   if (!files.length) {
-    return <EmptyFileList />;
+    return <EmptyFileList searchQuery="" />;
   }
 
   return (
@@ -152,8 +141,9 @@ const SubjectPage = () => {
             onRenameClick={handleRenameClick}
             onRenameSubmit={handleRenameSubmit}
             onRenameCancel={handleRenameCancel}
-            onTitleChange={setNewTitle}
+            onNewTitleChange={setNewTitle}
             onDelete={handleDelete}
+            selectedCategory=""
           />
         ))}
       </div>
