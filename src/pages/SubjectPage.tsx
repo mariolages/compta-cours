@@ -21,7 +21,11 @@ const SubjectPage = () => {
     try {
       const { data, error } = await supabase
         .from("files")
-        .select("*")
+        .select(`
+          *,
+          subject:subjects(id, name, code),
+          category:categories(id, name)
+        `)
         .eq("subject_id", parseInt(subjectId!));
 
       if (error) {
@@ -104,11 +108,11 @@ const SubjectPage = () => {
     }
   };
 
-  const handleDownload = async (file: File) => {
+  const handleDownload = async (fileId: string, filePath: string, fileName: string) => {
     try {
       const { data, error } = await supabase.storage
         .from("dcg_files")
-        .download(file.file_path);
+        .download(filePath);
 
       if (error) {
         throw error;
@@ -118,7 +122,7 @@ const SubjectPage = () => {
       const url = window.URL.createObjectURL(data);
       const a = document.createElement("a");
       a.href = url;
-      a.download = file.title;
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
