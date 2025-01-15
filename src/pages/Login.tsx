@@ -18,26 +18,18 @@ export default function Login() {
 
   const handleLogin = async (email: string, password: string) => {
     try {
-      // Log the login attempt
-      await supabase
-        .from('auth_logs')
-        .insert([
-          { 
-            email: email,
-            event_type: 'login_attempt'
-          }
-        ]);
-
+      console.log("Tentative de connexion...");
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error("Erreur de connexion:", error);
         throw error;
       }
 
-      // Check if user is banned
+      // Vérifier si l'utilisateur est banni
       const { data: profile } = await supabase
         .from('profiles')
         .select('is_banned')
@@ -48,17 +40,8 @@ export default function Login() {
         throw new Error('Votre compte a été banni');
       }
 
-      // Log successful login
-      await supabase
-        .from('auth_logs')
-        .insert([
-          { 
-            user_id: data.user.id,
-            email: email,
-            event_type: 'login_success'
-          }
-        ]);
-
+      console.log("Connexion réussie, redirection...");
+      navigate('/dashboard');
       return data;
     } catch (error) {
       console.error('Login error:', error);
