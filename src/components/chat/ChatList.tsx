@@ -51,13 +51,17 @@ export const ChatList = ({ selectedChat, onSelectChat }: ChatListProps) => {
           ? message.receiver_id 
           : message.sender_id;
         
-        const otherUser = message.profiles?.id === otherUserId
+        // If this user is already in our list, skip it
+        if (acc.some(chat => chat.id === otherUserId)) {
+          return acc;
+        }
+
+        // Get the user profile from the joined profiles data
+        const userProfile = message.profiles?.id === otherUserId
           ? message.profiles
           : { id: otherUserId, full_name: 'Utilisateur' };
         
-        if (!acc.some(chat => chat.id === otherUser.id)) {
-          acc.push(otherUser);
-        }
+        acc.push(userProfile);
         return acc;
       }, []);
 
