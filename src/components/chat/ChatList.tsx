@@ -35,7 +35,7 @@ export const ChatList = ({ selectedChat, onSelectChat }: ChatListProps) => {
           sender_id,
           receiver_id,
           created_at,
-          profiles:sender_id (
+          sender:sender_id (
             id,
             full_name
           )
@@ -56,9 +56,9 @@ export const ChatList = ({ selectedChat, onSelectChat }: ChatListProps) => {
           return acc;
         }
 
-        // Get the user profile from the joined profiles data
-        const userProfile = message.profiles && message.profiles.id === otherUserId
-          ? message.profiles
+        // Get the user profile from the joined sender data
+        const userProfile = message.sender && message.sender.id === otherUserId
+          ? message.sender
           : { id: otherUserId, full_name: 'Utilisateur' };
         
         acc.push(userProfile);

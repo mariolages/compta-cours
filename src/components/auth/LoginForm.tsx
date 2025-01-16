@@ -23,27 +23,34 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
     setIsLoading(true);
 
     try {
-      // D'abord, on récupère l'utilisateur pour avoir son UUID
+      // First check if the user exists and get their UUID
       const { data: { user }, error: userError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (userError) throw userError;
+      if (userError) {
+        if (userError.message.includes('Invalid login credentials')) {
+          throw new Error('Email ou mot de passe incorrect.');
+        }
+        throw userError;
+      }
 
       if (user) {
-        // Ensuite on vérifie si l'utilisateur est banni
-        const { data: profile } = await supabase
+        // Then check if the user is banned
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('is_banned')
           .eq('id', user.id)
           .single();
 
+        if (profileError) throw profileError;
+
         if (profile?.is_banned) {
           throw new Error('Votre compte a été banni. Contactez le support pour plus d\'informations.');
         }
 
-        // Si tout est bon, on procède à la connexion
+        // If everything is good, proceed with login
         await onSubmit(email, password);
 
         // Log successful login
@@ -54,6 +61,10 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
             user_id: user.id
           }
         ]);
+
+        // Refresh the session to ensure we have the latest token
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) throw refreshError;
       }
 
     } catch (error: any) {
