@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { Search, MessageSquare } from "lucide-react";
+import { Search } from "lucide-react";
 import { useState } from 'react';
 import { useSearch } from '@/hooks/use-search';
 
@@ -47,9 +47,13 @@ export const ChatList = ({ selectedChat, onSelectChat }: ChatListProps) => {
 
       // Get unique conversations
       const uniqueChats = messages?.reduce((acc: any[], message) => {
-        const otherUser = message.sender_id === session?.user?.id 
-          ? { id: message.receiver_id }
-          : message.profiles;
+        const otherUserId = message.sender_id === session?.user?.id 
+          ? message.receiver_id 
+          : message.sender_id;
+        
+        const otherUser = message.profiles?.id === otherUserId
+          ? message.profiles
+          : { id: otherUserId, full_name: 'Utilisateur' };
         
         if (!acc.some(chat => chat.id === otherUser.id)) {
           acc.push(otherUser);
@@ -57,7 +61,7 @@ export const ChatList = ({ selectedChat, onSelectChat }: ChatListProps) => {
         return acc;
       }, []);
 
-      return uniqueChats;
+      return uniqueChats || [];
     },
     enabled: !!session?.user?.id,
   });
@@ -103,7 +107,7 @@ export const ChatList = ({ selectedChat, onSelectChat }: ChatListProps) => {
       <div className="p-4 border-b border-gray-800">
         <div className="relative">
           <Input
-            placeholder="Rechercher un contact..."
+            placeholder="Rechercher..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -124,9 +128,9 @@ export const ChatList = ({ selectedChat, onSelectChat }: ChatListProps) => {
             return (
               <Button
                 key={user.id}
-                variant={selectedChat?.participants?.[0] === user.id ? "default" : "ghost"}
+                variant="ghost"
                 className={cn(
-                  "w-full justify-between group hover:bg-[#2C2C2E] rounded-xl transition-colors duration-200",
+                  "w-full justify-start group hover:bg-[#2C2C2E] rounded-xl p-3 transition-colors duration-200",
                   selectedChat?.participants?.[0] === user.id ? "bg-[#2C2C2E]" : "",
                   hasUnread && "bg-blue-500/10 hover:bg-blue-500/20"
                 )}
@@ -140,22 +144,28 @@ export const ChatList = ({ selectedChat, onSelectChat }: ChatListProps) => {
                   setSearchQuery('');
                 }}
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold">
-                    <MessageSquare className="h-5 w-5" />
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+                      <span className="text-lg text-white font-medium">
+                        {(user.full_name || 'U')[0].toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className={cn(
+                        "text-white text-sm",
+                        hasUnread && "font-semibold"
+                      )}>
+                        {user.full_name || 'Utilisateur'}
+                      </span>
+                    </div>
                   </div>
-                  <span className={cn(
-                    "text-left text-white",
-                    hasUnread && "font-semibold"
-                  )}>
-                    {user.full_name || 'Utilisateur'}
-                  </span>
+                  {hasUnread && (
+                    <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                      {unreadMessages[user.id]}
+                    </span>
+                  )}
                 </div>
-                {hasUnread && (
-                  <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
-                    {unreadMessages[user.id]}
-                  </span>
-                )}
               </Button>
             );
           })}
