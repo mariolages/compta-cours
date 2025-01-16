@@ -35,7 +35,7 @@ export const ChatList = ({ selectedChat, onSelectChat }: ChatListProps) => {
           sender_id,
           receiver_id,
           created_at,
-          profiles!chat_messages_sender_id_fkey (
+          profiles:sender_id (
             id,
             full_name
           )
@@ -57,7 +57,7 @@ export const ChatList = ({ selectedChat, onSelectChat }: ChatListProps) => {
         }
 
         // Get the user profile from the joined profiles data
-        const userProfile = message.profiles?.id === otherUserId
+        const userProfile = message.profiles && message.profiles.id === otherUserId
           ? message.profiles
           : { id: otherUserId, full_name: 'Utilisateur' };
         
