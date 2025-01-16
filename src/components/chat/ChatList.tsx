@@ -20,6 +20,17 @@ export interface SelectedChat {
   participants?: string[];
 }
 
+interface ChatMessage {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  created_at: string;
+  sender: {
+    id: string;
+    full_name: string | null;
+  } | null;
+}
+
 export const ChatList = ({ selectedChat, onSelectChat }: ChatListProps) => {
   const { session } = useSessionContext();
   const [showSearch, setShowSearch] = useState(false);
@@ -35,7 +46,7 @@ export const ChatList = ({ selectedChat, onSelectChat }: ChatListProps) => {
           sender_id,
           receiver_id,
           created_at,
-          sender:sender_id (
+          sender:profiles!sender_id (
             id,
             full_name
           )
@@ -46,7 +57,7 @@ export const ChatList = ({ selectedChat, onSelectChat }: ChatListProps) => {
       if (error) throw error;
 
       // Get unique conversations
-      const uniqueChats = messages?.reduce((acc: any[], message) => {
+      const uniqueChats = (messages as ChatMessage[])?.reduce((acc: any[], message) => {
         const otherUserId = message.sender_id === session?.user?.id 
           ? message.receiver_id 
           : message.sender_id;
