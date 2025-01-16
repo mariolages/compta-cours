@@ -1,21 +1,21 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { supabase } from '@/integrations/supabase/client';
-import type { Tables } from '@/integrations/supabase/types';
+import type { Database } from '@/integrations/supabase/types';
 
-interface SearchOptions<T extends keyof Tables> {
-  table: T;
-  columns: (keyof Tables[T]['Row'])[];
+interface SearchOptions {
+  table: keyof Database['public']['Tables'];
+  columns: string[];
   limit?: number;
 }
 
-export const useSearch = <T extends keyof Tables>({ 
+export const useSearch = ({ 
   table, 
   columns, 
   limit = 10 
-}: SearchOptions<T>) => {
+}: SearchOptions) => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Tables[T]['Row'][]>([]);
+  const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -39,18 +39,16 @@ export const useSearch = <T extends keyof Tables>({
       // Add search conditions for each column
       columns.forEach((column, index) => {
         if (index === 0) {
-          query = query.ilike(String(column), `%${searchQuery}%`);
+          query = query.ilike(column, `%${searchQuery}%`);
         } else {
-          query = query.or(`${String(column)}.ilike.%${searchQuery}%`);
+          query = query.or(`${column}.ilike.%${searchQuery}%`);
         }
       });
 
       const { data, error: searchError } = await query;
 
       if (searchError) throw searchError;
-      
-      // Explicitly type the data as Tables[T]['Row'][]
-      setResults(data as Tables[T]['Row'][]);
+      setResults(data || []);
     } catch (err) {
       console.error('Search error:', err);
       setError('An error occurred while searching');

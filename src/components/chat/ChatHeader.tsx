@@ -1,5 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Info } from "lucide-react";
+import { MessageSquare, Info } from "lucide-react";
 
 interface ChatHeaderProps {
   name: string;
@@ -8,10 +7,9 @@ interface ChatHeaderProps {
 export const ChatHeader = ({ name }: ChatHeaderProps) => {
   return (
     <div className="chat-header">
-      <Avatar className="h-10 w-10">
-        <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`} />
-        <AvatarFallback>{name[0]}</AvatarFallback>
-      </Avatar>
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white">
+        <MessageSquare className="h-5 w-5" />
+      </div>
       <div className="flex-1">
         <h3 className="font-medium text-white">{name}</h3>
         <p className="text-sm text-gray-400">En ligne</p>
