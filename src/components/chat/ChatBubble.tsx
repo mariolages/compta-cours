@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Check, CheckCheck } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface ChatBubbleProps {
   content: string;
@@ -10,16 +11,21 @@ interface ChatBubbleProps {
 
 export const ChatBubble = ({ content, isCurrentUser, timestamp, read }: ChatBubbleProps) => {
   return (
-    <div className={cn("flex flex-col", isCurrentUser ? "items-end" : "items-start")}>
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      className={cn("flex flex-col", isCurrentUser ? "items-end" : "items-start")}
+    >
       <div 
         className={cn(
-          "max-w-[70%] break-words rounded-2xl px-4 py-2",
+          "max-w-[70%] break-words rounded-2xl px-4 py-2 shadow-sm",
           isCurrentUser 
             ? "bg-blue-500 text-white rounded-br-md" 
             : "bg-[#2C2C2E] text-white rounded-bl-md"
         )}
       >
-        <p className="text-sm">{content}</p>
+        <p className="text-sm leading-relaxed">{content}</p>
       </div>
       <div className="text-xs text-gray-400 mt-1 flex items-center gap-1">
         {new Date(timestamp).toLocaleTimeString([], { 
@@ -36,6 +42,6 @@ export const ChatBubble = ({ content, isCurrentUser, timestamp, read }: ChatBubb
           </span>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
