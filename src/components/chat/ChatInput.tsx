@@ -20,7 +20,7 @@ export const ChatInput = ({ onSendMessage, isLoading }: ChatInputProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-2 bg-[#1C1C1E] border-t border-gray-800">
+    <form onSubmit={handleSubmit} className="p-4 bg-[#1C1C1E] border-t border-gray-800">
       <div className="flex items-center gap-2 max-w-4xl mx-auto">
         <Input
           value={message}
