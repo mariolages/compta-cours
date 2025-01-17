@@ -31,7 +31,7 @@ export function DashboardContent() {
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       return data;
@@ -40,13 +40,8 @@ export function DashboardContent() {
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     retry: 2,
-    onError: (error) => {
-      console.error('Error fetching profile:', error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger votre profil. Veuillez réessayer.",
-      });
+    meta: {
+      errorMessage: "Impossible de charger votre profil. Veuillez réessayer."
     }
   });
 
@@ -65,13 +60,8 @@ export function DashboardContent() {
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 2,
-    onError: (error) => {
-      console.error('Error fetching classes:', error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger les classes. Veuillez réessayer.",
-      });
+    meta: {
+      errorMessage: "Impossible de charger les classes. Veuillez réessayer."
     }
   });
 
@@ -91,15 +81,21 @@ export function DashboardContent() {
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 2,
-    onError: (error) => {
-      console.error('Error fetching subjects:', error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger les matières. Veuillez réessayer.",
-      });
+    meta: {
+      errorMessage: "Impossible de charger les matières. Veuillez réessayer."
     }
   });
+
+  // Gestion globale des erreurs
+  if (profileError || classesError || subjectsError) {
+    const error = profileError || classesError || subjectsError;
+    console.error('Error:', error);
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: error.message || "Une erreur est survenue. Veuillez réessayer."
+    });
+  }
 
   const handleClassClick = (classId: number) => {
     setSelectedClassId(classId);
@@ -109,19 +105,7 @@ export function DashboardContent() {
     navigate(`/subjects/${subjectId}`);
   };
 
-  // Affichage des erreurs si nécessaire
-  if (profileError || classesError || subjectsError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <h2 className="text-2xl font-semibold text-red-600">Une erreur est survenue</h2>
-          <p className="text-gray-600">Veuillez rafraîchir la page ou réessayer plus tard.</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Amélioration du loader avec un placeholder
+  // Affichage du loader avec placeholder
   if (isLoadingClasses || isLoadingSubjects) {
     return (
       <div className="min-h-screen flex items-center justify-center">
