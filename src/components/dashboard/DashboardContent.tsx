@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "@/components/ui/use-toast";
 
 export function DashboardContent() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -19,8 +20,10 @@ export function DashboardContent() {
   const [lastRefresh] = useState<Date>(new Date());
   const navigate = useNavigate();
   const { session } = useSessionContext();
+  const { toast } = useToast();
 
-  const { data: profile } = useQuery({
+  // Optimisation du cache avec staleTime et cacheTime
+  const { data: profile, error: profileError } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
@@ -34,9 +37,20 @@ export function DashboardContent() {
       return data;
     },
     enabled: !!session?.user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 30 * 60 * 1000, // 30 minutes
+    retry: 2,
+    onError: (error) => {
+      console.error('Error fetching profile:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger votre profil. Veuillez réessayer.",
+      });
+    }
   });
 
-  const { data: classes = [], isLoading: isLoadingClasses } = useQuery({
+  const { data: classes = [], isLoading: isLoadingClasses, error: classesError } = useQuery({
     queryKey: ['classes'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -48,9 +62,20 @@ export function DashboardContent() {
       return data || [];
     },
     enabled: !!session,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 30 * 60 * 1000,
+    retry: 2,
+    onError: (error) => {
+      console.error('Error fetching classes:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger les classes. Veuillez réessayer.",
+      });
+    }
   });
 
-  const { data: subjects = [], isLoading: isLoadingSubjects } = useQuery({
+  const { data: subjects = [], isLoading: isLoadingSubjects, error: subjectsError } = useQuery({
     queryKey: ['subjects', selectedClassId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -63,6 +88,17 @@ export function DashboardContent() {
       return data || [];
     },
     enabled: !!session && !!selectedClassId,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 30 * 60 * 1000,
+    retry: 2,
+    onError: (error) => {
+      console.error('Error fetching subjects:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger les matières. Veuillez réessayer.",
+      });
+    }
   });
 
   const handleClassClick = (classId: number) => {
@@ -73,21 +109,34 @@ export function DashboardContent() {
     navigate(`/subjects/${subjectId}`);
   };
 
+  // Affichage des erreurs si nécessaire
+  if (profileError || classesError || subjectsError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl font-semibold text-red-600">Une erreur est survenue</h2>
+          <p className="text-gray-600">Veuillez rafraîchir la page ou réessayer plus tard.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Amélioration du loader avec un placeholder
   if (isLoadingClasses || isLoadingSubjects) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <motion.div
-          animate={{
-            rotate: 360,
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-          className="rounded-full h-32 w-32 border-b-2 border-primary"
-        />
+        <div className="space-y-8 w-full max-w-4xl px-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((j) => (
+                  <div key={j} className="h-32 bg-gray-200 rounded"></div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
