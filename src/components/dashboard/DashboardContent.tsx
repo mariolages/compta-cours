@@ -11,6 +11,7 @@ import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function DashboardContent() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -75,32 +76,64 @@ export function DashboardContent() {
   if (isLoadingClasses || isLoadingSubjects) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <motion.div
+          animate={{
+            rotate: 360,
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+          className="rounded-full h-32 w-32 border-b-2 border-primary"
+        />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="container mx-auto px-4 py-8 space-y-8"
+    >
       <WelcomeCard lastRefresh={lastRefresh} />
       
       <Tabs defaultValue="classes" className="w-full">
-        <TabsList>
-          <TabsTrigger value="classes">Classes et Matières</TabsTrigger>
-          <TabsTrigger value="ai">Assistant IA</TabsTrigger>
+        <TabsList className="w-full sm:w-auto flex justify-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <TabsTrigger value="classes" className="flex-1 sm:flex-none">Classes et Matières</TabsTrigger>
+          <TabsTrigger value="ai" className="flex-1 sm:flex-none">Assistant IA</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="classes">
-          {selectedClassId ? (
-            <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
-          ) : (
-            <ClassesGrid classes={classes} onClassClick={handleClassClick} />
-          )}
-        </TabsContent>
+        <AnimatePresence mode="wait">
+          <TabsContent value="classes" className="mt-6">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {selectedClassId ? (
+                <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
+              ) : (
+                <ClassesGrid classes={classes} onClassClick={handleClassClick} />
+              )}
+            </motion.div>
+          </TabsContent>
 
-        <TabsContent value="ai">
-          <AIChatBox />
-        </TabsContent>
+          <TabsContent value="ai">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <AIChatBox />
+            </motion.div>
+          </TabsContent>
+        </AnimatePresence>
       </Tabs>
 
       <FileUploadDialog 
@@ -112,13 +145,18 @@ export function DashboardContent() {
       />
 
       {profile?.is_admin && (
-        <Button
-          onClick={() => setIsUploadOpen(true)}
-          className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-primary hover:bg-primary-hover transition-all duration-300 animate-fade-in"
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          <Plus className="h-6 w-6" />
-        </Button>
+          <Button
+            onClick={() => setIsUploadOpen(true)}
+            className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-primary hover:bg-primary/90 transition-all duration-300"
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
