@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SearchBar } from "./SearchBar";
+import { GlobalSearch } from "../search/GlobalSearch";
+import { RealtimeNotifications } from "../notifications/RealtimeNotifications";
 import { ProfileMenu } from "./ProfileMenu";
 import { ArrowLeft, MessageSquare, Upload } from "lucide-react";
 import { FileUploadDialog } from "./FileUploadDialog";
 import type { Profile } from "@/types/admin";
 import type { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 interface DashboardNavProps {
   searchQuery: string;
@@ -18,8 +20,6 @@ interface DashboardNavProps {
 }
 
 export function DashboardNav({
-  searchQuery,
-  onSearchChange,
   selectedClassId,
   onBackClick,
   profile,
@@ -29,7 +29,12 @@ export function DashboardNav({
   const navigate = useNavigate();
 
   return (
-    <div className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-sm">
+    <motion.div 
+      className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-sm"
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="container flex h-16 items-center justify-between gap-4 px-4">
         <div className="flex flex-1 items-center gap-4">
           {selectedClassId && (
@@ -42,11 +47,10 @@ export function DashboardNav({
               <ArrowLeft className="h-5 w-5" />
             </Button>
           )}
-          <SearchBar value={searchQuery} onChange={onSearchChange} />
+          <GlobalSearch />
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Le bouton de chat est maintenant visible pour tous les utilisateurs */}
           <Button 
             onClick={() => navigate('/messages')} 
             variant="ghost" 
@@ -56,7 +60,8 @@ export function DashboardNav({
             <MessageSquare className="h-5 w-5" />
           </Button>
 
-          {/* Le bouton de dépôt de fichier reste uniquement pour les administrateurs */}
+          <RealtimeNotifications />
+
           {profile?.is_admin && (
             <Button onClick={() => setIsUploadOpen(true)} className="gap-2">
               <Upload className="h-4 w-4" />
@@ -72,6 +77,6 @@ export function DashboardNav({
           onSuccess={() => setIsUploadOpen(false)}
         />
       </div>
-    </div>
+    </motion.div>
   );
 }
