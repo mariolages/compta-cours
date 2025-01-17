@@ -8,6 +8,24 @@ import { File, Search } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
+interface SearchResult {
+  files: Array<{
+    id: string;
+    title: string;
+    subject: {
+      name: string;
+      code: string;
+    };
+  }>;
+  subjects: Array<{
+    id: number;
+    code: string;
+    name: string;
+    class_id: number;
+    created_at: string;
+  }>;
+}
+
 export function GlobalSearch() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -27,10 +45,10 @@ export function GlobalSearch() {
     return () => document.removeEventListener('keydown', down);
   }, []);
 
-  const { data: searchResults = [], isLoading } = useQuery({
+  const { data: searchResults, isLoading } = useQuery<SearchResult>({
     queryKey: ['global-search', search],
     queryFn: async () => {
-      if (!search.trim()) return [];
+      if (!search.trim()) return { files: [], subjects: [] };
 
       const [filesResult, subjectsResult] = await Promise.all([
         supabase
@@ -101,7 +119,7 @@ export function GlobalSearch() {
             <CommandList>
               <CommandEmpty>Aucun résultat trouvé.</CommandEmpty>
               <AnimatePresence>
-                {searchResults.files?.length > 0 && (
+                {searchResults?.files?.length > 0 && (
                   <CommandGroup heading="Fichiers">
                     {searchResults.files.map((file) => (
                       <motion.div
@@ -128,7 +146,7 @@ export function GlobalSearch() {
                   </CommandGroup>
                 )}
 
-                {searchResults.subjects?.length > 0 && (
+                {searchResults?.subjects?.length > 0 && (
                   <CommandGroup heading="Matières">
                     {searchResults.subjects.map((subject) => (
                       <motion.div

@@ -47,7 +47,7 @@ export default function SubjectPage({ hasSubscription = false }) {
         .from("subjects")
         .select("*, class:class_id(*)")
         .eq("id", numericSubjectId)
-        .single();
+        .maybeSingle();  // Changed from single() to maybeSingle()
 
       if (error) {
         toast({
@@ -57,6 +57,17 @@ export default function SubjectPage({ hasSubscription = false }) {
         });
         throw error;
       }
+      
+      if (!data) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Cette matière n'existe pas",
+        });
+        navigate('/dashboard');
+        return null;
+      }
+      
       return data as Subject & { class: { code: string } };
     },
     enabled: !!numericSubjectId,

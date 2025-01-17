@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from '@tanstack/react-query';
+import { useSessionContext } from '@supabase/auth-helpers-react';
 
 interface FavoriteButtonProps {
   fileId: string;
@@ -16,8 +17,18 @@ export function FavoriteButton({ fileId, initialIsFavorite = false }: FavoriteBu
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { session } = useSessionContext();
 
   const toggleFavorite = async () => {
+    if (!session?.user?.id) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Vous devez être connecté pour ajouter des favoris",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       if (isFavorite) {
@@ -25,7 +36,8 @@ export function FavoriteButton({ fileId, initialIsFavorite = false }: FavoriteBu
         const { error } = await supabase
           .from('favorites')
           .delete()
-          .eq('file_id', fileId);
+          .eq('file_id', fileId)
+          .eq('user_id', session.user.id);
 
         if (error) throw error;
 
@@ -37,7 +49,10 @@ export function FavoriteButton({ fileId, initialIsFavorite = false }: FavoriteBu
         // Ajouter aux favoris
         const { error } = await supabase
           .from('favorites')
-          .insert([{ file_id: fileId }]);
+          .insert({
+            file_id: fileId,
+            user_id: session.user.id
+          });
 
         if (error) throw error;
 
