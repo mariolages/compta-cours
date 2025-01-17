@@ -22,7 +22,7 @@ export function DashboardContent() {
   const { session } = useSessionContext();
   const { toast } = useToast();
 
-  // Optimisation du cache avec staleTime et cacheTime
+  // Optimisation du cache avec staleTime et gcTime
   const { data: profile, error: profileError } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
@@ -38,7 +38,7 @@ export function DashboardContent() {
     },
     enabled: !!session?.user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     retry: 2,
     onError: (error) => {
       console.error('Error fetching profile:', error);
@@ -63,7 +63,7 @@ export function DashboardContent() {
     },
     enabled: !!session,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 30 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
     retry: 2,
     onError: (error) => {
       console.error('Error fetching classes:', error);
@@ -89,7 +89,7 @@ export function DashboardContent() {
     },
     enabled: !!session && !!selectedClassId,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 30 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
     retry: 2,
     onError: (error) => {
       console.error('Error fetching subjects:', error);
