@@ -15,22 +15,12 @@ serve(async (req) => {
 
   try {
     const { prompt, fileContent } = await req.json();
+    console.log("Received prompt:", prompt);
+    console.log("File content length:", fileContent?.length || 0);
 
-    let systemPrompt = `Tu es un assistant pédagogique expert qui aide à créer des quiz éducatifs. 
-    Pour chaque question, génère une question pertinente avec une réponse correcte et trois réponses incorrectes mais plausibles.
-    Réponds UNIQUEMENT avec un tableau JSON valide contenant exactement 5 questions.`;
+    let systemPrompt = `Tu es un assistant pédagogique expert qui aide à comprendre et à expliquer le contenu. 
+    Réponds de manière claire et concise, en utilisant un langage simple.`;
 
-    let userPrompt = `Basé sur ce contenu: "${fileContent}", génère 5 questions de quiz au format suivant:
-    [
-      {
-        "question": "La question",
-        "correct_answer": "La bonne réponse",
-        "options": ["La bonne réponse", "Mauvaise réponse 1", "Mauvaise réponse 2", "Mauvaise réponse 3"]
-      }
-    ]`;
-
-    console.log("Sending request to OpenAI with content length:", fileContent.length);
-    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -41,7 +31,7 @@ serve(async (req) => {
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
+          { role: 'user', content: fileContent ? `Contexte: ${fileContent}\n\nQuestion: ${prompt}` : prompt }
         ],
         temperature: 0.7,
       }),
@@ -53,7 +43,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log("OpenAI response:", JSON.stringify(data));
+    console.log("OpenAI response received:", data);
 
     if (!data.choices?.[0]?.message?.content) {
       throw new Error("Unexpected response format from OpenAI");
@@ -62,36 +52,7 @@ serve(async (req) => {
     const generatedText = data.choices[0].message.content;
     console.log("Generated text:", generatedText);
 
-    let questions;
-    try {
-      // Try to extract JSON if the response contains additional text
-      const jsonMatch = generatedText.match(/\[[\s\S]*\]/);
-      const jsonString = jsonMatch ? jsonMatch[0] : generatedText;
-      questions = JSON.parse(jsonString);
-
-      if (!Array.isArray(questions) || questions.length === 0) {
-        throw new Error("Generated content is not a valid array");
-      }
-
-      // Validate each question's format
-      questions = questions.map(q => {
-        if (!q.question || !q.correct_answer || !Array.isArray(q.options)) {
-          throw new Error("Invalid question format");
-        }
-        return {
-          question: q.question,
-          correct_answer: q.correct_answer,
-          options: q.options
-        };
-      });
-
-    } catch (error) {
-      console.error("Failed to parse OpenAI response:", error);
-      console.error("Raw response:", generatedText);
-      throw new Error("Failed to parse generated questions");
-    }
-
-    return new Response(JSON.stringify(questions), {
+    return new Response(JSON.stringify({ generatedText }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
