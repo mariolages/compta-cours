@@ -6,6 +6,9 @@ import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { ClassesGrid } from '@/components/dashboard/ClassesGrid';
 import { SubjectsGrid } from '@/components/dashboard/SubjectsGrid';
 import { AIChatBox } from '@/components/dashboard/AIChatBox';
+import { StatsCards } from '@/components/dashboard/StatsCards';
+import { FlashcardSection } from '@/components/dashboard/FlashcardSection';
+import { LearningGoals } from '@/components/dashboard/LearningGoals';
 import { useQuery } from "@tanstack/react-query";
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
@@ -22,108 +25,77 @@ export function DashboardContent() {
   const { session } = useSessionContext();
   const { toast } = useToast();
 
-  // Optimisation du cache avec staleTime et gcTime
-  const { data: profile, error: profileError } = useQuery({
-    queryKey: ['profile', session?.user?.id],
+  const { data: studyStats } = useQuery({
+    queryKey: ['study-stats', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       const { data, error } = await supabase
-        .from('profiles')
+        .from('study_statistics')
         .select('*')
-        .eq('id', session.user.id)
+        .eq('user_id', session.user.id)
         .maybeSingle();
       
       if (error) throw error;
-      return data;
+      return data || {
+        time_spent: 0,
+        completed_exercises: 0,
+        correct_answers: 0
+      };
     },
-    enabled: !!session?.user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
-    retry: 2,
-    meta: {
-      errorMessage: "Impossible de charger votre profil. Veuillez réessayer."
-    }
+    enabled: !!session?.user?.id
   });
 
-  const { data: classes = [], isLoading: isLoadingClasses, error: classesError } = useQuery({
-    queryKey: ['classes'],
+  const { data: flashcards } = useQuery({
+    queryKey: ['flashcards', session?.user?.id],
     queryFn: async () => {
+      if (!session?.user?.id) return [];
       const { data, error } = await supabase
-        .from('classes')
+        .from('flashcards')
         .select('*')
-        .order('code');
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       return data || [];
     },
-    enabled: !!session,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-    retry: 2,
-    meta: {
-      errorMessage: "Impossible de charger les classes. Veuillez réessayer."
-    }
+    enabled: !!session?.user?.id
   });
 
-  const { data: subjects = [], isLoading: isLoadingSubjects, error: subjectsError } = useQuery({
-    queryKey: ['subjects', selectedClassId],
+  const { data: goals } = useQuery({
+    queryKey: ['learning-goals', session?.user?.id],
     queryFn: async () => {
+      if (!session?.user?.id) return [];
       const { data, error } = await supabase
-        .from('subjects')
+        .from('learning_goals')
         .select('*')
-        .eq('class_id', selectedClassId)
-        .order('code');
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       return data || [];
     },
-    enabled: !!session && !!selectedClassId,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-    retry: 2,
-    meta: {
-      errorMessage: "Impossible de charger les matières. Veuillez réessayer."
-    }
+    enabled: !!session?.user?.id
   });
 
-  // Gestion globale des erreurs
-  if (profileError || classesError || subjectsError) {
-    const error = profileError || classesError || subjectsError;
-    console.error('Error:', error);
-    toast({
-      variant: "destructive",
-      title: "Erreur",
-      description: error.message || "Une erreur est survenue. Veuillez réessayer."
-    });
-  }
+  const handleToggleGoal = async (goalId: string) => {
+    if (!session?.user?.id) return;
+    
+    const goal = goals?.find(g => g.id === goalId);
+    if (!goal) return;
 
-  const handleClassClick = (classId: number) => {
-    setSelectedClassId(classId);
+    const { error } = await supabase
+      .from('learning_goals')
+      .update({ completed: !goal.completed })
+      .eq('id', goalId);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de mettre à jour l'objectif"
+      });
+    }
   };
-
-  const handleSubjectClick = (subjectId: number) => {
-    navigate(`/subjects/${subjectId}`);
-  };
-
-  // Affichage du loader avec placeholder
-  if (isLoadingClasses || isLoadingSubjects) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="space-y-8 w-full max-w-4xl px-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="animate-pulse">
-              <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3].map((j) => (
-                  <div key={j} className="h-32 bg-gray-200 rounded"></div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <motion.div
@@ -133,6 +105,39 @@ export function DashboardContent() {
       className="container mx-auto px-4 py-8 space-y-8"
     >
       <WelcomeCard lastRefresh={lastRefresh} />
+      
+      <StatsCards
+        stats={{
+          totalUsers: 0,
+          totalFiles: 0,
+          totalDownloads: 0,
+          studyTime: studyStats?.time_spent || 0,
+          completedExercises: studyStats?.completed_exercises || 0,
+          correctAnswers: studyStats?.correct_answers || 0
+        }}
+      />
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <FlashcardSection
+          flashcards={flashcards || []}
+          onAddFlashcard={() => {
+            toast({
+              title: "Bientôt disponible",
+              description: "La création de flashcards sera bientôt disponible"
+            });
+          }}
+        />
+        <LearningGoals
+          goals={goals || []}
+          onToggleGoal={handleToggleGoal}
+          onAddGoal={() => {
+            toast({
+              title: "Bientôt disponible",
+              description: "La création d'objectifs sera bientôt disponible"
+            });
+          }}
+        />
+      </div>
       
       <Tabs defaultValue="classes" className="w-full">
         <TabsList className="w-full sm:w-auto flex justify-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

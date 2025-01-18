@@ -384,6 +384,47 @@ export type Database = {
           },
         ]
       }
+      flashcards: {
+        Row: {
+          answer: string
+          created_at: string | null
+          difficulty: number | null
+          id: string
+          next_review: string | null
+          question: string
+          subject_id: number | null
+          user_id: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string | null
+          difficulty?: number | null
+          id?: string
+          next_review?: string | null
+          question: string
+          subject_id?: number | null
+          user_id: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string | null
+          difficulty?: number | null
+          id?: string
+          next_review?: string | null
+          question?: string
+          subject_id?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcards_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       folders: {
         Row: {
           created_at: string
@@ -419,6 +460,44 @@ export type Database = {
           },
           {
             foreignKeyName: "folders_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_goals: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          id: string
+          subject_id: number | null
+          target_date: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          subject_id?: number | null
+          target_date?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          subject_id?: number | null
+          target_date?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_goals_subject_id_fkey"
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "subjects"
@@ -676,6 +755,47 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "custom_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_statistics: {
+        Row: {
+          completed_exercises: number | null
+          correct_answers: number | null
+          created_at: string | null
+          id: string
+          subject_id: number | null
+          time_spent: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_exercises?: number | null
+          correct_answers?: number | null
+          created_at?: string | null
+          id?: string
+          subject_id?: number | null
+          time_spent?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_exercises?: number | null
+          correct_answers?: number | null
+          created_at?: string | null
+          id?: string
+          subject_id?: number | null
+          time_spent?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_statistics_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
             referencedColumns: ["id"]
           },
         ]
