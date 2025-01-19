@@ -3,13 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-interface Flashcard {
-  id: string;
-  question: string;
-  answer: string;
-  difficulty: number;
-}
+import type { Flashcard } from '@/types/flashcard';
 
 interface FlashcardSectionProps {
   flashcards: Flashcard[];
@@ -34,7 +28,12 @@ export const FlashcardSection = ({ flashcards, onAddFlashcard }: FlashcardSectio
     return (
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Flashcards</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Flashcards</CardTitle>
+            <Button variant="outline" size="sm" onClick={onAddFlashcard}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center p-6">
           <p className="text-muted-foreground mb-4">Pas encore de flashcards</p>

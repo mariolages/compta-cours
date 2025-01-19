@@ -1,16 +1,9 @@
-import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-interface Goal {
-  id: string;
-  title: string;
-  completed: boolean;
-  target_date: string;
-}
+import type { Goal } from '@/types/goal';
 
 interface LearningGoalsProps {
   goals: Goal[];
