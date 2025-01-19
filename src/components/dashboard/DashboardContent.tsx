@@ -16,6 +16,8 @@ import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
+import type { Class } from "@/types/class";
+import type { Subject } from "@/types/subject";
 
 export function DashboardContent() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -25,6 +27,23 @@ export function DashboardContent() {
   const { session } = useSessionContext();
   const { toast } = useToast();
 
+  // Fetch user profile
+  const { data: profile } = useQuery({
+    queryKey: ['profile', session?.user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session?.user?.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!session?.user?.id
+  });
+
+  // Fetch study statistics
   const { data: studyStats } = useQuery({
     queryKey: ['study-stats', session?.user?.id],
     queryFn: async () => {
@@ -45,6 +64,37 @@ export function DashboardContent() {
     enabled: !!session?.user?.id
   });
 
+  // Fetch classes
+  const { data: classes = [] } = useQuery<Class[]>({
+    queryKey: ['classes'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('classes')
+        .select('*')
+        .order('code');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch subjects for selected class
+  const { data: subjects = [] } = useQuery<Subject[]>({
+    queryKey: ['subjects', selectedClassId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('subjects')
+        .select('*')
+        .eq('class_id', selectedClassId)
+        .order('code');
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedClassId
+  });
+
+  // Fetch flashcards
   const { data: flashcards } = useQuery({
     queryKey: ['flashcards', session?.user?.id],
     queryFn: async () => {
@@ -61,6 +111,7 @@ export function DashboardContent() {
     enabled: !!session?.user?.id
   });
 
+  // Fetch learning goals
   const { data: goals } = useQuery({
     queryKey: ['learning-goals', session?.user?.id],
     queryFn: async () => {
@@ -76,6 +127,14 @@ export function DashboardContent() {
     },
     enabled: !!session?.user?.id
   });
+
+  const handleClassClick = (classId: number) => {
+    setSelectedClassId(classId);
+  };
+
+  const handleSubjectClick = (subjectId: number) => {
+    navigate(`/subjects/${subjectId}`);
+  };
 
   const handleToggleGoal = async (goalId: string) => {
     if (!session?.user?.id) return;
