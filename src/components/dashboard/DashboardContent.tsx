@@ -20,7 +20,6 @@ import type { Class } from "@/types/class";
 import type { Subject } from "@/types/subject";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -64,14 +63,15 @@ export function DashboardContent() {
   });
 
   // Fetch user profile
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
+      if (!session?.user?.id) return null;
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', session?.user?.id)
-        .single();
+        .eq('id', session.user.id)
+        .maybeSingle();
       
       if (error) throw error;
       return data;
@@ -80,7 +80,7 @@ export function DashboardContent() {
   });
 
   // Fetch study statistics
-  const { data: studyStats } = useQuery({
+  const { data: studyStats = { time_spent: 0, completed_exercises: 0, correct_answers: 0 } } = useQuery({
     queryKey: ['study-stats', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
@@ -101,7 +101,7 @@ export function DashboardContent() {
   });
 
   // Fetch classes
-  const { data: classes = [] } = useQuery<Class[]>({
+  const { data: classes = [], isLoading: isLoadingClasses } = useQuery<Class[]>({
     queryKey: ['classes'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -110,12 +110,12 @@ export function DashboardContent() {
         .order('code');
       
       if (error) throw error;
-      return data;
+      return data || [];
     }
   });
 
   // Fetch subjects for selected class
-  const { data: subjects = [] } = useQuery<Subject[]>({
+  const { data: subjects = [], isLoading: isLoadingSubjects } = useQuery<Subject[]>({
     queryKey: ['subjects', selectedClassId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -125,13 +125,13 @@ export function DashboardContent() {
         .order('code');
       
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!selectedClassId
   });
 
   // Fetch flashcards
-  const { data: flashcards } = useQuery({
+  const { data: flashcards = [] } = useQuery({
     queryKey: ['flashcards', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return [];
@@ -148,7 +148,7 @@ export function DashboardContent() {
   });
 
   // Fetch learning goals
-  const { data: goals } = useQuery({
+  const { data: goals = [] } = useQuery({
     queryKey: ['learning-goals', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return [];
@@ -189,7 +189,10 @@ export function DashboardContent() {
         title: "Erreur",
         description: "Impossible de mettre à jour l'objectif"
       });
+      return;
     }
+
+    queryClient.invalidateQueries({ queryKey: ['learning-goals'] });
   };
 
   const handleCreateFlashcard = async (data: z.infer<typeof flashcardSchema>) => {
@@ -258,6 +261,14 @@ export function DashboardContent() {
     });
   };
 
+  if (isLoadingProfile || isLoadingClasses || isLoadingSubjects) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -280,11 +291,11 @@ export function DashboardContent() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <FlashcardSection
-          flashcards={flashcards || []}
+          flashcards={flashcards}
           onAddFlashcard={() => setIsFlashcardDialogOpen(true)}
         />
         <LearningGoals
-          goals={goals || []}
+          goals={goals}
           onToggleGoal={handleToggleGoal}
           onAddGoal={() => setIsGoalDialogOpen(true)}
         />
