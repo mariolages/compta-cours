@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Calendar } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface WelcomeCardProps {
   lastRefresh: Date;
@@ -28,24 +29,38 @@ export function WelcomeCard({ lastRefresh }: WelcomeCardProps) {
   });
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm">
-      <CardContent className="pt-6">
-        <div className="flex items-center gap-4">
-          <div className="p-2 bg-primary/10 rounded-full">
-            <GraduationCap className="h-6 w-6 text-primary" />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Card className="bg-gradient-to-br from-primary/5 via-white to-primary/10 backdrop-blur-sm border-2 border-primary/10 hover:border-primary/20 transition-all duration-300">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-6">
+            <div className="p-3 bg-primary/10 rounded-xl">
+              <GraduationCap className="h-8 w-8 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-gray-800 mb-1">
+                Bienvenue, {profile?.full_name || 'Étudiant'}
+              </h2>
+              {profile?.class?.code && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Calendar className="h-4 w-4" />
+                  <p className="text-sm">
+                    {profile.class.code} - {profile.class.name}
+                    {profile.school_year && (
+                      <span className="ml-2 text-primary">
+                        {profile.school_year}ème année
+                      </span>
+                    )}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-800">
-              Bienvenue, {profile?.full_name || 'Étudiant'}
-            </h2>
-            {profile?.class?.code && (
-              <p className="text-sm text-gray-600">
-                Classe : {profile.class.code} - {profile.class.name}
-              </p>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
