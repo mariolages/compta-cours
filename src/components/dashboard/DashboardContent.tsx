@@ -71,22 +71,25 @@ export function DashboardContent() {
   const { data: stats } = useQuery({
     queryKey: ['study_statistics', session?.user?.id],
     queryFn: async () => {
+      if (!session?.user?.id) return null;
+      
       const { data, error } = await supabase
         .from('study_statistics')
         .select('*')
-        .eq('user_id', session?.user?.id)
-        .single();
+        .eq('user_id', session.user.id)
+        .maybeSingle();
       
-      if (error) return {
+      if (error && error.code !== 'PGRST116') throw error;
+      
+      // Transform the data to match the expected format
+      return {
         totalUsers: 0,
         totalFiles: 0,
         totalDownloads: 0,
-        studyTime: 0,
-        completedExercises: 0,
-        correctAnswers: 0
+        studyTime: data?.time_spent || 0,
+        completedExercises: data?.completed_exercises || 0,
+        correctAnswers: data?.correct_answers || 0
       };
-      
-      return data;
     },
     enabled: !!session?.user?.id
   });

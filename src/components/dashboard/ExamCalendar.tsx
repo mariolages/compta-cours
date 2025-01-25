@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarPlus } from "lucide-react";
 import { useSessionContext } from '@supabase/auth-helpers-react';
+import { DayPicker } from 'react-day-picker';
 
 export function ExamCalendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -23,16 +24,20 @@ export function ExamCalendar() {
   const { session } = useSessionContext();
 
   const { data: exams = [] } = useQuery({
-    queryKey: ['exams'],
+    queryKey: ['exams', session?.user?.id],
     queryFn: async () => {
+      if (!session?.user?.id) return [];
+      
       const { data, error } = await supabase
         .from('exams')
         .select('*')
+        .eq('user_id', session.user.id)
         .order('date');
       
       if (error) throw error;
       return data || [];
     },
+    enabled: !!session?.user?.id
   });
 
   const handleAddExam = async () => {
@@ -111,6 +116,14 @@ export function ExamCalendar() {
                   placeholder="Description de l'examen"
                 />
               </div>
+              <div className="p-3">
+                <DayPicker
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  locale={fr}
+                />
+              </div>
               <Button onClick={handleAddExam}>Ajouter</Button>
             </div>
           </DialogContent>
@@ -118,7 +131,7 @@ export function ExamCalendar() {
       </div>
 
       <div className="bg-white p-4 rounded-lg shadow">
-        <Calendar
+        <DayPicker
           mode="single"
           selected={date}
           onSelect={setDate}
