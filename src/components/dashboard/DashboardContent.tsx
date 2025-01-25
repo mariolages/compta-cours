@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { WelcomeCard } from './WelcomeCard';
 import { StatsCards } from './StatsCards';
 import { ExamCalendar } from './ExamCalendar';
-import { FlashcardSection } from './FlashcardSection';
 import { LearningGoals } from './LearningGoals';
 import { ClassSelector } from './ClassSelector';
 import { SubjectsGrid } from './SubjectsGrid';
@@ -17,7 +16,6 @@ export function DashboardContent() {
   const { session } = useSessionContext();
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
 
-  // Fetch user profile
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
@@ -34,7 +32,6 @@ export function DashboardContent() {
     enabled: !!session?.user?.id
   });
 
-  // Fetch classes
   const { data: classes = [], isLoading: isLoadingClasses } = useQuery({
     queryKey: ['classes'],
     queryFn: async () => {
@@ -48,7 +45,6 @@ export function DashboardContent() {
     }
   });
 
-  // Fetch subjects for selected class
   const { data: subjects = [], isLoading: isLoadingSubjects } = useQuery({
     queryKey: ['subjects', selectedClassId || profile?.class_id],
     queryFn: async () => {
@@ -67,7 +63,6 @@ export function DashboardContent() {
     enabled: !!(selectedClassId || profile?.class_id)
   });
 
-  // Fetch study statistics
   const { data: stats } = useQuery({
     queryKey: ['study_statistics', session?.user?.id],
     queryFn: async () => {
@@ -149,17 +144,11 @@ export function DashboardContent() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <ExamCalendar />
-        <div className="space-y-6">
-          <FlashcardSection
-            flashcards={[]}
-            onAddFlashcard={() => {}}
-          />
-          <LearningGoals
-            goals={[]}
-            onToggleGoal={() => {}}
-            onAddGoal={() => {}}
-          />
-        </div>
+        <LearningGoals
+          goals={[]}
+          onToggleGoal={() => {}}
+          onAddGoal={() => {}}
+        />
       </div>
 
       {(selectedClassId || profile?.class_id) ? (
