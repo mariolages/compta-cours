@@ -10,7 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarPlus, CalendarCheck, CalendarX, Calendar as CalendarIcon } from "lucide-react";
+import { CalendarPlus, CalendarCheck, CalendarX, Calendar as CalendarIcon, Book } from "lucide-react";
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,7 @@ export function ExamCalendar() {
   const [isAddExamOpen, setIsAddExamOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [chapter, setChapter] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { session } = useSessionContext();
@@ -59,6 +60,7 @@ export function ExamCalendar() {
           {
             title,
             description,
+            chapter,
             date: date.toISOString(),
             user_id: session.user.id,
           },
@@ -74,6 +76,7 @@ export function ExamCalendar() {
       setIsAddExamOpen(false);
       setTitle("");
       setDescription("");
+      setChapter("");
       queryClient.invalidateQueries({ queryKey: ['exams'] });
     } catch (error) {
       toast({
@@ -139,6 +142,16 @@ export function ExamCalendar() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Titre de l'examen"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="chapter">Chapitre à réviser</Label>
+                  <Input
+                    id="chapter"
+                    value={chapter}
+                    onChange={(e) => setChapter(e.target.value)}
+                    placeholder="Ex: Chapitre 3 - Les contrats"
                     className="mt-1"
                   />
                 </div>
@@ -216,11 +229,17 @@ export function ExamCalendar() {
                       className="bg-white p-4 rounded-lg shadow-sm border border-gray-100"
                     >
                       <div className="flex justify-between items-start">
-                        <div>
+                        <div className="space-y-2">
                           <h4 className="font-medium text-gray-900">{exam.title}</h4>
-                          <p className="text-sm text-gray-500 mt-1">
+                          <p className="text-sm text-gray-500">
                             {format(new Date(exam.date), "HH:mm", { locale: fr })}
                           </p>
+                          {exam.chapter && (
+                            <div className="flex items-center gap-1 text-sm text-primary">
+                              <Book className="h-4 w-4" />
+                              <span>{exam.chapter}</span>
+                            </div>
+                          )}
                           {exam.description && (
                             <p className="text-sm text-gray-600 mt-2">{exam.description}</p>
                           )}

@@ -264,6 +264,7 @@ export type Database = {
       }
       exams: {
         Row: {
+          chapter: string | null
           created_at: string
           date: string
           description: string | null
@@ -273,6 +274,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          chapter?: string | null
           created_at?: string
           date: string
           description?: string | null
@@ -282,6 +284,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          chapter?: string | null
           created_at?: string
           date?: string
           description?: string | null
