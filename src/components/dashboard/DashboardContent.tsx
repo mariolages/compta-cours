@@ -24,6 +24,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const flashcardSchema = z.object({
   question: z.string().min(1, "La question est requise"),
@@ -62,40 +63,19 @@ export function DashboardContent() {
     },
   });
 
-  // Fetch user profile
+  // Fetch user profile with class information
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['profile', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, class:class_id(*)')
         .eq('id', session.user.id)
         .maybeSingle();
       
       if (error) throw error;
       return data;
-    },
-    enabled: !!session?.user?.id
-  });
-
-  // Fetch study statistics
-  const { data: studyStats = { time_spent: 0, completed_exercises: 0, correct_answers: 0 } } = useQuery({
-    queryKey: ['study-stats', session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return null;
-      const { data, error } = await supabase
-        .from('study_statistics')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data || {
-        time_spent: 0,
-        completed_exercises: 0,
-        correct_answers: 0
-      };
     },
     enabled: !!session?.user?.id
   });
@@ -114,150 +94,44 @@ export function DashboardContent() {
     }
   });
 
-  // Fetch subjects for selected class
+  // Fetch subjects for user's class
   const { data: subjects = [], isLoading: isLoadingSubjects } = useQuery<Subject[]>({
-    queryKey: ['subjects', selectedClassId],
+    queryKey: ['subjects', profile?.class_id],
     queryFn: async () => {
+      if (!profile?.class_id) return [];
       const { data, error } = await supabase
         .from('subjects')
         .select('*')
-        .eq('class_id', selectedClassId)
+        .eq('class_id', profile.class_id)
         .order('code');
       
       if (error) throw error;
       return data || [];
     },
-    enabled: !!selectedClassId
+    enabled: !!profile?.class_id
   });
 
-  // Fetch flashcards
-  const { data: flashcards = [] } = useQuery({
-    queryKey: ['flashcards', session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return [];
-      const { data, error } = await supabase
-        .from('flashcards')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!session?.user?.id
-  });
-
-  // Fetch learning goals
-  const { data: goals = [] } = useQuery({
-    queryKey: ['learning-goals', session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return [];
-      const { data, error } = await supabase
-        .from('learning_goals')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!session?.user?.id
-  });
-
-  const handleClassClick = (classId: number) => {
-    setSelectedClassId(classId);
-  };
-
-  const handleSubjectClick = (subjectId: number) => {
-    navigate(`/subjects/${subjectId}`);
-  };
-
-  const handleToggleGoal = async (goalId: string) => {
+  const handleClassChange = async (classId: string) => {
     if (!session?.user?.id) return;
-    
-    const goal = goals?.find(g => g.id === goalId);
-    if (!goal) return;
 
     const { error } = await supabase
-      .from('learning_goals')
-      .update({ completed: !goal.completed })
-      .eq('id', goalId);
+      .from('profiles')
+      .update({ class_id: parseInt(classId) })
+      .eq('id', session.user.id);
 
     if (error) {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de mettre à jour l'objectif"
+        description: "Impossible de mettre à jour votre classe"
       });
       return;
     }
 
-    queryClient.invalidateQueries({ queryKey: ['learning-goals'] });
-  };
-
-  const handleCreateFlashcard = async (data: z.infer<typeof flashcardSchema>) => {
-    if (!session?.user?.id) return;
-
-    const { error } = await supabase
-      .from('flashcards')
-      .insert([
-        {
-          user_id: session.user.id,
-          question: data.question,
-          answer: data.answer,
-          difficulty: 1,
-        }
-      ]);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de créer la flashcard"
-      });
-      return;
-    }
-
-    queryClient.invalidateQueries({ queryKey: ['flashcards'] });
-    setIsFlashcardDialogOpen(false);
-    flashcardForm.reset();
-    
+    queryClient.invalidateQueries({ queryKey: ['profile'] });
     toast({
       title: "Succès",
-      description: "Flashcard créée avec succès"
-    });
-  };
-
-  const handleCreateGoal = async (data: z.infer<typeof goalSchema>) => {
-    if (!session?.user?.id) return;
-
-    const { error } = await supabase
-      .from('learning_goals')
-      .insert([
-        {
-          user_id: session.user.id,
-          title: data.title,
-          target_date: data.target_date,
-          completed: false,
-        }
-      ]);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de créer l'objectif"
-      });
-      return;
-    }
-
-    queryClient.invalidateQueries({ queryKey: ['learning-goals'] });
-    setIsGoalDialogOpen(false);
-    goalForm.reset();
-    
-    toast({
-      title: "Succès",
-      description: "Objectif créé avec succès"
+      description: "Votre classe a été mise à jour"
     });
   };
 
@@ -276,49 +150,72 @@ export function DashboardContent() {
       transition={{ duration: 0.5 }}
       className="container mx-auto px-4 py-8 space-y-8"
     >
-      <WelcomeCard lastRefresh={lastRefresh} />
+      <div className="flex justify-between items-center">
+        <WelcomeCard lastRefresh={lastRefresh} />
+        {!profile?.class_id && (
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-500">Sélectionnez votre classe :</span>
+            <Select onValueChange={handleClassChange}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Choisir une classe" />
+              </SelectTrigger>
+              <SelectContent>
+                {classes.map((cls) => (
+                  <SelectItem key={cls.id} value={cls.id.toString()}>
+                    {cls.code} - {cls.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
       
       <StatsCards
         stats={{
           totalUsers: 0,
           totalFiles: 0,
           totalDownloads: 0,
-          studyTime: studyStats?.time_spent || 0,
-          completedExercises: studyStats?.completed_exercises || 0,
-          correctAnswers: studyStats?.correct_answers || 0
+          studyTime: 0,
+          completedExercises: 0,
+          correctAnswers: 0
         }}
       />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <FlashcardSection
-          flashcards={flashcards}
+          flashcards={[]}
           onAddFlashcard={() => setIsFlashcardDialogOpen(true)}
         />
         <LearningGoals
-          goals={goals}
-          onToggleGoal={handleToggleGoal}
+          goals={[]}
+          onToggleGoal={() => {}}
           onAddGoal={() => setIsGoalDialogOpen(true)}
         />
       </div>
       
-      <Tabs defaultValue="classes" className="w-full">
-        <TabsList className="w-full sm:w-auto flex justify-center bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <TabsTrigger value="classes" className="flex-1 sm:flex-none">Classes et Matières</TabsTrigger>
-          <TabsTrigger value="ai" className="flex-1 sm:flex-none">Assistant IA</TabsTrigger>
+      <Tabs defaultValue="subjects" className="w-full">
+        <TabsList className="w-full flex justify-start bg-gray-50/50 p-4 rounded-lg mb-8">
+          <TabsTrigger value="subjects" className="flex-1">Matières</TabsTrigger>
+          <TabsTrigger value="ai" className="flex-1">Assistant IA</TabsTrigger>
         </TabsList>
         
         <AnimatePresence mode="wait">
-          <TabsContent value="classes" className="mt-6">
+          <TabsContent value="subjects" className="mt-6">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.3 }}
             >
-              {selectedClassId ? (
-                <SubjectsGrid subjects={subjects} onSubjectClick={handleSubjectClick} />
+              {profile?.class_id ? (
+                <SubjectsGrid subjects={subjects} onSubjectClick={() => {}} />
               ) : (
-                <ClassesGrid classes={classes} onClassClick={handleClassClick} />
+                <div className="text-center py-8">
+                  <h3 className="text-lg font-semibold text-gray-700">
+                    Veuillez sélectionner votre classe pour voir les matières
+                  </h3>
+                </div>
               )}
             </motion.div>
           </TabsContent>
@@ -341,7 +238,7 @@ export function DashboardContent() {
           <DialogHeader>
             <DialogTitle>Créer une nouvelle flashcard</DialogTitle>
           </DialogHeader>
-          <form onSubmit={flashcardForm.handleSubmit(handleCreateFlashcard)} className="space-y-4">
+          <form onSubmit={flashcardForm.handleSubmit(() => {})} className="space-y-4">
             <FormField
               control={flashcardForm.control}
               name="question"
@@ -378,7 +275,7 @@ export function DashboardContent() {
           <DialogHeader>
             <DialogTitle>Créer un nouvel objectif</DialogTitle>
           </DialogHeader>
-          <form onSubmit={goalForm.handleSubmit(handleCreateGoal)} className="space-y-4">
+          <form onSubmit={goalForm.handleSubmit(() => {})} className="space-y-4">
             <FormField
               control={goalForm.control}
               name="title"

@@ -534,33 +534,47 @@ export type Database = {
       }
       profiles: {
         Row: {
+          class_id: number | null
           created_at: string
           full_name: string | null
           id: string
           is_admin: boolean | null
           is_banned: boolean | null
           is_validated: boolean | null
+          school_year: number | null
           updated_at: string
         }
         Insert: {
+          class_id?: number | null
           created_at?: string
           full_name?: string | null
           id: string
           is_admin?: boolean | null
           is_banned?: boolean | null
           is_validated?: boolean | null
+          school_year?: number | null
           updated_at?: string
         }
         Update: {
+          class_id?: number | null
           created_at?: string
           full_name?: string | null
           id?: string
           is_admin?: boolean | null
           is_banned?: boolean | null
           is_validated?: boolean | null
+          school_year?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quiz_answers: {
         Row: {
