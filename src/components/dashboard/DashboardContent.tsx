@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +10,6 @@ import { ExamCalendar } from './ExamCalendar';
 import { LearningGoals } from './LearningGoals';
 import { ClassSelector } from './ClassSelector';
 import { SubjectsGrid } from './SubjectsGrid';
-import { motion } from "framer-motion";
 
 export function DashboardContent() {
   const navigate = useNavigate();
@@ -38,10 +38,10 @@ export function DashboardContent() {
       const { data, error } = await supabase
         .from('classes')
         .select('*')
-        .order('code');
+        .order('name');
       
       if (error) throw error;
-      return data || [];
+      return data;
     }
   });
 
@@ -58,82 +58,74 @@ export function DashboardContent() {
         .order('code');
       
       if (error) throw error;
-      return data || [];
+      return data;
     },
     enabled: !!(selectedClassId || profile?.class_id)
   });
 
-  const { data: stats } = useQuery({
+  const { data: studyStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['study_statistics', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
-      
+
       const { data, error } = await supabase
         .from('study_statistics')
         .select('*')
         .eq('user_id', session.user.id)
         .maybeSingle();
-      
+
       if (error && error.code !== 'PGRST116') throw error;
       
+      // If no stats exist yet, return default values
+      if (!data) {
+        return {
+          totalUsers: 0,
+          totalFiles: 0,
+          totalDownloads: 0,
+          studyTime: 0,
+          completedExercises: 0,
+          correctAnswers: 0
+        };
+      }
+
       // Transform the data to match the expected format
       return {
-        totalUsers: 0,
+        totalUsers: 1,
         totalFiles: 0,
         totalDownloads: 0,
-        studyTime: data?.time_spent || 0,
-        completedExercises: data?.completed_exercises || 0,
-        correctAnswers: data?.correct_answers || 0
+        studyTime: data.time_spent || 0,
+        completedExercises: data.completed_exercises || 0,
+        correctAnswers: data.correct_answers || 0
       };
     },
     enabled: !!session?.user?.id
   });
 
-  const handleClassChange = async (classId: string) => {
-    if (!session?.user?.id) return;
-
-    setSelectedClassId(parseInt(classId));
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({ class_id: parseInt(classId) })
-      .eq('id', session.user.id);
-
-    if (error) {
-      console.error('Error updating class:', error);
-      return;
-    }
-  };
-
-  if (isLoadingProfile || isLoadingClasses || isLoadingSubjects) {
+  // Show loading state while critical data is being fetched
+  if (isLoadingProfile || isLoadingClasses) {
     return (
-      <div className="flex items-center justify-center min-h-[80vh]">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       className="container mx-auto px-4 py-8 space-y-8"
     >
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <WelcomeCard lastRefresh={new Date()} />
-        </div>
-        <div className="lg:col-span-1">
-          <ClassSelector 
-            classes={classes}
-            selectedClassId={selectedClassId || profile?.class_id || null}
-            onClassChange={handleClassChange}
-          />
-        </div>
-      </div>
+      <WelcomeCard lastRefresh={new Date()} />
 
-      <StatsCards stats={stats || {
+      <ClassSelector
+        classes={classes}
+        selectedClassId={selectedClassId}
+        onClassSelect={setSelectedClassId}
+      />
+
+      <StatsCards stats={studyStats || {
         totalUsers: 0,
         totalFiles: 0,
         totalDownloads: 0,
@@ -152,17 +144,16 @@ export function DashboardContent() {
       </div>
 
       {(selectedClassId || profile?.class_id) ? (
-        <SubjectsGrid 
-          subjects={subjects} 
-          onSubjectClick={(subjectId) => navigate(`/subjects/${subjectId}`)}
+        <SubjectsGrid
+          subjects={subjects}
+          onSubjectClick={(subjectId) => {
+            navigate(`/subjects/${subjectId}`);
+          }}
         />
       ) : (
-        <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">
-            Sélectionnez votre classe
-          </h3>
-          <p className="text-gray-600">
-            Pour voir les matières disponibles, veuillez d'abord sélectionner votre classe
+        <div className="text-center py-8">
+          <p className="text-gray-500">
+            Sélectionnez une classe pour voir les matières disponibles
           </p>
         </div>
       )}
