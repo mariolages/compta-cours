@@ -17,6 +17,7 @@ export function AudioPlayer({ filePath, isLocked = false }: AudioPlayerProps) {
   const [volume, setVolume] = useState(1);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const audioRef = React.useRef<HTMLAudioElement>(null);
 
@@ -25,6 +26,7 @@ export function AudioPlayer({ filePath, isLocked = false }: AudioPlayerProps) {
     
     const loadAudio = async () => {
       try {
+        setIsLoading(true);
         const { data: { publicUrl } } = supabase
           .storage
           .from('dcg_files')
@@ -38,6 +40,8 @@ export function AudioPlayer({ filePath, isLocked = false }: AudioPlayerProps) {
           title: "Erreur",
           description: "Impossible de charger le fichier audio",
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -54,14 +58,24 @@ export function AudioPlayer({ filePath, isLocked = false }: AudioPlayerProps) {
       return;
     }
 
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
+    if (!audioRef.current) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.error("Error playing audio:", error);
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Impossible de lire l'audio",
+          });
+        });
       }
-      setIsPlaying(!isPlaying);
     }
+    setIsPlaying(!isPlaying);
   };
 
   const handleTimeUpdate = () => {
@@ -73,6 +87,7 @@ export function AudioPlayer({ filePath, isLocked = false }: AudioPlayerProps) {
   const handleLoadedMetadata = () => {
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
+      setIsLoading(false);
     }
   };
 
@@ -113,13 +128,17 @@ export function AudioPlayer({ filePath, isLocked = false }: AudioPlayerProps) {
     }
   };
 
-  if (!audioUrl && !isLocked) {
-    return <div className="animate-pulse bg-gray-200 h-12 rounded-md" />;
+  if (isLoading && !isLocked) {
+    return (
+      <div className="h-[120px] bg-white p-4 rounded-lg shadow-sm flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   if (isLocked) {
     return (
-      <div className="bg-white p-4 rounded-lg shadow-sm space-y-2">
+      <div className="h-[120px] bg-white p-4 rounded-lg shadow-sm space-y-2">
         <div className="flex items-center justify-center gap-2 text-gray-400">
           <Lock className="h-5 w-5" />
           <span>Contenu réservé aux abonnés</span>
@@ -129,13 +148,21 @@ export function AudioPlayer({ filePath, isLocked = false }: AudioPlayerProps) {
   }
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm space-y-2">
+    <div className="h-[120px] bg-white p-4 rounded-lg shadow-sm space-y-2">
       <audio
         ref={audioRef}
         src={audioUrl || undefined}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={() => setIsPlaying(false)}
+        onError={(e) => {
+          console.error("Audio error:", e);
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Erreur lors de la lecture de l'audio",
+          });
+        }}
       />
       
       <div className="flex items-center gap-4">
@@ -143,8 +170,8 @@ export function AudioPlayer({ filePath, isLocked = false }: AudioPlayerProps) {
           variant="ghost"
           size="icon"
           onClick={handlePlayPause}
-          className="h-10 w-10"
-          disabled={isLocked}
+          className="h-10 w-10 flex-shrink-0"
+          disabled={isLocked || isLoading}
         >
           {isPlaying ? (
             <Pause className="h-6 w-6" />
@@ -153,7 +180,7 @@ export function AudioPlayer({ filePath, isLocked = false }: AudioPlayerProps) {
           )}
         </Button>
 
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <Slider
             value={[currentTime]}
             min={0}
@@ -161,7 +188,7 @@ export function AudioPlayer({ filePath, isLocked = false }: AudioPlayerProps) {
             step={1}
             onValueChange={handleSeek}
             className="w-full"
-            disabled={isLocked}
+            disabled={isLocked || isLoading}
           />
           <div className="flex justify-between text-sm text-gray-500 mt-1">
             <span>{formatTime(currentTime)}</span>
@@ -174,8 +201,8 @@ export function AudioPlayer({ filePath, isLocked = false }: AudioPlayerProps) {
             variant="ghost"
             size="icon"
             onClick={toggleMute}
-            className="h-8 w-8"
-            disabled={isLocked}
+            className="h-8 w-8 flex-shrink-0"
+            disabled={isLocked || isLoading}
           >
             {isMuted ? (
               <VolumeX className="h-4 w-4" />
@@ -190,7 +217,7 @@ export function AudioPlayer({ filePath, isLocked = false }: AudioPlayerProps) {
             step={0.1}
             onValueChange={handleVolumeChange}
             className="w-24"
-            disabled={isLocked}
+            disabled={isLocked || isLoading}
           />
         </div>
       </div>
